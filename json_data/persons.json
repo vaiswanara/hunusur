@@ -1,0 +1,156 @@
+[
+  {
+    "person_id": "I0001",
+    "given_name": "KRISHNAMURTHY",
+    "surname": "HUNSUR",
+    "sex": "M",
+    "birth_date": "9-FEB-1914",
+    "birth_date_type": "exact",
+    "deceased": true,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "HUNSUR",
+    "birth_place_name": "13-FEB1989",
+    "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "Gautama",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+  {
+    "person_id": "I0002",
+    "given_name": "SAROJABHAI",
+    "surname": "",
+    "sex": "F",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": true,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "I0001",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "Gautama",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+  {
+    "person_id": "I0003",
+    "given_name": "NARAHARI",
+    "surname": "",
+    "sex": "M",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "Gautama",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+  {
+    "person_id": "I0004",
+    "given_name": "SREEPRASAD",
+    "surname": "",
+    "sex": "M",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "Gautama",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+  {
+    "person_id": "I0005",
+    "given_name": "CHANDRIKA",
+    "surname": "",
+    "sex": "F",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "Gautama",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+  {
+    "person_id": "I0006",
+    "given_name": "MALLIKA",
+    "surname": "",
+    "sex": "F",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "Gautama",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+  {
+    "person_id": "I0007",
+    "given_name": "RENUKA",
+    "surname": "",
+    "sex": "F",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "Gautama",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "family_id": "F0001",
+    "husband_id": "",
+    "wife_id": "",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0001",
+      "I0002"
+    ]
+  },
+  {
+    "family_id": "F0002",
+    "husband_id": "I0001",
+    "wife_id": "I0002",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0003",
+      "I0004",
+      "I0005",
+      "I0006",
+      "I0007"
+    ]
+  }
+]

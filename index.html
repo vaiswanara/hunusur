@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAMSHA VRUKSHA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4A90E2">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <link rel="icon" href="icon-512.png" type="image/png">
+    <style>
+        /* --- CSS Variables & Reset --- */
+        :root { --sidebar-width: 260px; --header-height: 60px; --primary-color: #4A90E2; --text-dark: #333; --bg-light: #f4f7f6; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; display: flex; height: 100vh; height: 100dvh; background: var(--bg-light); }
+        * { box-sizing: border-box; }
+
+        /* --- Sidebar (Slide Bar) --- */
+        #sidebar { width: var(--sidebar-width); background: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; z-index: 1000; transition: transform 0.3s ease; flex-shrink: 0; }
+        .brand { padding: 25px 20px; text-align: center; border-bottom: 1px solid #eee; }
+        .brand img { width: 80px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
+        .brand h1 { margin: 0; font-size: 22px; color: var(--text-dark); letter-spacing: 1px; }
+        .brand h2 { margin: 8px 0 0; font-size: 13px; color: #777; font-weight: normal; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .menu { list-style: none; padding: 20px 0; margin: 0; flex: 1; overflow-y: auto; }
+        .menu li a { display: block; padding: 15px 25px; color: #555; text-decoration: none; font-weight: 500; transition: all 0.2s; border-left: 4px solid transparent; }
+        .menu li a:hover, .menu li a.active { background: #eef5fc; color: var(--primary-color); border-left-color: var(--primary-color); }
+        
+        /* --- Main Content Area --- */
+        #main { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; overflow: hidden; }
+        
+        /* Header */
+        header { height: var(--header-height); background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; flex-shrink: 0; }
+        .toggle-btn { font-size: 24px; cursor: pointer; display: none; margin-right: 15px; color: #555; }
+        
+        /* Search Bar */
+        .search-wrapper { flex: 1; max-width: 500px; display: flex; align-items: center; position: relative; }
+        #search-input { width: 100%; padding: 10px 20px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-size: 16px; transition: border 0.3s; background: #f9f9f9; }
+        #search-input:focus { border-color: var(--primary-color); background: #fff; }
+        #search-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 2000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 5px; }
+        .suggestion-item { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .suggestion-item:hover { background-color: #f5f5f5; color: var(--primary-color); }
+
+        /* Tree Container */
+        #tree { flex: 1; width: 100%; height: 100%; background-color: #fff; position: relative; touch-action: none; }
+
+        /* --- Modal Styles --- */
+        #person-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        #person-modal-overlay.show { display: flex; }
+        #person-modal { background: #fff; width: 95%; max-width: 480px; max-height: 90vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        .modal-header h3 { margin: 0; font-size: 18px; color: var(--text-dark); }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+        
+        .modal-scroll-content { overflow-y: auto; flex: 1; padding: 0; }
+        .avatar-section { padding: 20px; text-align: center; background: linear-gradient(to bottom, #f9f9f9, #fff); }
+        #person-modal-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; margin: 0 auto; }
+        #person-modal-avatar-fallback { width: 100px; height: 100px; border-radius: 50%; background: #e0e0e0; color: #757575; font-size: 36px; display: flex; justify-content: center; align-items: center; margin: 0 auto; font-weight: bold; }
+        #person-modal-id { margin-top: 10px; font-size: 12px; color: #888; font-family: monospace; }
+        
+        .details-table { width: 100%; border-collapse: collapse; margin-top: 0; }
+        .details-table tr { border-bottom: 1px solid #f5f5f5; }
+        .details-table th, .details-table td { padding: 12px 20px; font-size: 14px; }
+        
+        .modal-footer { padding: 15px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; background: #f9f9f9; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-outline { background: transparent; border: 1px solid #ccc; color: #555; }
+
+        /* --- Birthdays Page --- */
+        #birthdays-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .birthdays-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .birthdays-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .birthdays-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .birthday-date-block { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+        .birthday-date-line { font-size: 15px; color: #4A90E2; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.5px; }
+        .birthday-person-block { margin-bottom: 12px; }
+        .birthday-name { font-size: 16px; color: #333; font-weight: 600; margin-bottom: 0; }
+        .birthday-name a { color: #039BE5; text-decoration: none; }
+        .birthday-name a:hover { text-decoration: underline; }
+        .birthday-phone { font-size: 16px; margin-top: 6px; margin-bottom: 4px; margin-left: 0; }
+        .birthday-whatsapp-link { color: #25D366; text-decoration: none; font-weight: 500; }
+        .birthday-whatsapp-link:hover { text-decoration: underline; }
+
+        /* --- Help Page --- */
+        #help-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .help-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .help-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .help-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .help-section { margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 15px; }
+        .help-section:last-child { border-bottom: none; }
+        .help-section h3 { color: var(--primary-color); font-size: 16px; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+        .help-section p { margin: 0 0 5px; color: #444; font-size: 14px; line-height: 1.5; }
+        .help-section strong { color: #333; }
+
+        /* --- Install App Page --- */
+        #install-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .install-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .install-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .install-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .install-card { background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 18px; box-shadow: 0 6px 20px rgba(0,0,0,0.05); }
+        .install-hero { display: flex; gap: 16px; align-items: center; }
+        .install-hero img { width: 72px; height: 72px; border-radius: 18px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.06); }
+        .install-hero h2 { margin: 0; font-size: 18px; color: #333; }
+        .install-hero p { margin: 6px 0 0; color: #666; font-size: 14px; line-height: 1.5; }
+        .install-actions { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .install-btn { background: var(--primary-color); color: #fff; border: none; border-radius: 999px; padding: 12px 18px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 22px rgba(74, 144, 226, 0.32); display: inline-flex; align-items: center; gap: 10px; }
+        .install-btn:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+        .install-hint { margin-top: 12px; color: #666; font-size: 13px; line-height: 1.6; }
+        .install-hint code { background: #f6f7f9; border: 1px solid #eceff3; padding: 2px 6px; border-radius: 6px; }
+
+        /* --- About Page --- */
+        #about-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .about-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .about-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .about-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .about-section { margin-bottom: 25px; }
+        .about-section h3 { color: var(--primary-color); font-size: 18px; margin-bottom: 10px; border-bottom: 2px solid #f0f7ff; padding-bottom: 5px; display: inline-block; }
+        .about-section p { color: #444; font-size: 15px; line-height: 1.6; margin-bottom: 10px; }
+        .about-card { background: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary-color); margin-top: 15px; }
+
+        /* --- Feedback Page --- */
+        #feedback-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .feedback-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .feedback-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .feedback-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+
+        /* --- Updates Page --- */
+        #updates-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .updates-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .updates-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .updates-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+        .update-item { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 15px; }
+        .update-number { font-size: 27px; font-weight: bold; color: #ccc; min-width: 25px; }
+        .update-details { flex: 1; }
+        .update-date { font-size: 18px; color: var(--primary-color); font-weight: bold; margin-bottom: 5px; }
+        .update-text { font-size: 23px; color: #333; line-height: 1.5; }
+
+        /* --- Reports Selection Page --- */
+        #reports-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .reports-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .reports-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .reports-content { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+        
+        .report-search-box { position: relative; margin-bottom: 20px; }
+        .report-search-input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        .report-search-input:focus { border-color: var(--primary-color); }
+        .report-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .selected-person-card { background: #e3f2fd; padding: 15px; border-radius: 8px; border: 1px solid #90caf9; margin-bottom: 25px; display: none; align-items: center; justify-content: space-between; }
+        .report-link-item { display: block; background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-decoration: none; color: #333; font-weight: 500; transition: all 0.2s; border-left: 4px solid var(--primary-color); cursor: pointer; }
+        .report-link-item:hover { background: #f9f9f9; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .report-link-item.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+        /* --- Relationship Report Page --- */
+        #relationship-report-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        .report-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; position: sticky; top: 0; z-index: 1; }
+        .report-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .report-content { padding: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
+        .report-print-btn { margin-left: auto; background: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+
+        /* --- Sidebar backdrop (mobile: tap outside to close) --- */
+        #sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 999; }
+        #sidebar-backdrop.show { display: block; }
+
+        /* --- Responsive Logic --- */
+        @media (min-width: 769px) {
+            #sidebar-backdrop.show { display: none; }
+        }
+        @media (max-width: 768px) {
+            #sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+            #sidebar.open { transform: translateX(0); }
+            #sidebar-backdrop.show { display: block; }
+            .toggle-btn { display: block; }
+            #main { width: 100%; }
+            header { padding: 0 10px; }
+        }
+
+        /* --- Dashboard Styles --- */
+        #dashboard-page { display: none; flex: 1; padding: 20px; overflow-y: auto; background: #f4f7f6; animation: fadeIn 0.3s ease; }
+        .dash-welcome { background: #fff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .dash-welcome h2 { margin: 0; font-size: 18px; color: #333; }
+        .dash-date { color: #888; font-size: 14px; font-weight: 500; }
+        
+        .namaste-card { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 15px 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3); position: relative; overflow: hidden; }
+        .namaste-card { background: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%); color: white; padding: 15px 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(255, 94, 98, 0.3); position: relative; overflow: hidden; }
+        .namaste-card h1 { margin: 0; font-size: 24px; letter-spacing: 1px; }
+        .namaste-card p { margin: 0; opacity: 0.95; font-size: 16px; font-weight: 500; }
+        .dash-message-card { display: none; background: #fff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; color: #E91E63; font-weight: 600; font-size: 15px; border-left: 5px solid #E91E63; animation: fadeIn 0.3s ease; line-height: 1.5; }
+        
+        .open-tree-card { background: #fff; border-radius: 16px; padding: 0; margin-bottom: 20px; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; position: relative; height: 180px; display: flex; align-items: center; justify-content: center; border: 2px solid transparent; }
+        .open-tree-card:hover { border-color: var(--primary-color); }
+        .open-tree-card:active { transform: scale(0.98); }
+        /* Placeholder tree illustration using CSS/SVG background */
+        .open-tree-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.2; background-image: url('ftree.jpg'); background-repeat: no-repeat; background-position: center; background-size: cover; }
+        .open-tree-content { position: relative; z-index: 2; text-align: center; }
+        .open-tree-btn { background: var(--primary-color); color: white; padding: 12px 30px; border-radius: 30px; font-weight: bold; font-size: 16px; border: none; box-shadow: 0 4px 10px rgba(74, 144, 226, 0.4); pointer-events: none; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; }
+        .stat-card { background: #fff; padding: 20px 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 130px; }
+        .stat-card:active { transform: scale(0.98); }
+        .stat-icon { font-size: 28px; margin-bottom: 10px; }
+        .stat-value { font-size: 22px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .stat-label { font-size: 12px; color: #777; font-weight: 500; text-transform: uppercase; }
+
+        /* Utility to hide tree */
+        .hidden { display: none !important; }
+
+        /* --- User Identity Card --- */
+        .user-identity-card { background: #fff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; animation: fadeIn 0.3s ease; }
+        .user-identity-content { display: flex; justify-content: space-between; align-items: center; }
+        .user-identity-info { display: flex; flex-direction: column; }
+        .user-identity-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+        .user-identity-name { font-size: 16px; font-weight: bold; color: var(--primary-color); }
+        .user-change-btn { background: transparent; border: 1px solid #ccc; color: #666; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .user-change-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: #f0f7ff; }
+
+        /* --- Generic App Toast --- */
+        .app-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(50, 50, 50, 0.95); color: #fff; padding: 14px 24px; border-radius: 50px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); z-index: 6000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease; font-size: 14px; font-weight: 500; text-align: center; max-width: 90%; width: max-content; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1); }
+        .app-toast.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+
+        /* --- Lineage Path Bar --- */
+        #lineage-bar { display: none; align-items: center; gap: 8px; padding: 10px 15px; background: #f8f9fa; border-top: 1px solid #e0e0e0; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 0; }
+        #lineage-bar::-webkit-scrollbar { display: none; }
+        .lineage-item { font-size: 13px; color: #555; cursor: pointer; padding: 4px 12px; border-radius: 15px; background: #fff; border: 1px solid #ddd; flex-shrink: 0; transition: all 0.2s; font-weight: 500; }
+        .lineage-item:hover { border-color: var(--primary-color); color: var(--primary-color); background: #f0f7ff; }
+        .lineage-item.current { font-weight: bold; background: var(--primary-color); color: #fff; border-color: var(--primary-color); box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3); }
+        .lineage-arrow { color: #bbb; font-size: 12px; flex-shrink: 0; }
+
+        /* --- Form Page --- */
+        #form-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 5000; flex-direction: column; animation: fadeIn 0.3s ease; }
+        .form-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; background: #fff; flex-shrink: 0; }
+        .form-back { font-size: 24px; cursor: pointer; background: none; border: none; padding: 0; color: #333; }
+        .form-content { flex: 1; width: 100%; height: 100%; display: flex; flex-direction: column; background: #f0f0f0; }
+        .form-iframe { width: 100%; flex: 1; border: none; display: block; background: #fff; }
+        .form-fallback { padding: 10px; text-align: center; background: #fff; border-bottom: 1px solid #eee; font-size: 13px; color: #666; }
+        .form-fallback a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
+
+        /* --- Print / Save PDF Styles --- */
+        @media print {
+            /* Hide all UI elements except the report */
+            #sidebar, #main, #sidebar-backdrop, .report-header, 
+            #person-modal-overlay, #relationship-modal-overlay, 
+            #app-toast, #birthdays-page, #form-page, #help-page, 
+            #install-page, #about-page, #feedback-page, #updates-page,
+            #reports-page,
+            header {
+                display: none !important;
+            }
+
+            /* Reset Body for Print */
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: auto;
+                overflow: visible;
+                background: #fff;
+            }
+
+            /* Ensure Report Page is Visible and Flows Correctly */
+            #relationship-report-page {
+                display: block !important;
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                z-index: auto !important;
+                background: #fff !important;
+            }
+
+            /* Style the Content for PDF/Print */
+            .report-content {
+                max-width: 100% !important;
+                padding: 0 40px !important; /* Add side margins for PDF */
+                margin: 0 !important;
+            }
+
+            /* Override Inline Styles for Better Print Layout */
+            .report-content > div {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+
+            /* Clean up headers for print (remove backgrounds, add borders) */
+            .report-content h3 {
+                background: none !important;
+                border-left: none !important;
+                border-bottom: 1px solid #ccc !important;
+                padding-left: 0 !important;
+                margin-top: 30px !important;
+            }
+
+            /* Remove borders from images in print */
+            img {
+                border: none !important;
+                outline: none !important;
+            }
+
+            /* Relationship Diagram Print Styles */
+            .rel-diagram-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
+                gap: 5px;
+            }
+            .rel-node {
+                border: 2px solid #4A90E2;
+                border-radius: 12px;
+                padding: 10px;
+                text-align: center;
+                min-width: 180px;
+                max-width: 220px;
+                background: #fff;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 2;
+            }
+            .rel-arrow {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                /* Mobile Defaults */
+                height: 50px;
+                width: 100%;
+            }
+            /* Connector Line */
+            .rel-arrow::after {
+                content: '';
+                position: absolute;
+                background: #ccc;
+                z-index: 1;
+                /* Mobile: Vertical Line */
+                width: 2px;
+                height: 100%;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            .rel-arrow-label {
+                position: relative;
+                z-index: 3;
+                background: #fff;
+                padding: 2px 8px;
+                color: #E91E63;
+                font-weight: bold;
+                font-size: 12px;
+                border: 1px solid #eee;
+                border-radius: 10px;
+                white-space: nowrap;
+            }
+
+            /* Desktop: Horizontal Layout (Left to Right) */
+            @media (min-width: 768px) {
+                .rel-diagram-container {
+                    flex-direction: row;
+                    overflow-x: auto;
+                    justify-content: center;
+                    padding-bottom: 40px;
+                }
+                .rel-arrow {
+                    height: auto;
+                    width: 60px;
+                    min-height: 40px;
+                }
+                /* Desktop: Horizontal Line */
+                .rel-arrow::after {
+                    width: 100%;
+                    height: 2px;
+                    top: 50%;
+                    left: 0;
+                    transform: translateY(-50%);
+                }
+            }
+
+            /* Avoid Page Breaks Inside Sections */
+            .report-content h3, .report-content ul, .report-content li {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* --- Language Selection Toast --- */
+        #language-selection-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: #fff; color: #333; padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 6000; opacity: 0; pointer-events: none; transition: all 0.3s ease; text-align: center; min-width: 300px; border: 1px solid #eee; }
+        #language-selection-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+        .lang-btn { padding: 10px 20px; margin: 0 5px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+        .lang-btn.te { background: #E91E63; color: white; }
+        .lang-btn.kn { background: #FF9800; color: white; }
+        .lang-close { position: absolute; top: 5px; right: 10px; background: none; border: none; font-size: 20px; cursor: pointer; color: #999; }
+
+        /* --- Common Ancestor Diagram Styles --- */
+        .ca-diagram { display: flex; flex-direction: column; align-items: center; padding: 20px 10px; font-family: 'Segoe UI', sans-serif; overflow-x: auto; }
+        
+        .ca-node {
+            border: 2px solid #4A90E2; border-radius: 12px; padding: 10px; text-align: center;
+            width: 140px; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 2; position: relative; display: flex; flex-direction: column; align-items: center;
+        }
+        .ca-node img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 5px; border: 1px solid #ddd; }
+        .ca-node-name { font-weight: bold; font-size: 13px; color: #333; line-height: 1.2; margin-bottom: 2px; }
+        .ca-node-id { font-size: 10px; color: #999; }
+        .ca-node-role { 
+            font-size: 10px; color: #E91E63; font-weight: bold; background: #fff0f5; 
+            padding: 2px 8px; border-radius: 10px; margin-bottom: 6px; border: 1px solid #f8bbd0;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* Pivot (Top Node) */
+        .ca-pivot-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; margin-bottom: 30px; }
+        .ca-pivot-wrapper::after {
+            content: ''; position: absolute; top: 100%; left: 50%; width: 2px; height: 30px;
+            background: #bbb; transform: translateX(-50%);
+        }
+
+        /* Branches Container */
+        .ca-branches { display: flex; justify-content: center; gap: 40px; position: relative; }
+
+        /* Branch Column */
+        .ca-branch { display: flex; flex-direction: column; align-items: center; position: relative; padding-top: 30px; }
+
+        /* Horizontal Connector (Top of branches) */
+        .ca-branch::before { content: ''; position: absolute; top: 0; height: 2px; background: #bbb; }
+        
+        /* Left Branch: Line from center-right to right edge */
+        .ca-branch.left::before { right: -20px; width: calc(50% + 20px); }
+        
+        /* Right Branch: Line from center-left to left edge */
+        .ca-branch.right::before { left: -20px; width: calc(50% + 20px); }
+
+        /* Vertical Connector (From horizontal line down to first node) */
+        .ca-branch::after {
+            content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 30px;
+            background: #bbb; transform: translateX(-50%);
+        }
+
+        /* Node Wrapper in Column */
+        .ca-node-wrapper { position: relative; margin-bottom: 30px; }
+        .ca-node-wrapper:last-child { margin-bottom: 0; }
+
+        /* Line to next node */
+        .ca-node-wrapper::after {
+            content: ''; position: absolute; top: 100%; left: 50%; width: 2px; height: 30px;
+            background: #bbb; transform: translateX(-50%);
+        }
+        .ca-node-wrapper:last-child::after { display: none; }
+
+        /* Arrowhead for node connections */
+        .ca-node-wrapper::before {
+            content: ''; position: absolute; top: calc(100% + 25px); left: 50%; 
+            border: 5px solid transparent; border-top-color: #bbb; 
+            transform: translateX(-50%); z-index: 1;
+        }
+        .ca-node-wrapper:last-child::before { display: none; }
+
+        /* Reverse arrows for Left Branch (A -> Pivot) to show flow A -> B */
+        .ca-branch.left .ca-node-wrapper::before,
+        .ca-single-col.left-stack .ca-node-wrapper::before,
+        .ca-sibling-side:first-child .ca-node-wrapper::before {
+            border-top-color: transparent; border-bottom-color: #bbb;
+            top: calc(100% + 5px); /* Position at top of line, pointing up */
+        }
+
+        /* Linear Layout (Single Column) */
+        .ca-single-col { padding-top: 0; }
+        .ca-single-col::before, .ca-single-col::after { display: none; }
+
+        /* Print Overrides for Diagram */
+        @media print {
+            .ca-diagram { overflow: visible; width: 100%; }
+            .ca-node { border: 1px solid #4A90E2; box-shadow: none; }
+            .ca-pivot-wrapper::after, .ca-branch::before, .ca-branch::after, .ca-node-wrapper::after {
+                background: #000 !important; -webkit-print-color-adjust: exact;
+            }
+            .ca-node-wrapper::before { border-top-color: #000 !important; }
+            .ca-branch.left .ca-node-wrapper::before,
+            .ca-single-col.left-stack .ca-node-wrapper::before,
+            .ca-sibling-side:first-child .ca-node-wrapper::before {
+                border-top-color: transparent !important; border-bottom-color: #000 !important;
+            }
+            .ca-node-role { border: 1px solid #ccc; color: #000; }
+        }
+
+        /* --- Sibling Bridge Layout --- */
+        .ca-sibling-container { display: flex; justify-content: center; gap: 60px; position: relative; margin-top: 10px; }
+        
+        /* Connector Line between the two sibling columns at the top */
+        .ca-sibling-container::before {
+            content: ''; position: absolute; top: 45px; left: 50%; transform: translateX(-50%);
+            width: 60px; height: 2px; background: #bbb; z-index: 1;
+        }
+
+        .ca-sibling-side { display: flex; flex-direction: column; align-items: center; position: relative; }
+        
+        /* Hide the top connector for the single columns inside sibling layout */
+        .ca-sibling-side .ca-single-col { padding-top: 30px; }
+        .ca-sibling-side .ca-single-col::before { display: none; }
+
+        /* --- Responsive Mobile Adjustments for Diagram --- */
+        @media (max-width: 768px) {
+            .ca-node {
+                width: 90px;
+                padding: 5px;
+                min-height: 90px;
+            }
+            .ca-node img {
+                width: 35px;
+                height: 35px;
+            }
+            .ca-node-name {
+                font-size: 11px;
+                margin-bottom: 0;
+            }
+            .ca-node-id {
+                font-size: 9px;
+            }
+            .ca-node-role {
+                font-size: 9px;
+                padding: 2px 4px;
+                margin-bottom: 4px;
+            }
+            .ca-branches {
+                gap: 10px;
+            }
+            .ca-branch.left::before { right: -5px; width: calc(50% + 5px); }
+            .ca-branch.right::before { left: -5px; width: calc(50% + 5px); }
+            .ca-sibling-container { gap: 20px; }
+            .ca-sibling-container::before { width: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar">
+        <div class="brand">
+            <img src="logo.png" alt="DFWA Logo">
+            <h1>VAMSHA VRUKSHA</h1>
+            <h2>HARE SRINIVASA</h2>
+        </div>
+        <ul class="menu" id="sidebar-menu">
+            <li><a href="#" id="nav-dashboard" class="active" onclick="window.showDashboard(); closeSidebar();">🏠 Dashboard</a></li>
+            <li><a href="#" id="nav-tree" onclick="window.showTreePage(); closeSidebar();">🌳 FAMILY TREE</a></li>
+            <li><a href="#" onclick="window.toggleLanguage(); closeSidebar();">🌐 Language: <span id="lang-display">TEL</span></a></li>
+            <li><a href="#" onclick="window.showUpdatesPage(); closeSidebar();">📰 UPDATES</a></li>
+            <li><a href="#" onclick="showBirthdays(); closeSidebar();">🎂 BIRTHDAYs</a></li>
+            <li><a href="#" onclick="window.showReportsPage(); closeSidebar();">📊 REPORTS</a></li>
+            <li><a href="#" onclick="showFormPage(); closeSidebar();">📝 UPDATE DATA</a></li>
+            <li><a href="#" onclick="showHelp(); closeSidebar();">❓ HELP</a></li>
+            <li><a href="#" id="nav-install" onclick="window.showInstallPage(); closeSidebar();">⬇️ Install App</a></li>
+            <li><a href="#" onclick="window.showAboutPage(); closeSidebar();">ℹ️ ABOUT</a></li>
+            <li><a href="#" onclick="window.showFeedbackPage(); closeSidebar();">💬 FEEDBACK</a></li>
+        </ul>
+    </nav>
+
+    <!-- Backdrop: tap/click outside sidebar to close it (mobile) -->
+    <div id="sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- Main Content -->
+    <div id="main">
+        <header>
+            <div style="display: flex; align-items: center;">
+                <span class="toggle-btn" onclick="toggleSidebar()">&#9776;</span>
+            </div>
+            <div id="dashboard-header-title" style="display: none; flex: 1; text-align: center;">
+                <h2 style="margin: 0; font-size: 23px; color: var(--primary-color); letter-spacing: 0.5px;">VAMSHA VRUKSHA</h2>
+                <p style="margin: 2px 0 0; font-size: 14px; color: #777; font-weight: 500;">HARE SRINIVASA</p>
+            </div>
+            <div class="search-wrapper">
+                <!-- Home button is injected here by app.js -->
+                <input type="text" id="search-input" placeholder="Search family member...">
+                <div id="search-suggestions"></div>
+            </div>
+        </header>
+
+        <!-- Dashboard Page -->
+        <div id="dashboard-page">
+            <!-- 1. Namaste Card (Moved to Top) -->
+            <div class="namaste-card">
+                <h1 id="dashboard-main-title">FAMILY TREE</h1>
+            </div>
+
+            <!-- 2.5 Dynamic Message Section -->
+            <div id="dash-dynamic-msg" class="dash-message-card"></div>
+
+            <!-- 3. User Identity Section (New Box) -->
+            <div id="dash-user-row" class="user-identity-card" style="display:none;">
+                <div class="user-identity-content">
+                    <div class="user-identity-info">
+                        <span class="user-identity-label">Home Person</span>
+                        <span id="dash-home-name" class="user-identity-name"></span>
+                    </div>
+                    <button onclick="window.changeHomePerson()" class="user-change-btn">Change</button>
+                </div>
+                <!-- Inline Search for Home Person -->
+                <div id="dash-search-container" style="display:none; margin-top: 15px; position: relative;">
+                    <input type="text" id="dash-search-input" placeholder="Type name (min 3 chars)..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 16px;">
+                    <div id="dash-search-suggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 10; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></div>
+                </div>
+            </div>
+
+            <!-- Open Tree Card -->
+            <div class="open-tree-card" onclick="window.showTreePage()">
+                <div class="open-tree-bg"></div>
+                <div class="open-tree-content">
+                    <button class="open-tree-btn">Open Family Tree</button>
+                </div>
+            </div>
+
+            <!-- Family Info Section -->
+            <div class="stats-grid">
+                <div class="stat-card" onclick="window.showTreePage()">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="stat-total-members">-</div>
+                    <div class="stat-label">Total Members</div>
+                </div>
+                <div class="stat-card" onclick="window.showBirthdays()">
+                    <div class="stat-icon">🎂</div>
+                    <div class="stat-value" id="stat-upcoming-birthdays">-</div>
+                    <div class="stat-label">Upcoming Birthdays</div>
+                </div>
+                <div class="stat-card" onclick="window.focusSearch()">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-value">Find</div>
+                    <div class="stat-label">Search Member</div>
+                </div>
+                <div class="stat-card" onclick="window.showReportsPage()">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value">Reports</div>
+                    <div class="stat-label">View Reports</div>
+                </div>
+                <div class="stat-card" onclick="window.showFormPage()">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value">Add</div>
+                    <div class="stat-label">Update Data</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tree"></div>
+
+        <!-- Lineage Path Bar -->
+        <div id="lineage-bar"></div>
+    </div>
+
+    <!-- Person Details Modal -->
+    <div id="person-modal-overlay" aria-hidden="true">
+        <div id="person-modal">
+            <div class="modal-header">
+                <h3 id="person-modal-name">Name</h3>
+                <button id="person-modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-scroll-content">
+                <div class="avatar-section">
+                    <img id="person-modal-avatar" src="" alt="Profile">
+                    <div id="person-modal-avatar-fallback"></div>
+                    <div id="person-modal-id"></div>
+                </div>
+                <table class="details-table">
+                    <tbody id="person-modal-body">
+                        <!-- Rows injected by app.js -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button id="person-home-btn" class="btn btn-outline">Set as Home</button>
+                <button id="relation-btn" class="btn btn-primary">Relationship</button>
+                <button id="person-share-btn" class="btn btn-primary">Share Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relationship Details Modal -->
+    <div id="relationship-modal-overlay" aria-hidden="true" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+        <div id="relationship-modal" style="background: #fff; width: 90%; max-width: 400px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideUp 0.3s ease;">
+            <div class="modal-header">
+                <h3 style="margin: 0; font-size: 18px;">Relationship</h3>
+                <button id="relationship-modal-close" class="modal-close">&times;</button>
+            </div>
+            <div id="relationship-modal-body" style="padding: 20px 25px; line-height: 1.6; text-align: center;">
+                <!-- Content injected by app.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic App Toast -->
+    <div id="app-toast" class="app-toast"></div>
+
+    <!-- Birthdays Page (next 20 days) -->
+    <div id="birthdays-page">
+        <div class="birthdays-header">
+            <button id="birthdays-page-close" class="birthdays-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Upcoming Birthdays</h3>
+        </div>
+        <div id="birthdays-content" class="birthdays-content">
+            <!-- Content injected by app.js -->
+        </div>
+    </div>
+
+    <!-- Form Page -->
+    <div id="form-page">
+        <div class="form-header">
+            <button id="form-page-close" class="form-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Submit Family Data</h3>
+        </div>
+        <div class="form-content" style="background: #fff; display: block; overflow-y: auto;">
+            <div style="text-align: center; padding: 30px 20px 10px;">
+                <p style="color: #666; margin: 0 0 15px; font-size: 15px;">Ready to add your family details?</p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSfXN90TgDOzXB3QfTte13QTdYXIpISceFku-sOdr9gTYspV3A/viewform" target="_blank" style="text-decoration: none;">
+                    <button style="background: var(--primary-color); color: white; padding: 15px 30px; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4); display: inline-flex; align-items: center; gap: 10px;">
+                        Open Google Form 📝
+                    </button>
+                </a>
+            </div>
+
+            <div style="padding: 20px 25px 40px; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+                <h2 style="color: var(--primary-color); font-size: 20px; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Contribute to Vamsha Vruksha</h2>
+                
+                <p style="margin-bottom: 15px;">Namaste! We are maintaining this family tree to preserve our rich history and connect with our roots. Your contribution helps us keep this record accurate and complete for future generations.</p>
+
+                <h3 style="font-size: 16px; color: #444; margin: 20px 0 10px;">Who can you add?</h3>
+                <p style="margin-bottom: 10px;">You may fill out this form to add or correct details for:</p>
+                <ul style="padding-left: 20px; color: #555; margin-bottom: 15px;">
+                    <li>Yourself</li>
+                    <li>Your children</li>
+                    <li>Your parents</li>
+                    <li>Any other relatives</li>
+                </ul>
+
+                <h3 style="font-size: 16px; color: #444; margin: 20px 0 10px;">Important Notes</h3>
+                <ul style="padding-left: 20px; color: #555; margin-bottom: 15px;">
+                    <li style="margin-bottom: 8px;"><strong>Partial info is okay:</strong> It is fine if you do not know every detail.</li>
+                    <li style="margin-bottom: 8px;"><strong>Dates:</strong> Approximate years (e.g., "1985") are acceptable if exact dates are unknown.</li>
+                    <li style="margin-bottom: 8px;"><strong>Manual Update:</strong> This website does not update instantly. All entries are personally reviewed before being added.</li>
+                </ul>
+
+                <h3 style="font-size: 16px; color: #444; margin: 20px 0 10px;">Photographs</h3>
+                <p style="margin-bottom: 15px;">Photos bring the tree to life! If you have a face photo, please attach it. Old photographs are also very welcome. This is optional.</p>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px; border-left: 4px solid #ccc;">
+                    <strong>Note on Google Sign-in:</strong><br>
+                    To securely attach a photo, Google may ask you to sign in. Please be assured that we never see your password or personal account details.
+                </div>
+
+                <h3 style="font-size: 16px; color: #444; margin: 20px 0 10px;">Before you begin</h3>
+                <ul style="padding-left: 20px; color: #555; margin-bottom: 25px;">
+                    <li>Keep names and dates ready.</li>
+                    <li>Have photos ready on your device if you wish to upload them.</li>
+                </ul>
+
+                <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+                
+                <p style="text-align: center; font-weight: 500; color: var(--primary-color); font-style: italic;">Thank you for helping us preserve our heritage. Your time and effort are deeply appreciated.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Page -->
+    <div id="help-page">
+        <div class="help-header">
+            <button id="help-page-close" class="help-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Help & Guide</h3>
+        </div>
+        <div class="help-content">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <img src="logo.png" alt="App Logo" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <h2 style="margin: 0; color: #333; font-size: 20px;">Vamsha Vruksha</h2>
+                <p style="color: #777; font-size: 13px;">User Guide</p>
+            </div>
+
+            <div class="help-section">
+                <h3>🔍 Search Bar</h3>
+                <p>Type a name in the top search bar. Tap on a name from the suggestions to view that person in the tree.</p>
+            </div>
+
+            <div class="help-section">
+                <h3>👤 Person Details</h3>
+                <p>Tap on any person in the tree to center them.</p>
+                <p>Click the <strong>Profile Icon (👤)</strong> next to the search bar to view full details (Parents, Spouse, Children, etc.).</p>
+                <p><em>Tip: You can also long-press a person on the tree to view details.</em></p>
+            </div>
+
+            <div class="help-section">
+                <h3>🏠 Set Home Person</h3>
+                <p>Go to your own profile details.</p>
+                <p>Click the <strong>"Set as Home"</strong> button.</p>
+                <p>Now, the <strong>Home Button (🏠)</strong> at the top will always bring the tree back to you.</p>
+            </div>
+
+            <div class="help-section">
+                <h3>↔️ Relationships</h3>
+                <p>Select any person in the tree.</p>
+                <p>Click the <strong>Relationship Icon (↔️)</strong> at the top.</p>
+                <p>It will show how the selected person is related to the Home Person (You).</p>
+            </div>
+
+            <div class="help-section">
+                <h3>🎂 Birthdays & Updates</h3>
+                <p>Check the Sidebar Menu (☰) for <strong>Birthdays</strong> (next 20 days) and latest <strong>Updates</strong>.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Page -->
+    <div id="about-page">
+        <div class="about-header">
+            <button id="about-page-close" class="about-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">About</h3>
+        </div>
+        <div class="about-content">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="logo.png" alt="DFWA Logo" style="width: 80px; height: auto; margin-bottom: 10px;">
+                <h2 style="margin: 0; color: #333;">Vamsha Vruksha</h2>
+                <p style="color: #777; margin-top: 5px;">Preserving Our Roots</p>
+            </div>
+
+            <div class="about-section">
+                <h3>Our Mission</h3>
+                <p>
+                    This application is a dedicated initiative by the <strong>Dharmavaram Family Welfare Association (DFWA)</strong>. 
+                    Our goal is simple yet profound: to digitally preserve the genealogy of our family for generations to come.
+                </p>
+                <p>
+                    In an era where families are spread across the globe, this tool serves as a bridge, connecting us back to our shared origins. 
+                    It is a free service intended solely to foster relationships and maintain the unity of our extended family.
+                </p>
+            </div>
+
+            <div class="about-section">
+                <h3>Traditional Lineage Information</h3>
+                <p>
+                    You may notice fields for <strong>Gotra</strong>, <strong>Nakshatra</strong>, and <strong>Rashi</strong> in future profile sections. 
+                    Here is a brief explanation of their significance in our heritage.
+                </p>
+
+                <div class="about-card">
+                    <strong>Gotra (Ancestral Lineage)</strong><br>
+                    <span style="font-size: 14px; color: #555;">
+                        Gotra traces our patrilineal heritage back to the ancient sages (Rishis). It acts as a marker of our ancestral origin, 
+                        preserving a lineage identity that has been passed down for thousands of years.
+                    </span>
+                </div>
+
+                <div class="about-card" style="border-left-color: #E91E63;">
+                    <strong>Nakshatra & Rashi</strong><br>
+                    <span style="font-size: 14px; color: #555;">
+                        <strong>Nakshatra</strong> (Birth Star) and <strong>Rashi</strong> (Moon Sign) are traditional astronomical markers. 
+                        Historically, before modern calendars, these were used to record the precise time of a child's birth.
+                    </span>
+                </div>
+
+                <p style="margin-top: 15px;">
+                    <strong>Why we preserve this:</strong><br>
+                    Recording these details is an act of cultural continuity, not superstition. It helps future generations understand 
+                    how their ancestors identified themselves and marked time. It is a vital part of our unique cultural identity.
+                </p>
+
+                <p style="background: #fff3cd; padding: 10px; border-radius: 6px; font-size: 14px; color: #856404; border: 1px solid #ffeeba;">
+                    <strong>Note:</strong> If you know these details, please enter them. If unsure, we encourage you to consult the elders in your family. 
+                    It is a great way to start a conversation about our history!
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px; color: #666; font-style: italic; font-size: 14px;">
+                "Preserving our relationships and cultural memory together strengthens the bonds of our family unity."
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #aaa;">
+                Version 1.0.0 &bull; Built with ❤️ by DFWA
+            </div>
+        </div>
+    </div>
+
+    <!-- Install App Page -->
+    <div id="install-page">
+        <div class="install-header">
+            <button id="install-page-close" class="install-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Install App</h3>
+        </div>
+        <div class="install-content">
+            <div class="install-card">
+                <div class="install-hero">
+                    <img src="icon-512.png" alt="App Icon">
+                    <div>
+                        <h2>Install Vamsha Vruksha</h2>
+                        <p>Add this app to your Android phone for a full-screen, fast experience (works offline after first load).</p>
+                    </div>
+                </div>
+                <div class="install-actions">
+                    <button id="install-app-btn" class="install-btn" disabled>Install on Android</button>
+                    <button id="install-how-btn" class="btn btn-outline">How to install</button>
+                </div>
+                <div id="install-status" class="install-hint" style="margin-top: 12px;">
+                    Checking install availability…
+                </div>
+            </div>
+
+            <!-- iOS Instructions -->
+            <div class="install-card" style="margin-top: 20px;">
+                <div class="install-hero">
+                    <div style="font-size: 48px; width: 72px; text-align: center;">🍎</div>
+                    <div>
+                        <h2>Install on iPhone / iPad</h2>
+                        <p>iOS does not support one-click install. Follow these manual steps:</p>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; font-size: 14px; color: #555; line-height: 1.6; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                    <ol style="padding-left: 20px; margin: 0;">
+                        <li style="margin-bottom: 8px;">Open this website in <strong>Safari</strong>.</li>
+                        <li style="margin-bottom: 8px;">Tap the <strong>Share</strong> button (square with arrow up) at the bottom.</li>
+                        <li style="margin-bottom: 8px;">Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+                        <li>Tap <strong>Add</strong> in the top right corner.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Safety Information -->
+            <div class="install-card" style="margin-top: 20px; background: #e8f5e9; border-color: #c8e6c9;">
+                <h3 style="margin: 0 0 10px; color: #2e7d32; display: flex; align-items: center; gap: 8px; font-size: 16px;">
+                    🛡️ Safety Information
+                </h3>
+                <p style="font-size: 14px; color: #333; line-height: 1.5; margin-bottom: 15px;">
+                    This is <strong>NOT</strong> an APK or Play Store application. It only creates a shortcut to this website on your phone's home screen.
+                </p>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px; color: #444;">
+                    <li style="margin-bottom: 8px; display: flex; gap: 10px;"><span style="color: #2e7d32;">✔</span> No files are downloaded to your phone</li>
+                    <li style="margin-bottom: 8px; display: flex; gap: 10px;"><span style="color: #2e7d32;">✔</span> No permissions are requested</li>
+                    <li style="margin-bottom: 8px; display: flex; gap: 10px;"><span style="color: #2e7d32;">✔</span> No personal information is collected</li>
+                    <li style="margin-bottom: 8px; display: flex; gap: 10px;"><span style="color: #2e7d32;">✔</span> No bank or payment data is accessed</li>
+                    <li style="margin-bottom: 8px; display: flex; gap: 10px;"><span style="color: #2e7d32;">✔</span> You can remove it anytime by deleting the icon</li>
+                </ul>
+                <p style="margin-top: 15px; font-weight: 600; color: #2e7d32; font-size: 14px; margin-bottom: 5px;">
+                    Your phone security and privacy remain completely safe.
+                </p>
+                <p style="margin: 0; font-size: 13px; color: #666;">
+                    This app works entirely inside your browser (Chrome/Safari).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Page -->
+    <div id="feedback-page">
+        <div class="feedback-header">
+            <button id="feedback-page-close" class="feedback-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Feedback</h3>
+        </div>
+        <div class="feedback-content">
+            <div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
+                <div style="font-size: 48px; margin-bottom: 10px;">💬</div>
+                <h2 style="margin: 0; color: #333;">We'd love to hear from you!</h2>
+                <p style="color: #666; margin-top: 10px; line-height: 1.5;">
+                    Your feedback helps us improve the Vamsha Vruksha application for the entire family.
+                </p>
+            </div>
+
+            <div class="install-card" style="text-align: center; padding: 30px 20px;">
+                <p style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Admin / Developer</p>
+                <h3 style="margin: 0 0 25px; color: var(--primary-color); font-size: 20px;">Srikanth Dharmavaram</h3>
+                
+                <a href="https://wa.me/919482094290?text=Namaste%20Srikanth,%20I%20have%20some%20feedback%20regarding%20the%20Family%20Tree%20App..." target="_blank" style="text-decoration: none;">
+                    <button style="background: #25D366; color: white; border: none; padding: 12px 28px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); transition: transform 0.2s;">
+                        <span style="font-size: 20px;">📱</span> Chat on WhatsApp
+                    </button>
+                </a>
+                <p style="margin-top: 20px; font-size: 15px; color: #555; font-weight: 500;">+91 94820 94290</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Updates Page -->
+    <div id="updates-page">
+        <div class="updates-header">
+            <button id="updates-page-close" class="updates-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Latest Updates</h3>
+        </div>
+        <div id="updates-content" class="updates-content">
+            <!-- Content injected by app.js -->
+        </div>
+    </div>
+
+    <!-- Reports Selection Page -->
+    <div id="reports-page">
+        <div class="reports-header">
+            <button id="reports-page-close" class="reports-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Reports</h3>
+        </div>
+        <div class="reports-content">
+            <p style="color: #666; margin-bottom: 10px;">Select a person to generate reports:</p>
+            
+            <div class="report-search-box">
+                <input type="text" id="report-search-input" class="report-search-input" placeholder="Search name...">
+                <div id="report-search-suggestions" class="report-suggestions"></div>
+            </div>
+
+            <div id="report-selected-person" class="selected-person-card">
+                <div><strong>Selected:</strong> <span id="report-selected-name">None</span></div>
+                <button onclick="window.clearReportSelection()" style="background:none; border:none; color:red; font-size:18px; cursor:pointer;">&times;</button>
+            </div>
+
+            <h4 style="margin-bottom: 15px; color: #444;">Available Reports:</h4>
+            <div id="report-links-container">
+                <div class="report-link-item disabled" id="btn-close-family-report" onclick="window.generateSelectedReport('close-family')">
+                    1) Close Family Report 📄
+                </div>
+                
+                <!-- New Relationship Diagram Option -->
+                <div class="report-link-item" id="btn-rel-diagram" onclick="window.toggleRelDiagramInputs()">
+                    2) Relationship Diagram ⟷
+                </div>
+
+                <!-- Second Person Selection UI (Hidden by default) -->
+                <div id="rel-diagram-inputs" style="display:none; margin-top:10px; padding:15px; background:#f8f9fa; border:1px solid #e0e0e0; border-radius: 8px;">
+                    <p style="margin:0 0 8px; font-size:14px; color:#555;">Select Second Person:</p>
+                    <div class="report-search-box" style="margin-bottom: 10px;">
+                        <input type="text" id="rel-diagram-search-input" class="report-search-input" placeholder="Search second person...">
+                        <div id="rel-diagram-suggestions" class="report-suggestions"></div>
+                    </div>
+                    <div id="rel-diagram-selected" style="display:none; margin-bottom:15px; font-weight:bold; color: var(--primary-color);">
+                        Selected: <span id="rel-diagram-selected-name"></span>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.generateRelDiagram()" style="width:100%;">Generate Diagram</button>
+                </div>
+
+                <div class="report-link-item" id="btn-ancestors-report" onclick="window.generateSelectedReport('ancestors')">
+                    3) Ancestors Report 🌳
+                </div>
+                <div class="report-link-item" id="btn-descendants-report" onclick="window.generateSelectedReport('descendants')">
+                    4) Descendants Report 👶
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relationship Report Page -->
+    <div id="relationship-report-page">
+        <div class="report-header">
+            <button id="report-page-close" class="report-back">&larr;</button>
+            <h3 style="margin:0; font-size: 18px;">Relationship Report</h3>
+            <button class="report-print-btn" onclick="window.print()">Save PDF</button>
+        </div>
+        <div id="report-content" class="report-content"></div>
+    </div>
+
+    <!-- Language Selection Toast -->
+    <div id="language-selection-toast">
+        <button class="lang-close" onclick="document.getElementById('language-selection-toast').classList.remove('show')">&times;</button>
+        <h3 style="margin: 0 0 15px; font-size: 16px;">Select Language / భాష / ಭಾಷೆ</h3>
+        <div style="display: flex; justify-content: center; gap: 10px;">
+            <button class="lang-btn te" onclick="window.setLanguage('te')">Telugu (తెలుగు)</button>
+            <button class="lang-btn kn" onclick="window.setLanguage('kn')">Kannada (ಕನ್ನಡ)</button>
+            <button class="lang-btn en" onclick="window.setLanguage('en')" style="background: #607D8B; color: white;">English Script</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://balkan.app/js/FamilyTree.js"></script>
+    <script src="relationship.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Sidebar toggle and close (expose closeSidebar for menu onclick)
+        function toggleSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var backdrop = document.getElementById('sidebar-backdrop');
+            if (!sidebar) return;
+            sidebar.classList.toggle('open');
+            if (backdrop) backdrop.classList.toggle('show', sidebar.classList.contains('open'));
+        }
+        function closeSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar) sidebar.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('show');
+        }
+        // Click/tap on backdrop closes sidebar (mobile overlay)
+        (function() {
+            var backdrop = document.getElementById('sidebar-backdrop');
+            if (backdrop) backdrop.addEventListener('click', closeSidebar);
+        })();
+    </script>
+
+</body>
+</html>

@@ -15,12 +15,13 @@
     "dashboard": true,
     "tree": true,
     "birthdays": true,
-    "updates": true,
+    "updates": false,
     "reports": true,
     "install": true,
     "help": true,
-    "about": true,
-    "feedback": true,
-    "update_data": true
+    "about": false,
+    "feedback": false,
+    "update_data": false
   }
 }
+

@@ -17,14 +17,14 @@
     "divorces": [],
     "jyotisha": {
       "gothra": "Gautama",
-      "nakshatra": "",
-      "rashi": ""
+      "nakshatra": "Pushya",
+      "rashi": "Karka"
     }
   },
   {
     "person_id": "I0002",
     "given_name": "SAROJABHAI",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "F",
     "birth_date": "",
     "birth_date_type": "",
@@ -46,7 +46,7 @@
   {
     "person_id": "I0003",
     "given_name": "NARAHARI",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "M",
     "birth_date": "05-MAY-1952",
     "birth_date_type": "exact",
@@ -68,7 +68,7 @@
   {
     "person_id": "I0004",
     "given_name": "SREEPRASAD",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "M",
     "birth_date": "11-Sep-57",
     "birth_date_type": "exact",
@@ -90,7 +90,7 @@
   {
     "person_id": "I0005",
     "given_name": "CHANDRIKA",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "F",
     "birth_date": "",
     "birth_date_type": "",
@@ -112,7 +112,7 @@
   {
     "person_id": "I0006",
     "given_name": "MALLIKA",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "F",
     "birth_date": "10-May-63",
     "birth_date_type": "exact",
@@ -134,7 +134,7 @@
   {
     "person_id": "I0007",
     "given_name": "RENUKA",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "F",
     "birth_date": "",
     "birth_date_type": "",
@@ -200,7 +200,7 @@
   {
     "person_id": "I0010",
     "given_name": "THEJU",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "M",
     "birth_date": "21-Oct-83",
     "birth_date_type": "exact",
@@ -222,7 +222,7 @@
   {
     "person_id": "I0011",
     "given_name": "PAVAN",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "M",
     "birth_date": "",
     "birth_date_type": "",
@@ -244,7 +244,7 @@
   {
     "person_id": "I0012",
     "given_name": "MANYA",
-    "surname": "",
+    "surname": "DOMBLA",
     "sex": "F",
     "birth_date": "26-Apr-87",
     "birth_date_type": "exact",
@@ -266,7 +266,7 @@
   {
     "person_id": "I0013",
     "given_name": "ANITHA",
-    "surname": "",
+    "surname": "HUNSUR",
     "sex": "F",
     "birth_date": "23-JUL-1983",
     "birth_date_type": "exact",
@@ -311,7 +311,7 @@
     "person_id": "I0015",
     "given_name": "MAITHILI",
     "surname": "",
-    "sex": "M",
+    "sex": "F",
     "birth_date": "13-APR-2008",
     "birth_date_type": "exact",
     "deceased": false,
@@ -329,6 +329,8 @@
       "rashi": "Karka"
     }
   },
+  
+  
   {
     "person_id": "I0016",
     "given_name": "SANJEEV",
@@ -344,6 +346,28 @@
     "birth_place_id": "",
     "birth_place_name": "",
     "active_spouse_id": "I0013",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+   {
+    "person_id": "I0017",
+    "given_name": "RITHVIK",
+    "surname": "",
+    "sex": "M",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "",
     "divorces": [],
     "jyotisha": {
       "gothra": "",

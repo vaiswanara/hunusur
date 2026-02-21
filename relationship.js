@@ -316,8 +316,8 @@ function resolveRelationName(result, homePerson, targetPerson) {
 function compareAge(p1, p2) {
     // 1. Try Date-based comparison first
     if (p1 && p2 && p1.Birth && p2.Birth) {
-        const d1 = parseDate(p1.Birth);
-        const d2 = parseDate(p2.Birth);
+        const d1 = window.DateUtils ? window.DateUtils.parse(p1.Birth) : null;
+        const d2 = window.DateUtils ? window.DateUtils.parse(p2.Birth) : null;
         
         // Ensure both dates are valid numbers before comparing
         if (d1 && d2 && !isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
@@ -914,50 +914,6 @@ function getStepLabel(fromId, toId) {
     return "Related";
 }
 
-function parseDate(dateStr) {
-    if (!dateStr) return null;
-    const s = String(dateStr).trim();
-    
-    // 1. Handle Year only (e.g. "1952")
-    if (/^\d{4}$/.test(s)) {
-        return new Date(parseInt(s, 10), 0, 1);
-    }
-
-    // 2. Handle standard formats (dd-MMM-yyyy, dd/MMM/yyyy, etc)
-    // Added dot (.) to split regex just in case
-    const parts = s.split(/[\-\/\s\.]+/);
-    if (parts.length !== 3) return null;
-
-    // Handle YYYY-MM-DD (ISO format)
-    if (parts[0].length === 4 && !isNaN(parts[0])) {
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10);
-        const d = parseInt(parts[2], 10);
-        return new Date(y, m - 1, d);
-    }
-
-    const months = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
-    const day = parseInt(parts[0], 10);
-    const monthKey = parts[1].trim().toUpperCase().slice(0, 3);
-    
-    // Try text month first, then numeric fallback
-    let month = months[monthKey];
-    if (month === undefined) {
-        const mVal = parseInt(parts[1], 10);
-        if (!isNaN(mVal) && mVal >= 1 && mVal <= 12) {
-            month = mVal - 1;
-        }
-    }
-
-    let year = parseInt(parts[2], 10);
-    if (year < 100) {
-        const currentYear = new Date().getFullYear() % 100;
-        year = year > (currentYear + 10) ? 1900 + year : 2000 + year;
-    }
-    if (month === undefined || isNaN(day) || isNaN(year)) return null;
-    return new Date(year, month, day);
-}
-
 function getSiblingTerm(homeId, siblingId) {
     const home = getPerson(homeId);
     const sib = getPerson(siblingId);
@@ -967,8 +923,8 @@ function getSiblingTerm(homeId, siblingId) {
     let unknownAge = true;
     
     if (home && sib && home.Birth && sib.Birth) {
-        const hDate = parseDate(home.Birth);
-        const sDate = parseDate(sib.Birth);
+        const hDate = window.DateUtils ? window.DateUtils.parse(home.Birth) : null;
+        const sDate = window.DateUtils ? window.DateUtils.parse(sib.Birth) : null;
         if (hDate && sDate) {
             isElder = sDate < hDate;
             unknownAge = false;

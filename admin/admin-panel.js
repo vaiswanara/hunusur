@@ -4,6 +4,19 @@
   const DATA_SCHEMA_VERSION = '1.1.0';
   const IMPORT_HELP_TEXT = 'Upload a JSON or CSV file, preview impact, then apply.';
 
+  const RASHI_LIST = [
+    "Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya",
+    "Tula", "Vrischika", "Dhanu", "Makara", "Kumbha", "Meena"
+  ];
+
+  const NAKSHATRA_LIST = [
+    "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra",
+    "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni",
+    "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha",
+    "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana",
+    "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
+  ];
+
   const state = {
     config: null,
     persons: [],
@@ -3324,10 +3337,38 @@
     }
   }
 
+  function populateJyotishaSelects() {
+    const rashiSel = qs('admin-jyotisha-rashi');
+    const nakSel = qs('admin-jyotisha-nakshatra');
+
+    if (rashiSel && rashiSel.tagName === 'SELECT') {
+      const current = rashiSel.value;
+      rashiSel.innerHTML = '<option value="">- Select Rashi -</option>';
+      RASHI_LIST.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r;
+        rashiSel.appendChild(opt);
+      });
+    }
+
+    if (nakSel && nakSel.tagName === 'SELECT') {
+      const current = nakSel.value;
+      nakSel.innerHTML = '<option value="">- Select Nakshatra -</option>';
+      NAKSHATRA_LIST.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = n;
+        nakSel.appendChild(opt);
+      });
+    }
+  }
+
   function init() {
     cacheElements();
     bindEvents();
     hydrateLogsFromStorage();
+    populateJyotishaSelects();
 
     loadData()
       .then(() => {

@@ -8,6 +8,16 @@ console.log("relationship.js loaded");
 // --- Language Configuration ---
 window.RELATION_LANGUAGE = localStorage.getItem('relation_language') || 'kn';
 
+function escapeHtml(text) {
+    if (text == null) return "";
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function getTerm(entryValue) {
     if (!entryValue) return "";
     if (typeof entryValue === 'string') return entryValue; // Backward compatibility
@@ -360,7 +370,7 @@ function generateRelationshipReport(customHomeId) {
     
     html += `<div style="text-align: center; margin-bottom: 10px;"><img src="logo.png" style="width: 80px; height: auto; border: none;"></div>`;
     html += `<h2 style="color: #4A90E2; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">Relationship Report</h2>`;
-    html += `<p style="color: #666; text-align: center;">Centered on: <strong>${p.name}</strong> (${p.id})</p>`;
+    html += `<p style="color: #666; text-align: center;">Centered on: <strong>${escapeHtml(p.name)}</strong> (${p.id})</p>`;
 
     // 1. SELF
     html += renderSection("SELF", [{ id: p.id, name: p.name }], id);
@@ -384,7 +394,7 @@ function generateRelationshipReport(customHomeId) {
             const kids = getChildrenIds(sib.id);
             if (kids.length > 0) {
                 sibChildrenList.push({ 
-                    header: `Children of ${sib.name}`, 
+                    header: `Children of ${escapeHtml(sib.name)}`, 
                     items: kids.map(k => ({ id: k, name: safeName(k) })) 
                 });
             }
@@ -403,7 +413,7 @@ function generateRelationshipReport(customHomeId) {
             const kids = getChildrenIds(child.id);
             if (kids.length > 0) {
                 grandChildrenList.push({ 
-                    header: `Children of ${child.name}`, 
+                    header: `Children of ${escapeHtml(child.name)}`, 
                     items: kids.map(k => ({ id: k, name: safeName(k) })) 
                 });
             }
@@ -421,7 +431,7 @@ function generateRelationshipReport(customHomeId) {
             
             const spouseRel = findRelationship(id, pid);
             spouseSideHtml += `<div style="margin-left: 15px; margin-bottom: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 15px;">`;
-            spouseSideHtml += `<h4 style="color: #E91E63; margin-bottom: 10px;">Spouse: ${spouse.name} — ${spouseRel}</h4>`;
+            spouseSideHtml += `<h4 style="color: #E91E63; margin-bottom: 10px;">Spouse: ${escapeHtml(spouse.name)} — ${spouseRel}</h4>`;
 
             // Spouse Parents
             const sParents = getParents(pid).map(x => ({ ...x, name: safeName(x.id) }));
@@ -441,12 +451,12 @@ function generateRelationshipReport(customHomeId) {
                 sSibs.forEach(sib => {
                     const kids = getChildrenIds(sib.id);
                     if (kids.length > 0) {
-                        sSibKidsHtml += `<div style="margin-left: 20px; font-size: 14px; color: #555;"><em>Children of ${sib.name}:</em></div>`;
+                        sSibKidsHtml += `<div style="margin-left: 20px; font-size: 14px; color: #555;"><em>Children of ${escapeHtml(sib.name)}:</em></div>`;
                         sSibKidsHtml += `<ul style="margin-top: 5px; margin-bottom: 10px;">`;
                         kids.forEach(k => {
                             let relation = findRelationship(id, k);
                             sSibKidsHtml += `<li style="margin-bottom: 4px;">
-                                <strong>${safeName(k)}</strong> 
+                                <strong>${escapeHtml(safeName(k))}</strong> 
                                 <span style="color:#E91E63; font-size:13px;"> — ${relation}</span>
                             </li>`;
                         });
@@ -476,7 +486,7 @@ function renderSection(title, items, homeId) {
     items.forEach(item => {
         let relation = findRelationship(hId, item.id);
         h += `<li style="margin-bottom: 4px;">
-        <strong>${item.name}</strong> 
+        <strong>${escapeHtml(item.name)}</strong> 
         <span style="color:#E91E63; font-size:13px;"> — ${relation}</span>
         </li>`;
     });
@@ -492,7 +502,7 @@ function generateAncestorsReport(id) {
     
     html += `<div style="text-align: center; margin-bottom: 10px;"><img src="logo.png" style="width: 80px; height: auto; border: none;"></div>`;
     html += `<h2 style="color: #4A90E2; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">Ancestors Report</h2>`;
-    html += `<p style="color: #666; text-align: center;">Ancestors of: <strong>${p.name}</strong> (${p.id})</p>`;
+    html += `<p style="color: #666; text-align: center;">Ancestors of: <strong>${escapeHtml(p.name)}</strong> (${p.id})</p>`;
 
     let currentGenIds = [];
     if (p.fid) currentGenIds.push(p.fid);
@@ -538,7 +548,7 @@ function generateAncestorsReport(id) {
                 }
 
                 html += `<li style="margin-bottom: 4px;">
-                    <strong>${anc.name}</strong> 
+                    <strong>${escapeHtml(anc.name)}</strong> 
                     <span style="color:#E91E63; font-size:13px;"> — ${displayRole}</span>
                 </li>`;
 
@@ -570,7 +580,7 @@ function generateDescendantsReport(id) {
     
     html += `<div style="text-align: center; margin-bottom: 10px;"><img src="logo.png" style="width: 80px; height: auto; border: none;"></div>`;
     html += `<h2 style="color: #4A90E2; border-bottom: 2px solid #eee; padding-bottom: 10px; text-align: center;">Descendants Report</h2>`;
-    html += `<p style="color: #666; text-align: center;">Descendants of: <strong>${p.name}</strong> (${p.id})</p>`;
+    html += `<p style="color: #666; text-align: center;">Descendants of: <strong>${escapeHtml(p.name)}</strong> (${p.id})</p>`;
 
     let currentGenIds = getChildrenIds(id);
     let genIndex = 1;
@@ -613,7 +623,7 @@ function generateDescendantsReport(id) {
                 }
 
                 html += `<li style="margin-bottom: 4px;">
-                    <strong>${desc.name}</strong> 
+                    <strong>${escapeHtml(desc.name)}</strong> 
                     <span style="color:#E91E63; font-size:13px;"> — ${displayRole}</span>
                 </li>`;
 
@@ -721,7 +731,7 @@ function generateDiagramHTML(id1, id2) {
                 <div class="ca-node">
                     ${displayRole ? `<div class="ca-node-role">${displayRole}</div>` : ''}
                     ${mediaHtml}
-                    <div class="ca-node-name">${displayName}</div>
+                    <div class="ca-node-name">${escapeHtml(displayName)}</div>
                     <div class="ca-node-id">${p.id}</div>
                 </div>
             </div>`;
@@ -731,7 +741,7 @@ function generateDiagramHTML(id1, id2) {
     html += `<div style="text-align: center; margin-bottom: 20px;">
                 <img src="logo.png" alt="Logo" style="width: 80px; height: auto; border: none; margin-bottom: 10px; display: inline-block;">
                 <h2 style="color: #4A90E2; margin:0;">Relationship Diagram</h2>
-                <p style="color: #666;">${p1.name} ➡ ${p2.name}</p>
+                <p style="color: #666;">${escapeHtml(p1.name)} ➡ ${escapeHtml(p2.name)}</p>
              </div>`;
     html += `<div class="ca-diagram">`;
 
@@ -869,7 +879,7 @@ function generateDiagramHTML(id1, id2) {
     // Final Summary Sentence
     const finalRel = findRelationship(id1, id2);
     html += `<div style="text-align:center; margin-top:30px; font-size:18px; color:#333; padding: 15px; background: #f9f9f9; border-radius: 8px;">
-                <strong>${p2.name}</strong> is your <strong>${finalRel}</strong>
+                <strong>${escapeHtml(p2.name)}</strong> is your <strong>${finalRel}</strong>
                 <div style="margin-top: 8px; font-size: 12px; color: #999; font-family: monospace;">Code: ${result.code}</div>
              </div>`;
 
@@ -956,7 +966,7 @@ function renderComplexSection(title, groups, homeId) {
         g.items.forEach(item => {
             let relation = findRelationship(hId, item.id);
             h += `<li style="margin-bottom: 4px;">
-            ${item.name} 
+            ${escapeHtml(item.name)} 
             <span style="color:#E91E63; font-size:13px;"> — ${relation}</span>
             </li>`;
         });
@@ -973,7 +983,7 @@ function renderSubList(label, items, homeId) {
     items.forEach(item => {
         let relation = findRelationship(hId, item.id);
         h += `<li style="margin-bottom: 4px;">
-        <strong>${item.name}</strong> 
+        <strong>${escapeHtml(item.name)}</strong> 
         <span style="color:#E91E63; font-size:13px;"> — ${relation}</span>
         </li>`;
     });

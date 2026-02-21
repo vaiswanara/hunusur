@@ -95,6 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return APP_BASE_PREFIX + raw.replace(/^\.?\//, '');
     }
 
+    function escapeHtml(text) {
+        if (text == null) return "";
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function scheduleBrokenImageRedraw() {
         if (brokenImageRedrawTimer) return;
         brokenImageRedrawTimer = setTimeout(() => {
@@ -678,7 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = personName(id);
             if (!name) return "";
             // Return a clickable div for the relative
-            return `<div class="modal-link" data-id="${id}" style="color: #039BE5; cursor: pointer; margin-bottom: 4px; font-weight: 500;">${name}</div>`;
+            return `<div class="modal-link" data-id="${id}" style="color: #039BE5; cursor: pointer; margin-bottom: 4px; font-weight: 500;">${escapeHtml(name)}</div>`;
         }).join("");
     }
 
@@ -694,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function getCustomFieldsRows(custom) {
         if (!custom || typeof custom !== 'object' || Array.isArray(custom)) return [];
         const entries = Object.entries(custom)
-            .map(([k, v]) => [String(k || '').trim(), String(v == null ? '' : v).trim()])
+            .map(([k, v]) => [escapeHtml(String(k || '').trim()), escapeHtml(String(v == null ? '' : v).trim())])
             .filter(([k, v]) => !!k && !!v)
             .sort((a, b) => a[0].localeCompare(b[0]));
         return entries.map(([key, value]) => rowHtml(key, value));
@@ -805,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeModalPersonId = personId;
 
         const fullName = (p.name || "").trim() || "Unknown";
-        personModalName.textContent = fullName;
+        personModalName.textContent = fullName; // textContent is safe
         
         // ID and Optional Badge for Home Person
         let idHtml = `ID: ${p.id}`;
@@ -910,10 +920,10 @@ document.addEventListener('DOMContentLoaded', () => {
         rows.push(
             rowHtml("Children", collectNames(children)),
             rowHtml("Siblings", collectNames(siblings)),
-            rowHtml("Address", p.Address || ""),
-            rowHtml("Email", p.email ? `<a href=\"mailto:${p.email}\" style=\"color: #039BE5; text-decoration: none;\">${p.email}</a>` : ""),
-            rowHtml("Phone", p.phone ? `<a href=\"tel:${p.phone}\" style=\"color: #039BE5; text-decoration: none;\">${p.phone}</a>` : ""),
-            rowHtml("Note", p.note || "")
+            rowHtml("Birth Place", escapeHtml(p.Address || "")),
+            rowHtml("Email", p.email ? `<a href=\"mailto:${escapeHtml(p.email)}\" style=\"color: #039BE5; text-decoration: none;\">${escapeHtml(p.email)}</a>` : ""),
+            rowHtml("Phone", p.phone ? `<a href=\"tel:${escapeHtml(p.phone)}\" style=\"color: #039BE5; text-decoration: none;\">${escapeHtml(p.phone)}</a>` : ""),
+            rowHtml("Note", escapeHtml(p.note || ""))
         );
         rows.push(...getCustomFieldsRows(p.custom));
         personModalBody.innerHTML = rows.join("");
@@ -1187,15 +1197,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (homeId === activeModalPersonId) {
                 relationshipHtml = `
                     <p style="margin-bottom: 10px;">This is the currently set Home Person:</p>
-                    <strong style="font-size: 1.2em; color: var(--primary-color);">${homePerson.name}</strong>
+                    <strong style="font-size: 1.2em; color: var(--primary-color);">${escapeHtml(homePerson.name)}</strong>
                 `;
             } else {
                 const relation = findRelationship(homeId, activeModalPersonId);
                 relationshipHtml = `
                     <p style="margin:0 0 5px;">Relationship between:</p>
-                    <strong style="font-size: 1.1em; display: block; margin-bottom: 15px;">${homePerson.name} (Home)</strong>
+                    <strong style="font-size: 1.1em; display: block; margin-bottom: 15px;">${escapeHtml(homePerson.name)} (Home)</strong>
                     <span style="font-size: 1.5em; color: #888;">&</span>
-                    <strong style="font-size: 1.1em; display: block; margin-top: 15px;">${modalPerson.name} (Profile)</strong>
+                    <strong style="font-size: 1.1em; display: block; margin-top: 15px;">${escapeHtml(modalPerson.name)} (Profile)</strong>
                     <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
                     <p style="font-size: 1.4em; color: var(--primary-color); font-weight: bold; margin:0;">${relation}</p>
                 `;
@@ -1361,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         matches.forEach(person => {
             const item = document.createElement('div');
             item.className = 'suggestion-item';
-            item.innerHTML = `<strong>${person.name}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${person.id}</span>`;
+            item.innerHTML = `<strong>${escapeHtml(person.name)}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${person.id}</span>`;
             item.dataset.id = person.id;
             item.addEventListener('click', () => {
                 drawTree(person.id);
@@ -1601,7 +1611,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="update-number">${index + 1})</div>
                             <div class="update-details">
                                 <div class="update-date">📅 ${item.dateStr}</div>
-                                <div class="update-text">${item.message}</div>
+                                <div class="update-text">${escapeHtml(item.message)}</div>
                             </div>
                         </div>
                     `).join('');
@@ -1662,10 +1672,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const phoneHtml = p.phone
-                        ? `<div class="birthday-phone"><a href="${getWhatsAppUrl(p.phone)}" target="_blank" rel="noopener" class="birthday-whatsapp-link" title="Open WhatsApp">${p.phone}</a></div>`
+                        ? `<div class="birthday-phone"><a href="${getWhatsAppUrl(p.phone)}" target="_blank" rel="noopener" class="birthday-whatsapp-link" title="Open WhatsApp">${escapeHtml(p.phone)}</a></div>`
                         : '';
                     return `<div class="birthday-person-block">
-                        <div class="birthday-name"><a href="#" data-person-id="${p.id}">${p.name}${ageStr}</a></div>
+                        <div class="birthday-name"><a href="#" data-person-id="${p.id}">${escapeHtml(p.name)}${ageStr}</a></div>
                         ${jyotishaHtml}
                         ${relationHtml}
                         ${phoneHtml}
@@ -1813,7 +1823,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             reportSuggestions.innerHTML = matches.map(p => `
                 <div class="suggestion-item" data-id="${p.id}">
-                    <strong>${p.name}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
+                    <strong>${escapeHtml(p.name)}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
                 </div>
             `).join('');
             reportSuggestions.style.display = matches.length > 0 ? 'block' : 'none';
@@ -1854,7 +1864,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const matches = PEOPLE.filter(p => p.name.toLowerCase().includes(query)).slice(0, 10);
             relSuggestions.innerHTML = matches.map(p => `
                 <div class="suggestion-item" data-id="${p.id}">
-                    <strong>${p.name}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
+                    <strong>${escapeHtml(p.name)}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
                 </div>
             `).join('');
             relSuggestions.style.display = matches.length > 0 ? 'block' : 'none';
@@ -2143,7 +2153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             jyotishaSuggestions.innerHTML = matches.map(p => `
                 <div class="suggestion-item" data-id="${p.id}">
-                    <strong>${p.name}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
+                    <strong>${escapeHtml(p.name)}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
                 </div>
             `).join('');
             jyotishaSuggestions.style.display = matches.length > 0 ? 'block' : 'none';
@@ -2251,7 +2261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             dashSearchSuggestions.innerHTML = matches.map(p => `
                 <div class="suggestion-item" data-id="${p.id}">
-                    <strong>${p.name}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
+                    <strong>${escapeHtml(p.name)}</strong> <span style="font-size: 0.85em; color: #888; float: right;">${p.id}</span>
                 </div>
             `).join('');
             dashSearchSuggestions.style.display = matches.length > 0 ? 'block' : 'none';
@@ -2451,7 +2461,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Use ONLY first name
             const firstName = (p.name || '').trim().split(' ')[0];
             const className = isCurrent ? 'lineage-item current' : 'lineage-item';
-            return `<div class="${className}" onclick="window.lineageClick('${p.id}')">${firstName}</div>`;
+            return `<div class="${className}" onclick="window.lineageClick('${p.id}')">${escapeHtml(firstName)}</div>`;
         };
 
         const arrow = `<div class="lineage-arrow">→</div>`;
@@ -2605,6 +2615,43 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Data transformation complete.");
         return Array.from(newPeopleMap.values());
     }
+
+    // =================================================================================
+    // SECTION 5.13: LANGUAGE SWITCHER
+    // =================================================================================
+
+    window.toggleLanguage = function() {
+        const toast = document.getElementById('language-selection-toast');
+        if (toast) {
+            toast.classList.add('show');
+        }
+    };
+
+    window.setLanguage = function(lang) {
+        localStorage.setItem('relation_language', lang);
+        if (typeof window.RELATION_LANGUAGE !== 'undefined') {
+            window.RELATION_LANGUAGE = lang;
+        }
+        
+        const display = document.getElementById('lang-display');
+        if (display) display.textContent = lang.toUpperCase();
+
+        const toast = document.getElementById('language-selection-toast');
+        if (toast) {
+            toast.classList.remove('show');
+        }
+
+        if (activePersonId) {
+            drawTree(activePersonId);
+        }
+        
+        if (window.showToast) window.showToast(`Language set to ${lang.toUpperCase()}`);
+    };
+
+    // Initialize language display
+    const initLang = localStorage.getItem('relation_language') || 'kn';
+    const initLangDisplay = document.getElementById('lang-display');
+    if (initLangDisplay) initLangDisplay.textContent = initLang.toUpperCase();
 
     // =================================================================================
     // SECTION 6: INITIAL APPLICATION START

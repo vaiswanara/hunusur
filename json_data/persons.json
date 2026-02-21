@@ -48,8 +48,8 @@
     "given_name": "NARAHARI",
     "surname": "",
     "sex": "M",
-    "birth_date": "",
-    "birth_date_type": "",
+    "birth_date": "05-MAY-1952",
+    "birth_date_type": "exact",
     "deceased": false,
     "death_date": "",
     "archived": false,
@@ -57,12 +57,12 @@
     "custom": {},
     "birth_place_id": "",
     "birth_place_name": "",
-    "active_spouse_id": "",
+    "active_spouse_id": "I0009",
     "divorces": [],
     "jyotisha": {
       "gothra": "Gautama",
-      "nakshatra": "",
-      "rashi": ""
+      "nakshatra": "Uttara Bhadrapada",
+      "rashi": "Meena"
     }
   },
   {
@@ -181,20 +181,20 @@
     "surname": "",
     "sex": "F",
     "birth_date": "03-DEC-1952",
-    "birth_date_type": "",
+    "birth_date_type": "exact",
     "deceased": false,
     "death_date": "",
     "archived": false,
     "archived_at": "",
     "custom": {},
     "birth_place_id": "",
-    "birth_place_name": "",
+    "birth_place_name": "BANGALORE",
     "active_spouse_id": "I0003",
     "divorces": [],
     "jyotisha": {
       "gothra": "Gautama",
-      "nakshatra": "",
-      "rashi": ""
+      "nakshatra": "Ardra",
+      "rashi": "Mithuna"
     }
   },
   {
@@ -268,8 +268,8 @@
     "given_name": "ANITHA",
     "surname": "",
     "sex": "F",
-    "birth_date": "",
-    "birth_date_type": "",
+    "birth_date": "23-JUL-1983",
+    "birth_date_type": "exact",
     "deceased": false,
     "death_date": "",
     "archived": false,
@@ -281,8 +281,8 @@
     "divorces": [],
     "jyotisha": {
       "gothra": "Gautama",
-      "nakshatra": "",
-      "rashi": ""
+      "nakshatra": "Purva Ashadha",
+      "rashi": "Dhanu"
     }
   },
   {
@@ -300,6 +300,50 @@
     "birth_place_id": "",
     "birth_place_name": "",
     "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "",
+      "nakshatra": "",
+      "rashi": ""
+    }
+  },
+  {
+    "person_id": "I0015",
+    "given_name": "MAITHILI",
+    "surname": "",
+    "sex": "M",
+    "birth_date": "13-APR-2008",
+    "birth_date_type": "exact",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "",
+    "divorces": [],
+    "jyotisha": {
+      "gothra": "",
+      "nakshatra": "Pushya",
+      "rashi": "Karka"
+    }
+  },
+  {
+    "person_id": "I0016",
+    "given_name": "SANJEEV",
+    "surname": "KULKARNI",
+    "sex": "M",
+    "birth_date": "",
+    "birth_date_type": "",
+    "deceased": false,
+    "death_date": "",
+    "archived": false,
+    "archived_at": "",
+    "custom": {},
+    "birth_place_id": "",
+    "birth_place_name": "",
+    "active_spouse_id": "I0013",
     "divorces": [],
     "jyotisha": {
       "gothra": "",

@@ -10,7 +10,8 @@
       "I0002",
       "I0008",
       "I0009",
-      "I0014"
+      "I0014",
+      "I0016"
     ]
   },
   {
@@ -56,6 +57,16 @@
     "marriage_place_id": "",
     "children": [
       "I0012"
+    ]
+  },
+  {
+    "family_id": "F0006",
+    "husband_id": "I0016",
+    "wife_id": "I0013",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0015"
     ]
   }
 ]

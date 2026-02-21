@@ -7,7 +7,10 @@
     "marriage_place_id": "",
     "children": [
       "I0001",
-      "I0002"
+      "I0002",
+      "I0008",
+      "I0009",
+      "I0014"
     ]
   },
   {
@@ -22,6 +25,37 @@
       "I0005",
       "I0006",
       "I0007"
+    ]
+  },
+  {
+    "family_id": "F0003",
+    "husband_id": "I0003",
+    "wife_id": "I0009",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0013"
+    ]
+  },
+  {
+    "family_id": "F0004",
+    "husband_id": "I0004",
+    "wife_id": "I0008",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0010",
+      "I0011"
+    ]
+  },
+  {
+    "family_id": "F0005",
+    "husband_id": "I0014",
+    "wife_id": "I0006",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0012"
     ]
   }
 ]

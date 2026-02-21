@@ -397,6 +397,26 @@
             .report-content h3, .report-content ul, .report-content li {
                 page-break-inside: avoid;
             }
+
+            /* Print Color Adjustment */
+            .ca-pivot-wrapper::after, .ca-branch::before, .ca-branch::after, .ca-node-wrapper::after {
+                background: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .ca-node-wrapper::before {
+                border-top-color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .ca-branch.left .ca-node-wrapper::before,
+            .ca-single-col.left-stack .ca-node-wrapper::before,
+            .ca-sibling-side:first-child .ca-node-wrapper::before {
+                border-top-color: transparent !important;
+                border-bottom-color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
 
         /* --- Language Selection Toast --- */

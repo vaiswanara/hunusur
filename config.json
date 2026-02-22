@@ -1,14 +1,14 @@
 {
-  "welcome_msg_url": "",
-  "updates_url": "",
+  "welcome_msg_url": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec?type=welcome",
+  "updates_url": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec?type=updates",
   "data_files": {
-    "persons": "json_data/persons.json",
-    "families": "json_data/families.json",
-    "places": "json_data/places.json",
-    "contacts": "json_data/contacts.json",
+    "persons": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec",
+    "families": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec?type=families",
+    "places": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec?type=places",
+    "contacts": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec?=type=contacts",
     "manifest": "manifest.json",
-    "photos": "json_data/photos.json",
-    "updates": "updates.json",
+    "photos": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec?type=photos",
+    "updates": "https://script.google.com/macros/s/AKfycbwvCyax3YTmDpgPFuvSatxIwHdGVFbBc9bkxE4uMuXbwtRTA-SaGXy0EpPhAkWN3nme/exec?type=updates",
     "relationshipDictionary": "relationshipDictionary.json",
     "transit": "json_data/transit.json",
     "transit_moon": "json_data/transit_moon.json"
@@ -17,12 +17,12 @@
     "dashboard": true,
     "tree": true,
     "birthdays": true,
-    "updates": false,
+    "updates": true,
     "reports": true,
     "install": true,
     "help": true,
-    "about": false,
-    "feedback": false,
-    "update_data": false
+    "about": true,
+    "feedback": true,
+    "update_data": true
   }
 }

@@ -1558,14 +1558,16 @@ document.addEventListener('DOMContentLoaded', () => {
         content.innerHTML = '<p style="text-align:center; color:#666; margin-top: 20px;">Loading updates...</p>';
 
         // Get URL from config
-        const updatesUrl = (APP_CONFIG && APP_CONFIG.updates_url) ? APP_CONFIG.updates_url : null;
+        let updatesUrl = (APP_CONFIG && (APP_CONFIG.updates || APP_CONFIG.updates_url)) ? (APP_CONFIG.updates || APP_CONFIG.updates_url) : null;
 
         if (!updatesUrl) {
             content.innerHTML = '<p style="text-align:center; color:red; margin-top: 20px;">Updates URL not configured.</p>';
             return;
         }
         
-        const fetchUrl = `${updatesUrl}&t=${Date.now()}`; // Bypass cache
+        updatesUrl = toAppPath(updatesUrl);
+        const separator = updatesUrl.includes('?') ? '&' : '?';
+        const fetchUrl = `${updatesUrl}${separator}t=${Date.now()}`; // Bypass cache
 
         fetch(fetchUrl)
             .then(res => res.json())
@@ -1591,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (itemDate && message) {
-                        validUpdates.push({ dateObj: itemDate, dateStr: dateStr, message: message });
+                        validUpdates.push({ dateObj: itemDate, dateStr: dateStr, message: message, url: item.url });
                     }
                 });
 
@@ -1607,6 +1609,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="update-details">
                                 <div class="update-date">📅 ${item.dateStr}</div>
                                 <div class="update-text">${escapeHtml(item.message)}</div>
+                                ${item.url ? `<div style="margin-top:5px;"><a href="${escapeHtml(item.url)}" target="_blank" style="color:#039BE5; text-decoration:none; font-weight:500;">🔗 Open Link</a></div>` : ''}
                             </div>
                         </div>
                     `).join('');
@@ -2440,11 +2443,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchDashboardMessage() {
-        const sheetUrl = (APP_CONFIG && APP_CONFIG.welcome_msg_url) ? APP_CONFIG.welcome_msg_url : null;
+        let sheetUrl = (APP_CONFIG && (APP_CONFIG.welcome || APP_CONFIG.welcome_msg_url)) ? (APP_CONFIG.welcome || APP_CONFIG.welcome_msg_url) : null;
         if (!sheetUrl) return;
 
+        sheetUrl = toAppPath(sheetUrl);
         // Append timestamp to bypass cache and ensure fresh data
-        const url = `${sheetUrl}&t=${Date.now()}`;
+        const separator = sheetUrl.includes('?') ? '&' : '?';
+        const url = `${sheetUrl}${separator}t=${Date.now()}`;
 
         fetch(url)
             .then(response => response.json())
@@ -2780,12 +2785,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================================
 
     function initAutoUpdateCheck() {
-        if (!APP_CONFIG || !APP_CONFIG.updates_url) return;
+        let updatesUrl = (APP_CONFIG && (APP_CONFIG.updates || APP_CONFIG.updates_url)) ? (APP_CONFIG.updates || APP_CONFIG.updates_url) : null;
+        if (!updatesUrl) return;
+        
+        updatesUrl = toAppPath(updatesUrl);
 
         const check = async () => {
             try {
                 // Fetch updates JSON to find the latest timestamp
-                const res = await fetch(APP_CONFIG.updates_url + '&t=' + Date.now());
+                const separator = updatesUrl.includes('?') ? '&' : '?';
+                const res = await fetch(updatesUrl + separator + 't=' + Date.now());
                 if (!res.ok) return;
                 const data = await res.json();
                 const updates = Array.isArray(data) ? data : [data];

@@ -1,0 +1,111 @@
+[
+  {
+    "family_id": "F0001",
+    "husband_id": "",
+    "wife_id": "",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0001",
+      "I0002",
+      "I0008",
+      "I0009",
+      "I0014",
+      "I0016",
+      "I0018",
+      "I0020"
+    ]
+  },
+  {
+    "family_id": "F0002",
+    "husband_id": "",
+    "wife_id": "I0005",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0019"
+    ]
+  },
+  {
+    "family_id": "F0003",
+    "husband_id": "I0001",
+    "wife_id": "I0002",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0003",
+      "I0004",
+      "I0005",
+      "I0006",
+      "I0007"
+    ]
+  },
+  {
+    "family_id": "F0004",
+    "husband_id": "I0003",
+    "wife_id": "I0009",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0013"
+    ]
+  },
+  {
+    "family_id": "F0005",
+    "husband_id": "I0004",
+    "wife_id": "I0008",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0010",
+      "I0011"
+    ]
+  },
+  {
+    "family_id": "F0006",
+    "husband_id": "I0010",
+    "wife_id": "",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0021"
+    ]
+  },
+  {
+    "family_id": "F0007",
+    "husband_id": "I0014",
+    "wife_id": "I0006",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0012"
+    ]
+  },
+  {
+    "family_id": "F0008",
+    "husband_id": "I0016",
+    "wife_id": "I0013",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": [
+      "I0015",
+      "I0017"
+    ]
+  },
+  {
+    "family_id": "F0009",
+    "husband_id": "I0018",
+    "wife_id": "I0012",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": []
+  },
+  {
+    "family_id": "F0010",
+    "husband_id": "I0020",
+    "wife_id": "I0019",
+    "marriage_date": "",
+    "marriage_place_id": "",
+    "children": []
+  }
+]

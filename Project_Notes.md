@@ -1,4 +1,4 @@
-HUNUSURU Family Tree v- 11.0.0
+DHARMAVARAM Family Tree v- 10.0.0
 
 New Famility tree build
 - data fetches from google sheet
@@ -8,12 +8,17 @@ New Famility tree build
 
 google sheet url
 
+https://script.google.com/macros/s/AKfycbx3rp7r34Gb-Xny-WBS50yEUIG7h9cihZC66JF2taCD3joqHmKIzkRC3-b_9sc5JyCC-A/exec
 
-
-V-11.0.1
+V-10.0.1
 
 - Now all data input working from json logic.
 - fetching all data from google sheets
 - Birthday, welcome, updates display rectified
 - ISO date logic implimented.
+
+v1.0.0 -dfwa-htdocs
+- new implimentation
+- downlad jsons from dfwa api and store in github json directory
+- tested. worked.
 

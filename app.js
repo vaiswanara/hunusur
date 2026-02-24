@@ -2865,10 +2865,13 @@ document.addEventListener('DOMContentLoaded', () => {
             buildLookups();
             setupLongPressHandlers();
             const photosPath = (APP_CONFIG && APP_CONFIG.data_files) ? APP_CONFIG.data_files.photos : 'json_data/photos.json';
-            return fetch(toAppPath(photosPath));
+            const finalPath = toAppPath(photosPath);
+            const separator = finalPath.includes('?') ? '&' : '?';
+            return fetch(finalPath + separator + 't=' + Date.now());
         })
         .then(response => response.json())
         .then(photoData => {
+            console.log(`[Photos] Loaded mappings for ${Object.keys(photoData).length} photos.`);
             // Update peopleMap with image URLs from the JSON file
             for (const [id, url] of Object.entries(photoData)) {
                 if (peopleMap.has(id)) {

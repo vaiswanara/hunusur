@@ -1,0 +1,265 @@
+[
+  {
+    "pid": "PID0001",
+    "firstName": "Narayana Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "spouseIds": [
+      "PID0002"
+    ],
+    "displayOrder": 1,
+    "fatherId": "PID0009",
+    "motherId": "PID0010"
+  },
+  {
+    "pid": "PID0002",
+    "firstName": "Saraswatamma",
+    "surName": "Dharmavaram",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0001"
+    ],
+    "displayOrder": 1
+  },
+  {
+    "pid": "PID0003",
+    "firstName": "Sudhakara Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "spouseIds": [
+      "PID0004"
+    ],
+    "displayOrder": 4
+  },
+  {
+    "pid": "PID0004",
+    "firstName": "Savithri",
+    "surName": "Hoturu",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0003"
+    ],
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Srinivas",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0003",
+    "motherId": "PID0004",
+    "displayOrder": 2,
+    "pid": "PID0005",
+    "spouseIds": [
+      "PID0006"
+    ]
+  },
+  {
+    "firstName": "Swathi",
+    "surName": "Hulluru",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0005"
+    ],
+    "pid": "PID0006",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Srikanth",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0003",
+    "motherId": "PID0004",
+    "displayOrder": 1,
+    "pid": "PID0007",
+    "spouseIds": [
+      "PID0008"
+    ]
+  },
+  {
+    "firstName": "Bhavana",
+    "surName": "Badeladuku",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0007"
+    ],
+    "pid": "PID0008",
+    "displayOrder": 1
+  },
+  {
+    "pid": "PID0009",
+    "firstName": "Srinivasa Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "spouseIds": [
+      "PID0010"
+    ],
+    "displayOrder": 1,
+    "gotram": "Koundinya"
+  },
+  {
+    "pid": "PID0010",
+    "firstName": "Rukmanemma",
+    "surName": "Dharmavaram",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0009"
+    ],
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Ananda Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 1,
+    "pid": "PID0011",
+    "spouseIds": [
+      "PID0012"
+    ]
+  },
+  {
+    "firstName": "Seeta Lakshmi",
+    "surName": "Hothuru",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0011"
+    ],
+    "pid": "PID0012",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Madhusudhana Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 2,
+    "pid": "PID0013",
+    "spouseIds": [
+      "PID0014"
+    ]
+  },
+  {
+    "firstName": "Ramamani",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0013"
+    ],
+    "pid": "PID0014",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Jaya Lakshmi",
+    "surName": "Dharmavaram",
+    "gender": "Female",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 3,
+    "pid": "PID0015",
+    "spouseIds": [
+      "PID0016"
+    ]
+  },
+  {
+    "firstName": "Subbarao",
+    "surName": "",
+    "gender": "Male",
+    "spouseIds": [
+      "PID0015"
+    ],
+    "pid": "PID0016",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Chandra Sekhar Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 5,
+    "pid": "PID0017",
+    "spouseIds": [
+      "PID0018"
+    ]
+  },
+  {
+    "firstName": "Usha",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0017"
+    ],
+    "pid": "PID0018",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Gururaja Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 6,
+    "pid": "PID0019",
+    "spouseIds": [
+      "PID0020"
+    ]
+  },
+  {
+    "firstName": "Vasanthi",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0019"
+    ],
+    "pid": "PID0020",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Muralidhar Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 7,
+    "pid": "PID0021",
+    "spouseIds": [
+      "PID0022"
+    ]
+  },
+  {
+    "firstName": "Nagamani",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0021"
+    ],
+    "pid": "PID0022",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Trivikrama Rao",
+    "surName": "Dharmavaram",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 8,
+    "pid": "PID0023",
+    "spouseIds": [
+      "PID0024"
+    ]
+  },
+  {
+    "firstName": "Padma",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0023"
+    ],
+    "pid": "PID0024",
+    "displayOrder": 1
+  }
+]

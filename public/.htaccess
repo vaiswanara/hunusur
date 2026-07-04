@@ -1,0 +1,36 @@
+# Vamsha React App — Apache SPA Routing
+# Upload this file to: vaiswanara.com/vamsha/.htaccess
+#
+# This makes React Router work when users refresh the page
+# or navigate directly to /vamsha/admin etc.
+
+Options -MultiViews -Indexes
+RewriteEngine On
+RewriteBase /vamsha/
+
+# Serve existing files & directories as-is
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# All other routes → index.html (React Router handles the rest)
+RewriteRule . /vamsha/index.html [L]
+
+# ── Security Headers ──────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options  "nosniff"
+    Header always set X-Frame-Options         "SAMEORIGIN"
+    Header always set X-XSS-Protection        "1; mode=block"
+    Header always set Referrer-Policy         "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy      "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# ── Cache static assets ───────────────────────────────────────────────────────
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/html              "access plus 0 seconds"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/css               "access plus 1 year"
+    ExpiresByType image/svg+xml          "access plus 1 year"
+    ExpiresByType image/png              "access plus 1 year"
+</IfModule>

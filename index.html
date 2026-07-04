@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <title>Vamsha - Family Tree</title>
+
+  <!-- PWA iOS & Mobile Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Vamsha" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- iOS Startup Splash Screen -->
+  <link rel="apple-touch-startup-image" href="icons/splash.png" />
+
+  <!-- Android & Chrome Theme Color -->
+  <meta name="theme-color" content="#63131D" />
+
+  <!-- Open Graph (OG) / Social Share Preview Tags -->
+  <meta property="og:title" content="Vamsha - Interactive Family Tree" />
+  <meta property="og:description"
+    content="Explore family lineage, interactive relationships, statistics dashboard, and astronomical details." />
+  <meta property="og:image" content="icons/splash.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Vamsha" />
+
+  <!-- Twitter / Telegram Card Preview Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Vamsha - Interactive Family Tree" />
+  <meta name="twitter:description"
+    content="Explore family lineage, interactive relationships, statistics dashboard, and astronomical details." />
+  <meta name="twitter:image" content="icons/splash.png" />
+
+  <!-- Vamsha Runtime Configuration -->
+  <script src="config.js"></script>
+</head>
+
+<body>
+  <div id="root">
+    <!-- Instant Splash Screen shown before React loads -->
+    <div id="initial-splash" style="
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      ">
+      <!-- Logo Image -->
+      <img src="icons/icon-maskable-512.png" alt="Vamsha Logo" style="
+          width: 196px;
+          height: 196px;
+          object-fit: contain;
+          margin-bottom: 2rem;
+        " />
+
+      <!-- App Titles -->
+      <h1 style="
+          color: #63131D;
+          margin: 0 0 2rem;
+          font-size: 1.8rem;
+          font-weight: 700;
+          letter-spacing: 0.5em;
+          text-indent: 0.5em;
+          text-transform: uppercase;
+        ">
+        VAMSHA
+      </h1>
+
+      <!-- Spinner -->
+      <div style="
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: 3px solid rgba(99, 19, 29, 0.1);
+          border-top-color: #63131D;
+          animation: spin-ring 1s linear infinite;
+        "></div>
+
+      <style>
+        @keyframes spin-ring {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      </style>
+    </div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

@@ -1,0 +1,28 @@
+# vamsha_db/.htaccess
+# Upload this to: vaiswanara.com/vamsha_db/.htaccess
+
+# ── No directory listing ──────────────────────────────
+Options -Indexes
+
+# ── Prevent direct access to backup/sensitive/data files ──
+<FilesMatch "\.(bak|log|tmp|env|ini|json)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# ── Security headers ──────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ── Cache control rules for api.php ───────────────────
+<FilesMatch "api\.php$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </IfModule>
+</FilesMatch>
+

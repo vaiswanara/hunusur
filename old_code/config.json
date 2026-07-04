@@ -1,0 +1,28 @@
+{
+  "welcome": "json_data/welcome.json",
+  "updates": "json_data/updates.json",
+  "data_files": {
+    "persons": "json_data/persons.json",
+    "families": "json_data/families.json",
+    "places": "json_data/places.json",
+    "contacts": "json_data/contacts.json",
+    "manifest": "manifest.json",
+    "photos": "json_data/photos.json",
+    "updates": "",
+    "relationshipDictionary": "relationshipDictionary.json",
+    "transit": "transit.json",
+    "transit_moon": "transit_moon.json"
+  },
+  "features": {
+    "dashboard": true,
+    "tree": true,
+    "birthdays": true,
+    "updates": true,
+    "reports": true,
+    "install": true,
+    "help": true,
+    "about": true,
+    "feedback": true,
+    "update_data": true
+  }
+}

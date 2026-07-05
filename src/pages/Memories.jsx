@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { saveProfiles } from '../lib/api';
 import SearchableSelect from '../components/SearchableSelect';
 
-const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline }) => {
+const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline, setFocusedPid }) => {
   const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
@@ -423,6 +423,7 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline }) => {
                     backgroundColor: 'white'
                   }} onClick={() => {
                     // Navigate to tree focused on this person
+                    if (setFocusedPid) setFocusedPid(m.targetPerson.pid);
                     localStorage.setItem('vamsha_home_pid', m.targetPerson.pid);
                     navigate('/tree');
                   }}>
@@ -432,6 +433,7 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline }) => {
                     <div style={{ fontSize: '0.8rem', color: '#999', fontWeight: 600 }}>{t('memories.about_person').replace('{name}', '')}</div>
                     <span 
                       onClick={() => {
+                        if (setFocusedPid) setFocusedPid(m.targetPerson.pid);
                         localStorage.setItem('vamsha_home_pid', m.targetPerson.pid);
                         navigate('/tree');
                       }}

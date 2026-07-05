@@ -4,7 +4,7 @@ import { Calendar, Search, Filter, Eye } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { parseDate } from '../lib/relationshipEngine';
 
-const Timeline = ({ profiles }) => {
+const Timeline = ({ profiles, setFocusedPid }) => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
 
@@ -124,6 +124,7 @@ const Timeline = ({ profiles }) => {
   }, [allEvents, searchQuery, eventType, selectedDecade]);
 
   const handleNavigateToTree = (pid) => {
+    if (setFocusedPid) setFocusedPid(pid);
     localStorage.setItem('vamsha_home_pid', pid);
     navigate('/tree');
   };

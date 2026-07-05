@@ -10,7 +10,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 
-const Reports = ({ profiles }) => {
+const Reports = ({ profiles, setFocusedPid }) => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   
@@ -278,6 +278,7 @@ const Reports = ({ profiles }) => {
               transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
             onClick={() => {
+              if (setFocusedPid) setFocusedPid(p.pid);
               localStorage.setItem('vamsha_home_pid', p.pid);
               navigate('/tree');
             }}

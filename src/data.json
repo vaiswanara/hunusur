@@ -62,7 +62,7 @@
   {
     "pid": "PID0004",
     "firstName": "Savithri",
-    "surName": "Hoturu",
+    "surName": "Dharmavaram",
     "gender": "Female",
     "spouseIds": [
       "PID0003"
@@ -70,14 +70,15 @@
     "displayOrder": 5,
     "isDeceased": false,
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0004.jpg",
-    "dob": "",
+    "dob": "1955-01-30",
     "phone": "8688589519",
     "email": "",
     "nakshatra": "",
     "rashi": "",
     "deathDate": "",
     "fatherId": "PID0163",
-    "motherId": "PID0164"
+    "motherId": "PID0164",
+    "maidenName": "Hoturu"
   },
   {
     "firstName": "Srinivas",
@@ -97,7 +98,7 @@
     "email": "",
     "nakshatra": "",
     "rashi": "",
-    "deathDate": "",
+    "deathDate": "2025-05-13",
     "memories": []
   },
   {
@@ -131,7 +132,7 @@
     "spouseIds": [
       "PID0008"
     ],
-    "dob": "1982-07-16",
+    "dob": "1982-02-16",
     "phone": "9482094290",
     "email": "vaiswanara@gmail.com",
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0007.jpg",
@@ -142,7 +143,7 @@
   },
   {
     "firstName": "Bhavana",
-    "surName": "Badeladuku",
+    "surName": "Dharmavaram",
     "gender": "Female",
     "spouseIds": [
       "PID0007"
@@ -152,13 +153,14 @@
     "nakshatra": "Purva Bhadrapada",
     "rashi": "Kumbha",
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0008.jpg",
-    "dob": "",
+    "dob": "1986-10-15",
     "phone": "9493371910",
-    "email": "",
+    "email": "krishbhavana86@gmail.com",
     "isDeceased": false,
     "deathDate": "",
     "fatherId": "",
-    "motherId": ""
+    "motherId": "",
+    "maidenName": "Badeladuku"
   },
   {
     "pid": "PID0009",
@@ -450,8 +452,8 @@
     "displayOrder": 8,
     "pid": "PID0023",
     "spouseIds": [
-      "PID0052",
-      "PID0024"
+      "PID0024",
+      "PID0052"
     ],
     "isDeceased": false,
     "deathDate": "",
@@ -492,7 +494,7 @@
     "pid": "PID0025",
     "spouseIds": [],
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0025.jpg",
-    "dob": "",
+    "dob": "2007-01-07",
     "phone": "9014401427",
     "email": "",
     "nakshatra": "",
@@ -510,7 +512,7 @@
     "pid": "PID0026",
     "spouseIds": [],
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0026.jpg",
-    "dob": "",
+    "dob": "2010-06-15",
     "phone": "",
     "email": "",
     "nakshatra": "",
@@ -530,7 +532,7 @@
     "nakshatra": "Mula",
     "rashi": "Dhanu",
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0027.jpg",
-    "dob": "",
+    "dob": "2013-04-30",
     "phone": "",
     "email": "",
     "isDeceased": false,
@@ -604,7 +606,9 @@
     "motherId": "PID0010",
     "displayOrder": 4,
     "pid": "PID0031",
-    "spouseIds": [],
+    "spouseIds": [
+      "PID0155"
+    ],
     "isDeceased": true,
     "dob": "",
     "phone": "",
@@ -957,7 +961,7 @@
   {
     "firstName": "Srinivasa Murthy",
     "surName": "Suswaram",
-    "gender": "Female",
+    "gender": "Male",
     "spouseIds": [
       "PID0048"
     ],
@@ -966,8 +970,8 @@
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0049.jpg",
     "isDeceased": false,
     "deathDate": "",
-    "fatherId": "",
-    "motherId": "",
+    "fatherId": "PID0155",
+    "motherId": "PID0031",
     "dob": "",
     "phone": "9492605452",
     "email": "",
@@ -1076,7 +1080,7 @@
     "gender": "Male",
     "fatherId": "PID0023",
     "motherId": "PID0052",
-    "displayOrder": 1,
+    "displayOrder": 2,
     "isDeceased": false,
     "pid": "PID0055",
     "spouseIds": [
@@ -1156,7 +1160,7 @@
     "gender": "Male",
     "fatherId": "PID0016",
     "motherId": "PID0015",
-    "displayOrder": 1,
+    "displayOrder": 4,
     "isDeceased": false,
     "pid": "PID0059",
     "spouseIds": [
@@ -2989,6 +2993,7 @@
     "surName": "Suswaram",
     "gender": "Male",
     "spouseIds": [
+      "PID0031",
       "PID0156"
     ],
     "isDeceased": true,
@@ -3029,7 +3034,7 @@
     "surName": "Suswaram",
     "gender": "Female",
     "fatherId": "PID0155",
-    "motherId": "PID0154",
+    "motherId": "PID0031",
     "displayOrder": 1,
     "isDeceased": false,
     "pid": "PID0157",
@@ -3047,8 +3052,8 @@
     "surName": "Suswaram",
     "gender": "Female",
     "fatherId": "PID0155",
-    "motherId": "PID0154",
-    "displayOrder": 1,
+    "motherId": "PID0031",
+    "displayOrder": 3,
     "isDeceased": false,
     "pid": "PID0158",
     "spouseIds": [
@@ -3164,13 +3169,14 @@
   {
     "pid": "PID0164",
     "firstName": "Ramadevamma",
-    "surName": "Adoni",
+    "surName": "Hoturu",
     "isDeceased": true,
     "gender": "Female",
     "spouseIds": [
       "PID0163"
     ],
-    "displayOrder": 1
+    "displayOrder": 1,
+    "maidenName": "Adoni"
   },
   {
     "firstName": "Srinivasa Rao",
@@ -3301,7 +3307,7 @@
     "gender": "Male",
     "fatherId": "PID0163",
     "motherId": "PID0164",
-    "displayOrder": 1,
+    "displayOrder": 8,
     "isDeceased": false,
     "pid": "PID0175",
     "spouseIds": [
@@ -3385,8 +3391,8 @@
     "gender": "Male",
     "fatherId": "PID0155",
     "motherId": "PID0156",
-    "displayOrder": 1,
-    "isDeceased": false,
+    "displayOrder": 4,
+    "isDeceased": true,
     "pid": "PID0182",
     "spouseIds": []
   },
@@ -3396,7 +3402,7 @@
     "gender": "Female",
     "fatherId": "PID0155",
     "motherId": "PID0156",
-    "displayOrder": 1,
+    "displayOrder": 5,
     "isDeceased": false,
     "pid": "PID0183",
     "spouseIds": [
@@ -3407,7 +3413,7 @@
   {
     "firstName": "Kumar",
     "surName": "Dharmavaram",
-    "gender": "Female",
+    "gender": "Male",
     "spouseIds": [
       "PID0183"
     ],
@@ -3421,7 +3427,7 @@
     "gender": "Male",
     "fatherId": "PID0155",
     "motherId": "PID0156",
-    "displayOrder": 3,
+    "displayOrder": 6,
     "isDeceased": false,
     "pid": "PID0185",
     "spouseIds": [

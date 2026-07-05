@@ -547,15 +547,16 @@ function App() {
             />
           } />
           <Route path="/birthdays" element={<Birthdays profiles={enrichedProfiles} />} />
-          <Route path="/reports" element={<Reports profiles={enrichedProfiles} />} />
+          <Route path="/reports" element={<Reports profiles={enrichedProfiles} setFocusedPid={setFocusedPid} />} />
           <Route path="/memories" element={
             <Memories 
               profiles={profiles} 
               setProfiles={updateProfiles}
               setSavedProfilesBaseline={setSavedProfilesBaseline}
+              setFocusedPid={setFocusedPid}
             />
           } />
-          <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} />} />
+          <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} setFocusedPid={setFocusedPid} />} />
           <Route path="/menu" element={<MenuPage profiles={enrichedProfiles} />} />
           <Route path="/dashboard" element={<Dashboard profiles={enrichedProfiles} />} />
           <Route path="/settings" element={

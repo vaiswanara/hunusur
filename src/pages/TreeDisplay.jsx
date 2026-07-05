@@ -10,26 +10,8 @@ import { useLanguage } from '../context/LanguageContext';
 const getRelationshipTag = (person, type, focusedPerson, isElder, t) => {
   if (type === 'father') return t('tree.relationships.father');
   if (type === 'mother') return t('tree.relationships.mother');
-  if (type === 'spouse') {
-    const label = person.gender === 'Female' ? t('tree.relationships.spouse_female') : t('tree.relationships.spouse_male');
-    if (focusedPerson) {
-      const lang = localStorage.getItem('vamsha_lang') || 'en';
-      if (lang === 'te') return `${focusedPerson.firstName} గారి ${label}`;
-      if (lang === 'kn') return `${focusedPerson.firstName} ಅವರ ${label}`;
-      return `${focusedPerson.firstName}'s ${label}`;
-    }
-    return label;
-  }
-  if (type === 'child') {
-    const label = person.gender === 'Male' ? t('tree.relationships.child_male') : t('tree.relationships.child_female');
-    if (focusedPerson) {
-      const lang = localStorage.getItem('vamsha_lang') || 'en';
-      if (lang === 'te') return `${focusedPerson.firstName} గారి ${label}`;
-      if (lang === 'kn') return `${focusedPerson.firstName} ಅವರ ${label}`;
-      return `${focusedPerson.firstName}'s ${label}`;
-    }
-    return label;
-  }
+  if (type === 'spouse') return person.gender === 'Female' ? t('tree.relationships.spouse_female') : t('tree.relationships.spouse_male');
+  if (type === 'child') return person.gender === 'Male' ? t('tree.relationships.child_male') : t('tree.relationships.child_female');
   if (type === 'sibling') {
     if (person.gender === 'Male') return isElder ? t('tree.relationships.brother_elder') : t('tree.relationships.brother_younger');
     return isElder ? t('tree.relationships.sister_elder') : t('tree.relationships.sister_younger');
@@ -198,6 +180,21 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
     return { person, parents, spouses, children, elderSiblings, youngerSiblings };
   }, [focusedPid, profiles]);
 
+  const getSectionLabel = (sectionKey) => {
+    if (!treeData || !treeData.person) return '';
+    const name = treeData.person.firstName;
+    const lang = localStorage.getItem('vamsha_lang') || 'en';
+    const labelText = t(`tree.${sectionKey}`);
+    
+    if (lang === 'te') {
+      return `${name} గారి ${labelText}`;
+    } else if (lang === 'kn') {
+      return `${name} ಅವರ ${labelText}`;
+    } else {
+      return `${name}'s ${labelText}`;
+    }
+  };
+
   if (!treeData) return <div className="tree-container">{t('tree.no_data')}</div>;
 
   return (
@@ -278,8 +275,10 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         {/* Parents Section */}
         {treeData.parents.length > 0 && (
           <div className="tree-card">
-            <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
-              <div className="internal-label">{t('tree.parents')}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
+              <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {getSectionLabel('parents')}
+              </span>
             </div>
             <div className="card-content row-flex">
               {treeData.parents.map(p => (
@@ -300,8 +299,10 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         {treeData.parents.length > 0 && <VerticalConnector />}
 
         <div className="tree-card">
-          <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
-            <div className="internal-label">{t('tree.siblings')}</div>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
+            <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {getSectionLabel('siblings')}
+            </span>
           </div>
           <div className="card-content row-flex wrap">
             {/* Elder Siblings */}
@@ -324,8 +325,10 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
           <>
             <VerticalConnector />
             <div className="tree-card">
-              <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
-                <div className="internal-label">{t('tree.spouse')}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
+                <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {getSectionLabel('spouse')}
+                </span>
               </div>
               <div className="card-content row-flex" style={{ flexWrap: 'nowrap', gap: '0.25rem', justifyContent: 'center' }}>
                 {/* Selected Person Profile again */}
@@ -346,8 +349,10 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
             <VerticalConnector />
 
             <div className="tree-card spouse-children-card">
-              <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
-                <div className="internal-label">{t('tree.children')}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
+                <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {getSectionLabel('children')}
+                </span>
               </div>
 
               <div className="children-section row-flex wrap">

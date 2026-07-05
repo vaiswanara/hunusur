@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RotateCw, UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -6,6 +6,15 @@ import { useLanguage } from '../context/LanguageContext';
 const MenuPage = ({ profiles }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    setTimeout(() => {
+      window.location.reload();
+    }, 600);
+  };
 
   // Find the primary surname from the home person (if configured)
   const homePid = localStorage.getItem('vamsha_home_pid');
@@ -46,7 +55,8 @@ const MenuPage = ({ profiles }) => {
         zIndex: 10
       }}>
         <button 
-          onClick={() => window.location.reload()}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
           style={{
             width: '40px',
             height: '40px',
@@ -56,14 +66,18 @@ const MenuPage = ({ profiles }) => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            cursor: 'pointer',
+            cursor: isRefreshing ? 'not-allowed' : 'pointer',
             boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
             transition: 'all 0.2s',
             color: 'var(--color-maroon, #63131D)'
           }}
           title="Refresh App"
         >
-          <RotateCw size={18} strokeWidth={2.5} />
+          <RotateCw 
+            size={18} 
+            strokeWidth={2.5} 
+            className={isRefreshing ? 'refresh-spin-active' : ''} 
+          />
         </button>
         <span style={{
           fontSize: '0.65rem',
@@ -76,6 +90,13 @@ const MenuPage = ({ profiles }) => {
         </span>
       </div>
       <style>{`
+        @keyframes spin-refresh {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .refresh-spin-active {
+          animation: spin-refresh 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         .menu-page-item-btn {
           -webkit-tap-highlight-color: transparent;
         }

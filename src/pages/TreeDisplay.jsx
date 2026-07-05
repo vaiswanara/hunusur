@@ -297,14 +297,26 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         {treeData.parents.length > 0 && <VerticalConnector />}
 
         <div className="tree-card">
-          <div className="card-content row-flex wrap">
+          <div className="card-content row-flex wrap" style={{ gap: '1rem 0.5rem' }}>
             {/* Elder Siblings */}
             {treeData.elderSiblings.map(s => (
               <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
             ))}
 
-            {/* Focused Person */}
-            <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+            {/* Focused Person & Spouse Group (stays side-by-side) */}
+            <div className="focused-couple-group" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '0.25rem',
+              flexWrap: 'nowrap'
+            }}>
+              <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+              
+              {treeData.spouses.map(sp => (
+                <PersonIcon key={sp.pid} person={sp} type="spouse" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+              ))}
+            </div>
 
             {/* Younger Siblings */}
             {treeData.youngerSiblings.map(s => (
@@ -313,38 +325,21 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
           </div>
         </div>
 
-        {/* Spouses & Children Section */}
-        {(treeData.spouses.length > 0 || treeData.children.length > 0) && (
+        {/* Children Section */}
+        {treeData.children.length > 0 && (
           <>
             <VerticalConnector />
 
             <div className="tree-card spouse-children-card">
+              <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
+                <div className="internal-label">{t('tree.children')}</div>
+              </div>
 
-              {/* Spouses */}
-              {treeData.spouses.length > 0 && (
-                <div className="spouse-section">
-                  {treeData.spouses.map(sp => (
-                    <PersonIcon key={sp.pid} person={sp} type="spouse" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-                  ))}
-                </div>
-              )}
-
-              {/* Connecting line to children */}
-              {treeData.spouses.length > 0 && treeData.children.length > 0 && (
-                <div className="vertical-connector-internal">
-                  <div className="internal-label">{t('tree.children')}</div>
-                </div>
-              )}
-
-              {/* Children */}
-              {treeData.children.length > 0 && (
-                <div className="children-section row-flex wrap">
-                  {treeData.children.map(c => (
-                    <PersonIcon key={c.pid} person={c} type="child" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-                  ))}
-                </div>
-              )}
-
+              <div className="children-section row-flex wrap">
+                {treeData.children.map(c => (
+                  <PersonIcon key={c.pid} person={c} type="child" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                ))}
+              </div>
             </div>
           </>
         )}

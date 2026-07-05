@@ -10,7 +10,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 
 const Reports = ({ profiles }) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'lineage'
   
   // State for lineage reports
@@ -1256,10 +1256,10 @@ const Reports = ({ profiles }) => {
       {/* Main Title Section */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h2 style={{ color: 'var(--color-maroon)', fontSize: '2rem', fontWeight: 800, margin: '0 0 0.5rem' }}>
-          Family Reports & Stats
+          {t('reports.title')}
         </h2>
         <p style={{ color: '#666', fontSize: '0.95rem', margin: 0 }}>
-          Complete statistics and comprehensive lineage reports for our family tree.
+          {t('reports.subtitle')}
         </p>
       </div>
 
@@ -1270,14 +1270,14 @@ const Reports = ({ profiles }) => {
           onClick={() => setActiveTab('dashboard')}
         >
           <BarChart2 size={18} />
-          Statistics Dashboard
+          {t('reports.tab_stats')}
         </button>
         <button 
           className={`reports-tab-btn ${activeTab === 'lineage' ? 'active' : ''}`}
           onClick={() => setActiveTab('lineage')}
         >
           <GitBranch size={18} />
-          Lineage Reports
+          {t('reports.tab_lineage')}
         </button>
       </div>
 
@@ -1292,7 +1292,7 @@ const Reports = ({ profiles }) => {
               <div className="dash-stat-icon-wrapper"><Users size={24} /></div>
               <div>
                 <div className="dash-stat-value">{totalCount}</div>
-                <div className="dash-stat-label">Total Members</div>
+                <div className="dash-stat-label">{t('reports.total_members')}</div>
               </div>
             </div>
 
@@ -1300,7 +1300,7 @@ const Reports = ({ profiles }) => {
               <div className="dash-stat-icon-wrapper" style={{ color: '#4A90E2' }}><Users size={24} /></div>
               <div>
                 <div className="dash-stat-value">{maleCount} <span style={{ fontSize: '0.85rem', color: '#777', fontWeight: 500 }}>({Math.round((maleCount/totalCount)*100)}%)</span></div>
-                <div className="dash-stat-label">Males</div>
+                <div className="dash-stat-label">{t('reports.males')}</div>
               </div>
             </div>
 
@@ -1308,7 +1308,7 @@ const Reports = ({ profiles }) => {
               <div className="dash-stat-icon-wrapper" style={{ color: '#E91E63' }}><Users size={24} /></div>
               <div>
                 <div className="dash-stat-value">{femaleCount} <span style={{ fontSize: '0.85rem', color: '#777', fontWeight: 500 }}>({Math.round((femaleCount/totalCount)*100)}%)</span></div>
-                <div className="dash-stat-label">Females</div>
+                <div className="dash-stat-label">{t('reports.females')}</div>
               </div>
             </div>
 
@@ -1316,16 +1316,115 @@ const Reports = ({ profiles }) => {
               <div className="dash-stat-icon-wrapper" style={{ color: '#c0392b' }}><Users size={24} /></div>
               <div>
                 <div className="dash-stat-value">{deceasedCount} <span style={{ fontSize: '0.85rem', color: '#777', fontWeight: 500 }}>({Math.round((deceasedCount/totalCount)*100)}%)</span></div>
-                <div className="dash-stat-label">Deceased</div>
+                <div className="dash-stat-label">{t('reports.deceased')}</div>
               </div>
             </div>
             
             <div className="dash-stat-card" style={{ gridColumn: 'span 1' }}>
               <div className="dash-stat-icon-wrapper" style={{ color: '#27ae60' }}><Calendar size={24} /></div>
               <div>
-                <div className="dash-stat-value">{avgAge} yrs</div>
-                <div className="dash-stat-label">Average Age</div>
+                <div className="dash-stat-value">{avgAge} {t('reports.years')}</div>
+                <div className="dash-stat-label">{t('reports.avg_age')}</div>
               </div>
+            </div>
+          </div>
+
+          {/* Visual Overview Section */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '2rem',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+            border: '1px solid rgba(0,0,0,0.05)',
+            marginBottom: '2rem'
+          }}>
+            <div className="dash-visual-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
+              
+              {/* 1. Gender Ratio Chart */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', background: '#FCFAF7', borderRadius: '12px', border: '1px solid #F0E8E0' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-maroon)', margin: 0 }}>
+                  👥 {t('reports.gender_ratio')}
+                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#666', fontWeight: 600 }}>
+                  <span style={{ color: '#4A90E2' }}>{t('reports.males')}: {maleCount} ({Math.round((maleCount/totalCount)*100)}%)</span>
+                  <span style={{ color: '#E91E63' }}>{t('reports.females')}: {femaleCount} ({Math.round((femaleCount/totalCount)*100)}%)</span>
+                </div>
+                <div style={{ height: '16px', borderRadius: '8px', background: '#eaeaea', overflow: 'hidden', display: 'flex', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)' }}>
+                  <div style={{ width: `${(maleCount/totalCount)*100}%`, background: '#4A90E2', height: '100%', transition: 'width 0.6s ease' }} title="Males" />
+                  <div style={{ width: `${(femaleCount/totalCount)*100}%`, background: '#E91E63', height: '100%', transition: 'width 0.6s ease' }} title="Females" />
+                </div>
+              </div>
+
+              {/* 2. Top Gotrams Bar Graph */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', background: '#FCFAF7', borderRadius: '12px', border: '1px solid #F0E8E0' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-maroon)', margin: 0 }}>
+                  🔱 {t('reports.top_gotrams')}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {gotramData.slice(0, 3).map(g => {
+                    const pct = Math.round((g.count / totalCount) * 100);
+                    return (
+                      <div key={g.name} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
+                          <span style={{ color: '#555' }}>{g.name}</span>
+                          <span style={{ color: 'var(--color-maroon)' }}>{g.count} ({pct}%)</span>
+                        </div>
+                        <div style={{ height: '8px', borderRadius: '4px', background: '#EAEAEA', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, background: 'var(--color-gold, #D4AF37)', height: '100%', borderRadius: '4px' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Top Surnames Bar Graph */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', background: '#FCFAF7', borderRadius: '12px', border: '1px solid #F0E8E0' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-maroon)', margin: 0 }}>
+                  🏡 {t('reports.top_surnames')}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {surnameData.slice(0, 3).map(s => {
+                    const pct = Math.round((s.count / totalCount) * 100);
+                    return (
+                      <div key={s.name} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
+                          <span style={{ color: '#555' }}>{s.name}</span>
+                          <span style={{ color: 'var(--color-maroon)' }}>{s.count} ({pct}%)</span>
+                        </div>
+                        <div style={{ height: '8px', borderRadius: '4px', background: '#EAEAEA', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, background: 'var(--color-maroon, #63131D)', height: '100%', borderRadius: '4px' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 4. Age Demographics */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', padding: '1rem', background: '#FCFAF7', borderRadius: '12px', border: '1px solid #F0E8E0' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-maroon)', margin: 0 }}>
+                  ⏳ {t('reports.age_demographics')}
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {Object.entries(ageData).map(([bracket, list]) => {
+                    if (bracket === 'Unknown DOB / Deceased') return null;
+                    const pct = Math.round((list.length / totalCount) * 100);
+                    return (
+                      <div key={bracket} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
+                          <span style={{ color: '#555' }}>{bracket}</span>
+                          <span style={{ color: 'var(--color-maroon)' }}>{list.length} ({pct}%)</span>
+                        </div>
+                        <div style={{ height: '8px', borderRadius: '4px', background: '#EAEAEA', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, background: '#27ae60', height: '100%', borderRadius: '4px' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -1336,7 +1435,7 @@ const Reports = ({ profiles }) => {
             <div className="accordion-header" onClick={() => handleToggleSection('gotram')}>
               <div className="accordion-title">
                 <FileText size={20} />
-                Gotrams Distribution ({gotramData.length} Gotrams)
+                {t('reports.gotram_dist')} ({gotramData.length} Gotrams)
               </div>
               <ChevronDown size={20} style={{ transform: expandedSection === 'gotram' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </div>
@@ -1374,7 +1473,7 @@ const Reports = ({ profiles }) => {
             <div className="accordion-header" onClick={() => handleToggleSection('surname')}>
               <div className="accordion-title">
                 <FileText size={20} />
-                Surnames Distribution ({surnameData.length} Surnames)
+                {t('reports.surname_dist')} ({surnameData.length} Surnames)
               </div>
               <ChevronDown size={20} style={{ transform: expandedSection === 'surname' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </div>
@@ -1412,7 +1511,7 @@ const Reports = ({ profiles }) => {
             <div className="accordion-header" onClick={() => handleToggleSection('generation')}>
               <div className="accordion-title">
                 <GitBranch size={20} />
-                Generations Breakdown ({generationData.length} Generations)
+                {t('reports.gen_dist')} ({generationData.length} Generations)
               </div>
               <ChevronDown size={20} style={{ transform: expandedSection === 'generation' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </div>
@@ -1422,7 +1521,7 @@ const Reports = ({ profiles }) => {
                   {generationData.map(group => (
                     <div className="accordion-group-item" key={group.level}>
                       <div className="group-header" onClick={() => handleToggleItem(`gen-${group.level}`)}>
-                        <span>Generation {group.level}</span>
+                        <span>{t('reports.generation')} {group.level}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ fontSize: '0.82rem', background: '#eaeaea', padding: '2px 8px', borderRadius: '20px' }}>{group.count}</span>
                           <ChevronDown size={14} style={{ transform: expandedItems[`gen-${group.level}`] ? 'rotate(180deg)' : 'none' }} />
@@ -1450,7 +1549,7 @@ const Reports = ({ profiles }) => {
             <div className="accordion-header" onClick={() => handleToggleSection('age')}>
               <div className="accordion-title">
                 <Calendar size={20} />
-                Age Groups Distribution
+                {t('reports.age_demographics')}
               </div>
               <ChevronDown size={20} style={{ transform: expandedSection === 'age' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </div>
@@ -1488,13 +1587,13 @@ const Reports = ({ profiles }) => {
             <div className="accordion-header" onClick={() => handleToggleSection('astro')}>
               <div className="accordion-title">
                 <Calendar size={20} />
-                Astro Details (Rashi & Nakshatra)
+                {t('reports.astro_dist')}
               </div>
               <ChevronDown size={20} style={{ transform: expandedSection === 'astro' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </div>
             {expandedSection === 'astro' && (
               <div className="accordion-content">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2rem' }}>
                   
                   {/* Rashis */}
                   <div>
@@ -1512,7 +1611,7 @@ const Reports = ({ profiles }) => {
                           {expandedItems[`rashi-${group.name}`] && (
                             <div className="group-member-list">
                               {group.list.map(p => (
-                                <div key={p.pid} style={{ display: 'flex', justifyStyle: 'space-between', borderBottom: '1px solid #f9f9f9', padding: '2px 0' }}>
+                                <div key={p.pid} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f9f9f9', padding: '2px 0' }}>
                                   <span>{p.firstName} {p.surName}</span>
                                   <span style={{ color: '#999', fontSize: '0.75rem' }}>{p.pid}</span>
                                 </div>
@@ -1567,7 +1666,7 @@ const Reports = ({ profiles }) => {
           {/* Setup controls */}
           <div className="lineage-setup-card">
             <h4 style={{ color: 'var(--color-maroon)', margin: '0 0 1rem', fontSize: '1.1rem' }}>
-              Select Primary Family Member
+              {t('reports.select_primary')}
             </h4>
             
             <div style={{ maxWidth: '400px', marginBottom: '1.5rem' }}>
@@ -1582,14 +1681,14 @@ const Reports = ({ profiles }) => {
             {primaryPid && (
               <>
                 <h5 style={{ margin: '1.5rem 0 0.75rem', color: '#666', fontWeight: 600 }}>
-                  Select a Report to Generate:
+                  {t('reports.choose_report')}:
                 </h5>
                 <div className="lineage-options-grid">
                   <button 
                     className={`lineage-btn ${selectedReport === 'close-family' ? 'selected' : ''}`}
                     onClick={() => triggerReport('close-family')}
                   >
-                    <span>1) Close Family Report 📄</span>
+                    <span>1) {t('reports.close_family')} 📄</span>
                     <ChevronRight size={16} />
                   </button>
 
@@ -1597,7 +1696,7 @@ const Reports = ({ profiles }) => {
                     className={`lineage-btn ${selectedReport === 'relationship-diagram' ? 'selected' : ''}`}
                     onClick={() => triggerReport('relationship-diagram')}
                   >
-                    <span>2) Relationship Diagram ⟷</span>
+                    <span>2) {t('reports.relationship_diagram')} ⟷</span>
                     <ChevronRight size={16} />
                   </button>
 
@@ -1605,7 +1704,7 @@ const Reports = ({ profiles }) => {
                     className={`lineage-btn ${selectedReport === 'ancestors' ? 'selected' : ''}`}
                     onClick={() => triggerReport('ancestors')}
                   >
-                    <span>3) Ancestors Report 🌳</span>
+                    <span>3) {t('reports.ancestors')} 🌳</span>
                     <ChevronRight size={16} />
                   </button>
 
@@ -1613,7 +1712,7 @@ const Reports = ({ profiles }) => {
                     className={`lineage-btn ${selectedReport === 'descendants' ? 'selected' : ''}`}
                     onClick={() => triggerReport('descendants')}
                   >
-                    <span>4) Descendants Report 👶</span>
+                    <span>4) {t('reports.descendants')} 👶</span>
                     <ChevronRight size={16} />
                   </button>
 
@@ -1621,7 +1720,7 @@ const Reports = ({ profiles }) => {
                     className={`lineage-btn ${selectedReport === 'full-descendants' ? 'selected' : ''}`}
                     onClick={() => triggerReport('full-descendants')}
                   >
-                    <span>5) Full Descendants List 👨‍👩‍👧‍👦</span>
+                    <span>5) {t('reports.full_descendants')} 👨‍👩‍👧‍👦</span>
                     <ChevronRight size={16} />
                   </button>
 
@@ -1629,7 +1728,7 @@ const Reports = ({ profiles }) => {
                     className={`lineage-btn ${selectedReport === 'full-descendants-diagram' ? 'selected' : ''}`}
                     onClick={() => triggerReport('full-descendants-diagram')}
                   >
-                    <span>6) Descendants Tree Diagram 🌳</span>
+                    <span>6) {t('reports.full_descendants_diagram')} 🌳</span>
                     <ChevronRight size={16} />
                   </button>
                 </div>
@@ -1640,7 +1739,7 @@ const Reports = ({ profiles }) => {
             {showRelDiagramSecondary && (
               <div style={{ marginTop: '2rem', padding: '1.25rem', backgroundColor: '#fcfbfa', border: '1.5px solid var(--color-sandalwood)', borderRadius: '8px' }}>
                 <h4 style={{ color: 'var(--color-maroon)', margin: '0 0 0.75rem', fontSize: '0.95rem' }}>
-                  Select Second Family Member to Link:
+                  {t('reports.select_secondary')}
                 </h4>
                 <div style={{ maxWidth: '400px' }}>
                   <SearchableSelect 
@@ -1676,7 +1775,7 @@ const Reports = ({ profiles }) => {
                   }}
                 >
                   <Printer size={16} />
-                  Save as PDF / Print
+                  {t('reports.print_btn')}
                 </button>
               </div>
 

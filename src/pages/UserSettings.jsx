@@ -447,9 +447,6 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
         <span>Vamsha Family Tree App</span>
         <span>
           Version: <strong>{import.meta.env.VITE_APP_VERSION || '1.3.0'}</strong>
-          {import.meta.env.VITE_COMMIT_HASH && (
-            <> | Commit: <strong>{import.meta.env.VITE_COMMIT_HASH}</strong></>
-          )}
         </span>
       </div>
 

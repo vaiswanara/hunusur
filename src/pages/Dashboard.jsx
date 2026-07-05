@@ -138,18 +138,17 @@ const Dashboard = ({ profiles }) => {
       'Youth (13-29 yrs)': [],
       'Adults (30-59 yrs)': [],
       'Seniors (60+ yrs)': [],
-      'Unknown DOB / Deceased': []
+      'Unknown DOB': []
     };
 
     profiles.forEach(p => {
       if (p.isDeceased) {
-        brackets['Unknown DOB / Deceased'].push(p);
         return;
       }
       
       const dobDate = parseDate(p.dob);
       if (!dobDate || isNaN(dobDate.getTime())) {
-        brackets['Unknown DOB / Deceased'].push(p);
+        brackets['Unknown DOB'].push(p);
         return;
       }
 
@@ -441,8 +440,8 @@ const Dashboard = ({ profiles }) => {
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {ageData.map(group => {
-                if (group.name === 'Unknown DOB / Deceased') return null;
-                const pct = totalCount > 0 ? Math.round((group.count / totalCount) * 100) : 0;
+                if (group.name === 'Unknown DOB') return null;
+                const pct = livingCount > 0 ? Math.round((group.count / livingCount) * 100) : 0;
                 return (
                   <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>

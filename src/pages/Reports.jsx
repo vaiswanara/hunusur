@@ -7,8 +7,10 @@ import {
   getPerson, getChildrenIds, getGender, getSiblings, getParents, getGrandParents,
   getRelationshipCode, findRelationship, parseDate, resolveRelationName
 } from '../lib/relationshipEngine';
+import { useLanguage } from '../context/LanguageContext';
 
 const Reports = ({ profiles }) => {
+  const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'lineage'
   
   // State for lineage reports
@@ -291,7 +293,7 @@ const Reports = ({ profiles }) => {
     const spouses = (p.spouseIds || []).map(spid => getPerson(profiles, spid)).filter(Boolean);
 
     const renderPersonRow = (person, type) => {
-      const rel = findRelationship(profiles, centerId, person.pid, 'te');
+      const rel = findRelationship(profiles, centerId, person.pid, language);
       return (
         <div key={person.pid} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.6rem 1rem', borderBottom: '1px solid #eee', background: '#fff' }}>
           <div>
@@ -371,7 +373,7 @@ const Reports = ({ profiles }) => {
           return (
             <div key={spouse.pid} style={{ border: '1px solid #ffccd5', borderRadius: '8px', padding: '1rem', marginTop: '2rem', backgroundColor: '#fffbfb' }}>
               <h4 style={{ margin: '0 0 1rem', color: '#D81B60', borderBottom: '1px solid #ffd1dc', paddingBottom: '0.5rem' }}>
-                SPOUSE SIDE: {spouse.firstName} {spouse.surName} ({findRelationship(profiles, centerId, spouse.pid, 'te')})
+                SPOUSE SIDE: {spouse.firstName} {spouse.surName} ({findRelationship(profiles, centerId, spouse.pid, language)})
               </h4>
               
               {spouseParents.length > 0 && (
@@ -444,7 +446,7 @@ const Reports = ({ profiles }) => {
       const r = getRelationshipCode(profiles, id1, targetId);
       if (!r) return "";
       if (r.code === 'SELF') return "Self";
-      return resolveRelationName(profiles, r, p1, getPerson(profiles, targetId), 'te');
+      return resolveRelationName(profiles, r, p1, getPerson(profiles, targetId), language);
     };
 
     const renderDiagramNodeCard = (pid, label, isRoot = false) => {
@@ -472,7 +474,7 @@ const Reports = ({ profiles }) => {
       );
     };
 
-    const finalRel = findRelationship(profiles, id1, id2, 'te');
+    const finalRel = findRelationship(profiles, id1, id2, language);
 
     return (
       <div style={{ padding: '1rem', overflowX: 'auto' }}>
@@ -654,7 +656,7 @@ const Reports = ({ profiles }) => {
             role = "Great-".repeat(genIndex - 2) + (g === 'Male' ? "Grandfather" : "Grandmother");
           }
 
-          const relName = findRelationship(profiles, centerId, ancId, 'te');
+          const relName = findRelationship(profiles, centerId, ancId, language);
           genItems.push({ anc, role, relName });
 
           if (anc.fatherId) nextGenIds.push(anc.fatherId);
@@ -732,7 +734,7 @@ const Reports = ({ profiles }) => {
             role = "Great-".repeat(genIndex - 2) + (g === 'Male' ? "Grandson" : "Granddaughter");
           }
 
-          const relName = findRelationship(profiles, centerId, descId, 'te');
+          const relName = findRelationship(profiles, centerId, descId, language);
           genItems.push({ desc, role, relName });
 
           const kids = getChildrenIds(profiles, descId);
@@ -801,7 +803,7 @@ const Reports = ({ profiles }) => {
       currentGenIds.forEach(descId => {
         const desc = getPerson(profiles, descId);
         if (desc) {
-          const relName = findRelationship(profiles, centerId, descId, 'te');
+          const relName = findRelationship(profiles, centerId, descId, language);
           
           // Get spouses
           const spouses = (desc.spouseIds || []).map(spid => {
@@ -809,7 +811,7 @@ const Reports = ({ profiles }) => {
             if (sp) {
               return {
                 person: sp,
-                relName: findRelationship(profiles, centerId, sp.pid, 'te')
+                relName: findRelationship(profiles, centerId, sp.pid, language)
               };
             }
             return null;
@@ -885,7 +887,7 @@ const Reports = ({ profiles }) => {
         .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       const hasChildren = children.length > 0;
 
-      const relLabel = pid === centerId ? "ME" : findRelationship(profiles, centerId, pid, 'te');
+      const relLabel = pid === centerId ? "ME" : findRelationship(profiles, centerId, pid, language);
       
       const avatarUrl = person.photoUrl
         ? person.photoUrl
@@ -909,7 +911,7 @@ const Reports = ({ profiles }) => {
 
               {/* Spouses */}
               {spouses.map(spouse => {
-                const spouseRel = findRelationship(profiles, centerId, spouse.pid, 'te');
+                const spouseRel = findRelationship(profiles, centerId, spouse.pid, language);
                 const spouseAvatar = spouse.photoUrl
                   ? spouse.photoUrl
                   : `${import.meta.env.BASE_URL}icons/${spouse.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;

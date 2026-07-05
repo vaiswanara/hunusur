@@ -11,11 +11,13 @@ import AdminGate from './components/AdminGate';
 import { fetchProfiles } from './lib/api';
 import initialData from './data.json';
 import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2 } from 'lucide-react';
+import { useLanguage } from './context/LanguageContext';
 
 function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const title = import.meta.env.VITE_APP_TITLE || 'Vamsha';
+  const { t } = useLanguage();
+  const title = t('home.title');
 
   const handleTreeClick = (e) => {
     e.preventDefault();
@@ -48,12 +50,12 @@ function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
         <h1 style={{ margin: 0, lineHeight: 1 }}>{title}</h1>
       </div>
       <nav className="nav-links">
-        <Link to="/" className={location.pathname === '/' || location.pathname === import.meta.env.BASE_URL ? 'active' : ''}>Home</Link>
-        <Link to="/home-person" className={location.pathname.includes('/home-person') ? 'active' : ''}>Home Person</Link>
-        <a href="/tree" onClick={handleTreeClick} className={location.pathname === '/tree' && !location.pathname.includes('/admin') && !location.pathname.includes('/birthdays') && !location.pathname.includes('/reports') && !location.pathname.includes('/home-person') ? 'active' : ''}>Tree</a>
-        <Link to="/birthdays" className={location.pathname.includes('/birthdays') ? 'active' : ''}>Birthdays</Link>
-        <Link to="/reports" className={location.pathname.includes('/reports') ? 'active' : ''}>Reports (new)</Link>
-        <Link to="/settings" className={location.pathname.includes('/settings') ? 'active' : ''}>Settings</Link>
+        <Link to="/" className={location.pathname === '/' || location.pathname === import.meta.env.BASE_URL ? 'active' : ''}>{t('nav.home')}</Link>
+        <Link to="/home-person" className={location.pathname.includes('/home-person') ? 'active' : ''}>{t('nav.home_person')}</Link>
+        <a href="/tree" onClick={handleTreeClick} className={location.pathname === '/tree' && !location.pathname.includes('/admin') && !location.pathname.includes('/birthdays') && !location.pathname.includes('/reports') && !location.pathname.includes('/home-person') ? 'active' : ''}>{t('nav.tree')}</a>
+        <Link to="/birthdays" className={location.pathname.includes('/birthdays') ? 'active' : ''}>{t('nav.birthdays')}</Link>
+        <Link to="/reports" className={location.pathname.includes('/reports') ? 'active' : ''}>{t('nav.reports')}</Link>
+        <Link to="/settings" className={location.pathname.includes('/settings') ? 'active' : ''}>{t('nav.settings')}</Link>
       </nav>
     </header>
   );
@@ -62,6 +64,7 @@ function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
 function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, setSidebarPerson }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const handleHomePortalClick = () => {
     setSidebarPerson(null);
@@ -117,31 +120,32 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
     <div className="mobile-bottom-nav">
       <button className={`nav-item-btn ${location.pathname === '/' ? 'active' : ''}`} onClick={handleHomePortalClick}>
         <HomeIcon size={23} />
-        <span>Home</span>
+        <span>{t('nav.home')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/home-person') ? 'active' : ''}`} onClick={handleHomePersonClick}>
         <User size={23} />
-        <span>Home Person</span>
+        <span>{t('nav.home_person')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname === '/tree' ? 'active' : ''}`} onClick={handleRootTreeClick}>
         <GitBranch size={23} />
-        <span>Tree</span>
+        <span>{t('nav.tree')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/birthdays') ? 'active' : ''}`} onClick={handleBirthdaysClick}>
         <Cake size={23} />
-        <span>Birthdays</span>
+        <span>{t('nav.birthdays')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/reports') ? 'active' : ''}`} onClick={handleReportsClick}>
         <BarChart2 size={23} />
-        <span>Reports</span>
+        <span>{t('nav.reports')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/settings') ? 'active' : ''}`} onClick={handleSettingsClick}>
         <Settings size={23} />
-        <span>Settings</span>
+        <span>{t('nav.settings')}</span>
       </button>
     </div>
   );
 }
+
 
 function SplashScreen() {
   const logoUrl = `${import.meta.env.BASE_URL}icons/icon-maskable-512.png`;

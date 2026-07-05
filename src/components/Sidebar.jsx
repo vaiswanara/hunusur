@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Home } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
+  const { t } = useLanguage();
   const [isHome, setIsHome] = useState(() => {
     return person ? localStorage.getItem('vamsha_home_pid') === person.pid : false;
   });
@@ -50,7 +52,7 @@ const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
             </div>
             {person.isDeceased && (
               <div
-                title="Deceased"
+                title={t('sidebar.deceased')}
                 style={{
                   position: 'absolute',
                   bottom: '12px',
@@ -71,100 +73,100 @@ const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
               </div>
             )}
           </div>
-          <h2 className="sidebar-name">{person.isDeceased ? 'Late ' : ''}{person.firstName} {person.surName}</h2>
+          <h2 className="sidebar-name">{person.isDeceased ? t('sidebar.late') + ' ' : ''}{person.firstName} {person.surName}</h2>
           {person.maidenName && <p className="sidebar-maiden">(Nee: {person.maidenName})</p>}
 
           <div style={{ marginTop: '0.75rem' }}>
             {isHome ? (
               <span className="home-badge active">
-                <Home size={14} /> Home Person
+                <Home size={14} /> {t('sidebar.home_badge')}
               </span>
             ) : (
               <button className="home-badge-btn" onClick={handleSetHome}>
-                <Home size={14} /> Set as Home Person
+                <Home size={14} /> {t('sidebar.set_as_home')}
               </button>
             )}
           </div>
         </div>
 
         <div className="sidebar-content">
-          <div className="sidebar-section-title">Personal Details</div>
+          <div className="sidebar-section-title">{t('sidebar.personal_details')}</div>
 
           <div className="sidebar-details-grid">
             {person.isDeceased && (
               <div className="info-group" style={{ gridColumn: '1 / -1' }}>
-                <span className="info-label" style={{ color: '#c0392b' }}>Status</span>
-                <span className="info-value" style={{ color: '#c0392b', fontWeight: 600 }}>Deceased</span>
+                <span className="info-label" style={{ color: '#c0392b' }}>{t('sidebar.status')}</span>
+                <span className="info-value" style={{ color: '#c0392b', fontWeight: 600 }}>{t('sidebar.deceased')}</span>
               </div>
             )}
             <div className="info-group">
-              <span className="info-label">Profile ID</span>
+              <span className="info-label">{t('sidebar.profile_id')}</span>
               <span className="info-value">{person.pid}</span>
             </div>
             <div className="info-group">
-              <span className="info-label">Date of Birth</span>
+              <span className="info-label">{t('sidebar.dob')}</span>
               <span className="info-value">{person.dob || '-'}</span>
             </div>
             {person.isDeceased && (
               <div className="info-group">
-                <span className="info-label">Date of Death</span>
+                <span className="info-label">{t('sidebar.dod')}</span>
                 <span className="info-value">{person.deathDate || '-'}</span>
               </div>
             )}
             <div className="info-group">
-              <span className="info-label">Phone</span>
+              <span className="info-label">{t('sidebar.phone')}</span>
               <span className="info-value">{person.phone || '-'}</span>
             </div>
             <div className="info-group">
-              <span className="info-label">Email ID</span>
+              <span className="info-label">{t('sidebar.email')}</span>
               <span className="info-value">{person.email || '-'}</span>
             </div>
             <div className="info-group">
-              <span className="info-label">Nakshatram</span>
+              <span className="info-label">{t('sidebar.nakshatram')}</span>
               <span className="info-value">{person.nakshatra ? person.nakshatra.split(' (')[0] : '-'}</span>
             </div>
             <div className="info-group">
-              <span className="info-label">Rashi</span>
+              <span className="info-label">{t('sidebar.rashi')}</span>
               <span className="info-value">{person.rashi ? person.rashi.split(' (')[0] : '-'}</span>
             </div>
             <div className="info-group" style={{ gridColumn: (person.gender === 'Female' && person.maidenGotram) ? 'auto' : 'span 2' }}>
-              <span className="info-label">Gotramu</span>
+              <span className="info-label">{t('sidebar.gotram')}</span>
               <span className="info-value">{person.gotram || '-'}</span>
             </div>
             {person.gender === 'Female' && person.maidenGotram && (
               <div className="info-group">
-                <span className="info-label">Maiden Gotram</span>
+                <span className="info-label">{t('sidebar.maiden_gotram')}</span>
                 <span className="info-value">{person.maidenGotram}</span>
               </div>
             )}
           </div>
 
-          <div className="sidebar-section-title" style={{ marginTop: '1rem' }}>Family</div>
+          <div className="sidebar-section-title" style={{ marginTop: '1rem' }}>{t('sidebar.family')}</div>
 
           <div className="info-group">
-            <span className="info-label">Father (తండ్రి)</span>
+            <span className="info-label">{t('sidebar.father')}</span>
             <span className="info-value">
               {father ? (
                 <button className="relation-link-btn" onClick={() => onSelectPerson(father)}>
                   {father.firstName} {father.surName}
                 </button>
-              ) : <span className="empty-text">None</span>}
+              ) : <span className="empty-text">{t('sidebar.none')}</span>}
             </span>
           </div>
 
           <div className="info-group">
-            <span className="info-label">Mother (తల్లి)</span>
+            <span className="info-label">{t('sidebar.mother')}</span>
             <span className="info-value">
               {mother ? (
                 <button className="relation-link-btn" onClick={() => onSelectPerson(mother)}>
                   {mother.firstName} {mother.surName}
                 </button>
-              ) : <span className="empty-text">None</span>}
+              ) : <span className="empty-text">{t('sidebar.none')}</span>}
             </span>
           </div>
 
           <div className="info-group">
-            <span className="info-label">Spouse (భార్య/భర్త)</span>
+            <span className="info-label">{t('sidebar.spouse')}</span>
             <span className="info-value">
               {spouses.length > 0 ? (
                 <div className="relation-links-list">
@@ -174,12 +176,12 @@ const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
                     </button>
                   ))}
                 </div>
-              ) : <span className="empty-text">None</span>}
+              ) : <span className="empty-text">{t('sidebar.none')}</span>}
             </span>
           </div>
 
           <div className="info-group">
-            <span className="info-label">Children (పిల్లలు)</span>
+            <span className="info-label">{t('sidebar.children')}</span>
             <span className="info-value">
               {children.length > 0 ? (
                 <div className="relation-links-list">
@@ -189,13 +191,13 @@ const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
                     </button>
                   ))}
                 </div>
-              ) : <span className="empty-text">None</span>}
+              ) : <span className="empty-text">{t('sidebar.none')}</span>}
             </span>
           </div>
 
           {person.notes && (
             <div className="info-group notes-group" style={{ marginTop: '1rem' }}>
-              <span className="info-label">Notes</span>
+              <span className="info-label">{t('sidebar.notes')}</span>
               <p className="info-value notes-text">{person.notes}</p>
             </div>
           )}
@@ -204,5 +206,6 @@ const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
     </>
   );
 };
+
 
 export default Sidebar;

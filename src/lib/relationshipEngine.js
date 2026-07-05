@@ -41,7 +41,7 @@ export function parseDate(dateStr) {
       return new Date(year, month, day);
     }
   }
-  
+
   // 3. Year only (e.g. 1945)
   if (/^\d{4}$/.test(s)) {
     return new Date(parseInt(s, 10), 0, 1);
@@ -84,14 +84,14 @@ export function getSiblings(profiles, pid) {
   const person = getPerson(profiles, pid);
   if (!person) return [];
   const siblings = new Set();
-  
+
   if (person.fatherId) {
     profiles.filter(p => p.fatherId === person.fatherId).forEach(c => siblings.add(c.pid));
   }
   if (person.motherId) {
     profiles.filter(p => p.motherId === person.motherId).forEach(c => siblings.add(c.pid));
   }
-  
+
   siblings.delete(pid);
   return Array.from(siblings);
 }
@@ -109,7 +109,7 @@ export function getGrandParents(profiles, pid) {
   const p = getPerson(profiles, pid);
   if (!p) return [];
   const gps = [];
-  
+
   if (p.fatherId) {
     const father = getPerson(profiles, p.fatherId);
     if (father) {
@@ -138,18 +138,18 @@ export function getRelationshipCode(profiles, homeId, targetId) {
   // BFS Queue: { id, code, path }
   let queue = [{ id: homeId, code: "", path: [homeId] }];
   let visited = new Set([homeId]);
-  const MAX_DEPTH = 50; 
+  const MAX_DEPTH = 50;
 
   while (queue.length > 0) {
     let curr = queue.shift();
 
     if (curr.id === targetId) {
-      return { 
-        code: normalizeCode(curr.code), 
-        path: curr.path 
+      return {
+        code: normalizeCode(curr.code),
+        path: curr.path
       };
     }
-    
+
     if (curr.path.length > MAX_DEPTH) continue;
 
     const p = getPerson(profiles, curr.id);
@@ -200,7 +200,7 @@ export function normalizeCode(raw) {
   if (!raw) return "";
   let code = raw;
   let prev;
-  
+
   do {
     prev = code;
     code = code.replace(/FS/g, 'B');
@@ -222,16 +222,16 @@ export function normalizeCode(raw) {
   return code;
 }
 
-export function getTerm(entryValue, lang = 'te') {
+export function getTerm(entryValue, lang = 'en') {
   if (!entryValue) return "";
   if (typeof entryValue === 'string') return entryValue;
-  return entryValue[lang] || entryValue['te'] || entryValue['en'] || "";
+  return entryValue[lang] || entryValue['en'] || entryValue['te'] || entryValue['kn'] || "";
 }
 
 /**
  * Resolves a relationship code to its local language display term.
  */
-export function resolveRelationName(profiles, result, homePerson, targetPerson, lang = 'te') {
+export function resolveRelationName(profiles, result, homePerson, targetPerson, lang = 'en') {
   if (!result) return "Unknown";
   const { code, path } = result;
 
@@ -266,10 +266,10 @@ export function resolveRelationName(profiles, result, homePerson, targetPerson, 
       if (comparisonNodeId) {
         const parent = getPerson(profiles, comparisonNodeId);
         const comparison = compareAge(targetPerson, parent);
-        
+
         if (comparison === 'older') return getTerm(entry.pedda || entry.elder, lang);
         if (comparison === 'younger') return getTerm(entry.chinna || entry.younger, lang);
-        
+
         return getTerm(entry.pedda || entry.elder, lang) + "/" + getTerm(entry.chinna || entry.younger, lang);
       }
     }
@@ -278,7 +278,7 @@ export function resolveRelationName(profiles, result, homePerson, targetPerson, 
       const siblingId = path[path.length - 2];
       const sibling = getPerson(profiles, siblingId);
       const comparison = compareAge(sibling, homePerson);
-      
+
       if (comparison === 'older') return getTerm(entry.elder, lang);
       if (comparison === 'younger') return getTerm(entry.younger, lang);
       return getTerm(entry.elder, lang) + "/" + getTerm(entry.younger, lang);
@@ -288,7 +288,7 @@ export function resolveRelationName(profiles, result, homePerson, targetPerson, 
       const siblingId = path[path.length - 2];
       const sibling = getPerson(profiles, siblingId);
       const comparison = compareAge(sibling, homePerson);
-      
+
       if (comparison === 'older') return getTerm(entry.elder, lang);
       if (comparison === 'younger') return getTerm(entry.younger, lang);
       return getTerm(entry.elder, lang) + "/" + getTerm(entry.younger, lang);
@@ -317,12 +317,12 @@ export function resolveRelationName(profiles, result, homePerson, targetPerson, 
 /**
  * Main external API to resolve relationship names directly.
  */
-export function findRelationship(profiles, id1, id2, lang = 'te') {
+export function findRelationship(profiles, id1, id2, lang = 'en') {
   const p1 = getPerson(profiles, id1);
   const p2 = getPerson(profiles, id2);
   if (!p1 || !p2) return "Unknown";
-  
-  if (id1 === id2) return lang === 'te' ? 'నా స్వంతం' : (lang === 'kn' ? 'ಸ್ವಂತ' : 'Self');
+
+  if (id1 === id2) return lang === 'te' ? 'నేను' : (lang === 'kn' ? 'ನಾನು' : 'Self');
 
   const result = getRelationshipCode(profiles, id1, id2);
   if (!result) return lang === 'te' ? 'సంబంధం లేదు' : (lang === 'kn' ? 'ಸಂಬಂಧವಿಲ್ಲ' : 'No relation');

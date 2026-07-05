@@ -2,9 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HelpCircle } from 'lucide-react';
 import SearchableSelect from '../components/SearchableSelect';
+import { useLanguage } from '../context/LanguageContext';
 
 const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
   // Load saved home person pid from local storage
   const [homePid, setHomePid] = useState(() => {
@@ -184,10 +186,10 @@ const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
               margin: '0 0 0.5rem',
               fontFamily: "'Outfit', sans-serif"
             }}>
-              Select Home Person
+              {t('home_person.select_title')}
             </h2>
             <p style={{ color: '#666', fontSize: '0.9rem', margin: 0, lineHeight: 1.45 }}>
-              Select or change the primary focus person to initialize the lineage tree display.
+              {t('home_person.select_desc')}
             </p>
           </div>
         )}
@@ -198,7 +200,7 @@ const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
             options={personOptions}
             value={homePid}
             onChange={handlePersonChange}
-            placeholder="Search and select Home Person..."
+            placeholder={t('home_person.placeholder')}
           />
         </div>
 
@@ -207,10 +209,10 @@ const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
           <>
             <div className="welcome-banner" style={{ marginTop: '1rem' }}>
               <h3 className="welcome-title">
-                Welcome, {selectedPerson.firstName}!
+                {t('home_person.welcome', { name: selectedPerson.firstName })}
               </h3>
               <p className="welcome-subtitle">
-                You have configured <strong>{selectedPerson.firstName} {selectedPerson.surName} ({selectedPerson.pid})</strong> as the home focus.
+                {t('home_person.configured', { name: `${selectedPerson.firstName} ${selectedPerson.surName}`, id: selectedPerson.pid })}
               </p>
             </div>
 
@@ -225,14 +227,14 @@ const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
                 className="tree-image-premium"
               />
               <div className="tree-frame-overlay">
-                <span>Click Tree to Explore</span>
+                <span>{t('home_person.explore_tree')}</span>
               </div>
             </div>
 
             <div className="tip-box" style={{ marginTop: '1.25rem' }}>
               <HelpCircle className="tip-icon" size={16} />
               <div>
-                <strong>Perspective configuration saved:</strong> You can return to this page anytime in the future to change your focus person or explore from another branch.
+                <strong>{t('home_person.tip_title')}</strong> {t('home_person.tip_desc')}
               </div>
             </div>
           </>

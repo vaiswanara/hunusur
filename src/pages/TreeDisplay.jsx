@@ -2,29 +2,31 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Info, Home, UserCheck } from 'lucide-react';
 import initialData from '../data.json';
 import Sidebar from '../components/Sidebar';
+import { useLanguage } from '../context/LanguageContext';
 
 
-// Utility to calculate exact relationship tag in Telugu
-const getRelationshipTag = (person, type, focusedPerson, isElder) => {
-  if (type === 'father') return 'తండ్రి';
-  if (type === 'mother') return 'తల్లి';
-  if (type === 'spouse') return person.gender === 'Female' ? 'భార్య' : 'భర్త';
-  if (type === 'child') return person.gender === 'Male' ? 'కొడుకు' : 'కూతురు';
+// Utility to calculate exact relationship tag based on language
+const getRelationshipTag = (person, type, focusedPerson, isElder, t) => {
+  if (type === 'father') return t('tree.relationships.father');
+  if (type === 'mother') return t('tree.relationships.mother');
+  if (type === 'spouse') return person.gender === 'Female' ? t('tree.relationships.spouse_female') : t('tree.relationships.spouse_male');
+  if (type === 'child') return person.gender === 'Male' ? t('tree.relationships.child_male') : t('tree.relationships.child_female');
   if (type === 'sibling') {
-    if (person.gender === 'Male') return isElder ? 'అన్న' : 'తమ్ముడు';
-    return isElder ? 'అక్క' : 'చెల్లి';
+    if (person.gender === 'Male') return isElder ? t('tree.relationships.brother_elder') : t('tree.relationships.brother_younger');
+    return isElder ? t('tree.relationships.sister_elder') : t('tree.relationships.sister_younger');
   }
   return '';
 };
 
 const PersonIcon = ({ person, type, focusedPerson, isElder, onFocus, onInfo, isFocused }) => {
   if (!person) return null;
+  const { t } = useLanguage();
 
   const iconSrc = person.photoUrl
     ? person.photoUrl
     : `${import.meta.env.BASE_URL}icons/${person.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
-  const displayName = `${person.isDeceased ? 'Late ' : ''}${person.surName ? person.surName.charAt(0).toUpperCase() + '.' : ''} ${person.firstName}`;
-  const tag = getRelationshipTag(person, type, focusedPerson, isElder);
+  const displayName = `${person.isDeceased ? t('sidebar.late') + ' ' : ''}${person.surName ? person.surName.charAt(0).toUpperCase() + '.' : ''} ${person.firstName}`;
+  const tag = getRelationshipTag(person, type, focusedPerson, isElder, t);
 
   // Dynamic classes
   const genderClass = person.gender === 'Male' ? 'gender-male' : 'gender-female';
@@ -82,6 +84,7 @@ const VerticalConnector = () => (
 
 const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sidebarPerson, setSidebarPerson }) => {
   const profiles = profilesProp || initialData;
+  const { t } = useLanguage();
 
   // If profiles change externally and focusedPid no longer exists, reset to first
   useEffect(() => {
@@ -122,7 +125,7 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
     return { person, parents, spouses, children, siblings, focusedDisplayOrder };
   }, [focusedPid, profiles]);
 
-  if (!treeData) return <div className="tree-container">No Data Available</div>;
+  if (!treeData) return <div className="tree-container">{t('tree.no_data')}</div>;
 
   return (
     <div className="tree-layout-wrapper">
@@ -183,7 +186,7 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
             {/* Connecting line to children */}
             {treeData.spouses.length > 0 && treeData.children.length > 0 && (
               <div className="vertical-connector-internal">
-                <div className="internal-label">Children</div>
+                <div className="internal-label">{t('tree.children')}</div>
               </div>
             )}
 
@@ -214,5 +217,6 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
     </div>
   );
 };
+
 
 export default TreeDisplay;

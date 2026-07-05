@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 import { Calendar, Cake } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const MONTH_NAMES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const WEEKDAYS = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 
 const Birthdays = ({ profiles }) => {
+  const { t } = useLanguage();
   const upcomingBirthdays = useMemo(() => {
     // Current date and year
     const today = new Date();
@@ -79,18 +81,18 @@ const Birthdays = ({ profiles }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', borderBottom: '2px solid var(--color-sandalwood)', paddingBottom: '1rem' }}>
         <Cake size={28} style={{ color: 'var(--color-maroon)' }} />
         <h3 style={{ color: 'var(--color-maroon)', fontSize: '1.6rem', margin: 0 }}>
-          Upcoming Birthdays
+          {t('birthdays.title')}
         </h3>
       </div>
 
       <p style={{ color: '#666', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: 1.5 }}>
-        List of family members celebrating their birthdays in the next 15 days.
+        {t('birthdays.desc')}
       </p>
 
       {upcomingBirthdays.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: '#999', backgroundColor: '#FAFAFA', borderRadius: '8px', border: '1px dashed #DDD' }}>
           <Calendar size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-          <p style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>No upcoming birthdays in the next 15 days.</p>
+          <p style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>{t('birthdays.no_birthdays')}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '600px', margin: '0 auto' }}>

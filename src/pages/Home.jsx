@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GitBranch, ArrowRight, RefreshCw } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const Home = ({ profiles }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // Find the primary surname from the home person (if configured)
   const homePid = localStorage.getItem('vamsha_home_pid');
@@ -83,7 +85,7 @@ const Home = ({ profiles }) => {
             letterSpacing: '1px',
             fontFamily: "'Outfit', 'Inter', sans-serif"
           }}>
-            VAMSHA
+            {t('home.title')}
           </h2>
           <p style={{
             color: '#8C6A53',
@@ -93,17 +95,17 @@ const Home = ({ profiles }) => {
             letterSpacing: '2px',
             textTransform: 'uppercase'
           }}>
-            {primarySurname ? `${primarySurname.toUpperCase()} FAMILY TREE` : 'TRADITIONAL FAMILY TREE'}
+            {primarySurname ? `${primarySurname.toUpperCase()} ${t('home.subtitle_family_tree')}` : t('home.subtitle_family_tree')}
           </p>
         </div>
 
         {/* Welcome Message */}
         <div style={{ marginBottom: '3rem' }}>
           <h3 style={{ fontSize: '1.35rem', color: '#333', fontWeight: 700, margin: '0 0 0.75rem' }}>
-            Welcome to Our Family Tree
+            {t('home.welcome_title')}
           </h3>
           <p style={{ color: '#666', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
-            Discover our lineage, relationships, and special astrological details. Select a primary member to explore the interactive tree display.
+            {t('home.welcome_desc')}
           </p>
         </div>
 
@@ -125,7 +127,7 @@ const Home = ({ profiles }) => {
             }}
           >
             <GitBranch size={20} />
-            Explore Family Tree
+            {t('home.explore_btn')}
             <ArrowRight size={18} />
           </button>
         </div>
@@ -163,10 +165,11 @@ const Home = ({ profiles }) => {
         }}
       >
         <RefreshCw size={12} />
-        Force Sync / Hard Refresh
+        {t('home.sync_btn')}
       </button>
     </div>
   );
 };
+
 
 export default Home;

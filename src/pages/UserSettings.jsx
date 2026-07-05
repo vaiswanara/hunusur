@@ -4,8 +4,10 @@ import {
   Sliders, Shield, Camera, Moon, Calendar, Phone, Mail, 
   GitFork, GitBranch, Heart, FileText, ChevronDown, ChevronUp, Download 
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
+  const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState('general');
   const [expandedSection, setExpandedSection] = useState(null);
   const navigate = useNavigate();
@@ -64,7 +66,7 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
     <div className="card" style={{ padding: '2rem', borderRadius: '12px', marginBottom: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', borderBottom: '2px solid var(--color-sandalwood)', paddingBottom: '1rem' }}>
         <Sliders size={28} style={{ color: 'var(--color-maroon)' }} />
-        <h3 style={{ color: 'var(--color-maroon)', fontSize: '1.6rem', margin: 0 }}>Settings</h3>
+        <h3 style={{ color: 'var(--color-maroon)', fontSize: '1.6rem', margin: 0 }}>{t('settings.title')}</h3>
       </div>
 
       {/* Tabs */}
@@ -87,7 +89,7 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
             transition: 'all 0.2s ease'
           }}
         >
-          <Sliders size={18} /> General
+          <Sliders size={18} /> {t('settings.tab_general')}
         </button>
         <button 
           className={`settings-tab-btn ${activeTab === 'check' ? 'active' : ''}`}
@@ -107,7 +109,7 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
             transition: 'all 0.2s ease'
           }}
         >
-          <Shield size={18} /> Data Check
+          <Shield size={18} /> {t('settings.tab_datacheck')}
         </button>
       </div>
 
@@ -115,6 +117,48 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
       <div>
         {activeTab === 'general' && (
           <div>
+            {/* Language Selection Card */}
+            <div style={{
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #EFE4DC',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              marginBottom: '2rem'
+            }}>
+              <h4 style={{ margin: '0 0 1.25rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🌐 {t('settings.lang_label')}
+              </h4>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', maxWidth: '500px' }}>
+                {[
+                  { code: 'te', name: t('settings.lang_te') },
+                  { code: 'kn', name: t('settings.lang_kn') },
+                  { code: 'en', name: t('settings.lang_en') }
+                ].map(opt => (
+                  <button
+                    key={opt.code}
+                    onClick={() => setLanguage(opt.code)}
+                    style={{
+                      padding: '0.75rem 1.25rem',
+                      borderRadius: '10px',
+                      border: language === opt.code ? '2.5px solid var(--color-maroon)' : '1.5px solid #EFE4DC',
+                      backgroundColor: language === opt.code ? '#ffffff' : '#FAF9F6',
+                      color: language === opt.code ? 'var(--color-maroon)' : '#666',
+                      fontWeight: '700',
+                      fontSize: '0.92rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease',
+                      flex: '1 1 120px',
+                      textAlign: 'center',
+                      boxShadow: language === opt.code ? '0 4px 10px rgba(99, 19, 29, 0.1)' : 'none'
+                    }}
+                  >
+                    {opt.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Install PWA Component */}
             <div className="install-card" style={{
               backgroundColor: '#FAF8F5',
@@ -133,10 +177,10 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
                 />
                 <div style={{ textAlign: 'left' }}>
                   <h3 style={{ margin: 0, color: 'var(--color-maroon, #63131D)', fontSize: '1.25rem', fontWeight: 700 }}>
-                    Install Vamsha App
+                    {t('settings.install_app')}
                   </h3>
                   <p style={{ margin: '6px 0 0', color: '#666', fontSize: '0.9rem', lineHeight: 1.4, maxWidth: '400px' }}>
-                    Add Vamsha App to your phone's home screen for a fast, full-screen experience (works offline after first load).
+                    {t('settings.install_desc')}
                   </p>
                 </div>
               </div>
@@ -151,12 +195,12 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
                     boxShadow: deferredPrompt ? '0 4px 12px rgba(99, 19, 29, 0.2)' : 'none'
                   }}
                 >
-                  <Download size={18} /> Install Vamsha App
+                  <Download size={18} /> {t('settings.install_btn')}
                 </button>
               </div>
               {!deferredPrompt && (
                 <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#888' }}>
-                  ℹ️ If this button is disabled, the app may already be installed or your browser does not support one-click install. Follow the manual steps below.
+                  ℹ️ {t('settings.install_disabled_info')}
                 </div>
               )}
             </div>
@@ -170,17 +214,17 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
               marginBottom: '1.5rem'
             }}>
               <h4 style={{ margin: '0 0 10px', color: 'var(--color-maroon)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🍎 iPhone / iPad Instructions:
+                🍎 {t('settings.ios_title')}
               </h4>
               <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.5, marginBottom: '10px' }}>
-                iOS does not support one-click install. Follow these simple steps:
+                {t('settings.ios_desc')}
               </p>
               <div style={{ fontSize: '0.9rem', color: '#444', lineHeight: 1.6, backgroundColor: '#FAF9F6', padding: '12px 18px', borderRadius: '8px', border: '1px solid #EEE' }}>
                 <ol style={{ paddingLeft: '20px', margin: 0 }}>
-                  <li style={{ marginBottom: '6px' }}>Open this website in <strong>Safari</strong>.</li>
-                  <li style={{ marginBottom: '6px' }}>Tap the <strong>Share</strong> button (square with arrow up) at the bottom.</li>
-                  <li style={{ marginBottom: '6px' }}>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
-                  <li>Tap <strong>Add</strong> in the top right corner.</li>
+                  <li style={{ marginBottom: '6px' }}>{t('settings.ios_step1')}</li>
+                  <li style={{ marginBottom: '6px' }}>{t('settings.ios_step2')}</li>
+                  <li style={{ marginBottom: '6px' }}>{t('settings.ios_step3')}</li>
+                  <li>{t('settings.ios_step4')}</li>
                 </ol>
               </div>
             </div>
@@ -194,19 +238,19 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
               marginBottom: '2rem'
             }}>
               <h4 style={{ margin: '0 0 10px', color: '#2e7d32', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🛡️ Safety Information:
+                🛡️ {t('settings.safety_title')}
               </h4>
               <p style={{ fontSize: '0.9rem', color: '#333', lineHeight: 1.5, marginBottom: '15px' }}>
-                This is <strong>NOT</strong> an APK or Play Store application. It only creates a shortcut to this website on your phone's home screen.
+                {t('settings.safety_desc')}
               </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem', color: '#444', lineHeight: 1.8 }}>
-                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> No files are downloaded to your phone.</li>
-                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> No permissions are requested.</li>
-                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> No personal information is collected.</li>
-                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> You can remove it anytime by deleting the icon.</li>
+                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> {t('settings.safety_bullet1')}</li>
+                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> {t('settings.safety_bullet2')}</li>
+                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> {t('settings.safety_bullet3')}</li>
+                <li style={{ marginBottom: '6px', display: 'flex', gap: '10px' }}><span style={{ color: '#2e7d32', fontWeight: 'bold' }}>✔</span> {t('settings.safety_bullet4')}</li>
               </ul>
               <p style={{ marginTop: '12px', fontWeight: '600', color: '#2e7d32', fontSize: '0.9rem', marginBottom: 0 }}>
-                Your phone security and privacy remain completely safe.
+                {t('settings.safety_footer')}
               </p>
             </div>
 

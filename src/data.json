@@ -67,7 +67,7 @@
     "spouseIds": [
       "PID0003"
     ],
-    "displayOrder": 4,
+    "displayOrder": 5,
     "isDeceased": false,
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0004.jpg",
     "dob": "",
@@ -76,8 +76,8 @@
     "nakshatra": "",
     "rashi": "",
     "deathDate": "",
-    "fatherId": "",
-    "motherId": ""
+    "fatherId": "PID0163",
+    "motherId": "PID0164"
   },
   {
     "firstName": "Srinivas",
@@ -130,7 +130,7 @@
     "spouseIds": [
       "PID0008"
     ],
-    "dob": "16-02-1982",
+    "dob": "1982-07-16",
     "phone": "9482094290",
     "email": "vaiswanara@gmail.com",
     "photoUrl": "https://raw.githubusercontent.com/vaiswanara/dfwa/main/photos/PID0007.jpg",
@@ -2988,7 +2988,6 @@
     "surName": "Suswaram",
     "gender": "Male",
     "spouseIds": [
-      "PID0154",
       "PID0156"
     ],
     "isDeceased": true,
@@ -3013,7 +3012,7 @@
     "spouseIds": [
       "PID0155"
     ],
-    "displayOrder": 1,
+    "displayOrder": 4,
     "dob": "",
     "phone": "",
     "email": "",
@@ -3021,8 +3020,8 @@
     "nakshatra": "",
     "rashi": "",
     "deathDate": "",
-    "fatherId": "",
-    "motherId": ""
+    "fatherId": "PID0163",
+    "motherId": "PID0164"
   },
   {
     "firstName": "Lakshmi Devi",
@@ -3139,5 +3138,372 @@
     "deathDate": "",
     "fatherId": "",
     "motherId": ""
+  },
+  {
+    "pid": "PID0163",
+    "firstName": "Narayana Rao",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "maidenName": "",
+    "dob": "",
+    "phone": "",
+    "email": "",
+    "notes": "",
+    "fatherId": "",
+    "motherId": "",
+    "spouseIds": [
+      "PID0164"
+    ],
+    "displayOrder": 1,
+    "isDeceased": true,
+    "deathDate": "",
+    "photoUrl": "",
+    "gotram": ""
+  },
+  {
+    "pid": "PID0164",
+    "firstName": "Ramadevamma",
+    "surName": "Adoni",
+    "isDeceased": true,
+    "gender": "Female",
+    "spouseIds": [
+      "PID0163"
+    ],
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Srinivasa Rao",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0163",
+    "motherId": "PID0164",
+    "displayOrder": 1,
+    "isDeceased": true,
+    "pid": "PID0165",
+    "spouseIds": [
+      "PID0166"
+    ],
+    "deathDate": ""
+  },
+  {
+    "firstName": "Lalitha",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0165"
+    ],
+    "isDeceased": false,
+    "pid": "PID0166",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Seetha",
+    "surName": "Hoturu",
+    "gender": "Female",
+    "fatherId": "PID0163",
+    "motherId": "PID0164",
+    "displayOrder": 2,
+    "isDeceased": true,
+    "pid": "PID0167",
+    "spouseIds": [
+      "PID0168"
+    ]
+  },
+  {
+    "firstName": "Krishna murthy Rao(Kittu)",
+    "surName": "Adoni",
+    "gender": "Male",
+    "spouseIds": [
+      "PID0167"
+    ],
+    "isDeceased": true,
+    "pid": "PID0168",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Rukkamma",
+    "surName": "Hoturu",
+    "gender": "Female",
+    "fatherId": "PID0163",
+    "motherId": "PID0164",
+    "displayOrder": 3,
+    "isDeceased": true,
+    "pid": "PID0169",
+    "spouseIds": [
+      "PID0170"
+    ]
+  },
+  {
+    "firstName": "Rama Rao",
+    "surName": "",
+    "gender": "Male",
+    "spouseIds": [
+      "PID0169"
+    ],
+    "isDeceased": true,
+    "pid": "PID0170",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Shanta Kumari",
+    "surName": "Hoturu",
+    "gender": "Female",
+    "fatherId": "PID0163",
+    "motherId": "PID0164",
+    "displayOrder": 6,
+    "isDeceased": false,
+    "pid": "PID0171",
+    "spouseIds": [
+      "PID0172"
+    ],
+    "deathDate": ""
+  },
+  {
+    "firstName": "Narayana Rao",
+    "surName": "Peddirajula",
+    "gender": "Male",
+    "spouseIds": [
+      "PID0171"
+    ],
+    "isDeceased": true,
+    "pid": "PID0172",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Saradha",
+    "surName": "Hoturu",
+    "gender": "Female",
+    "fatherId": "PID0163",
+    "motherId": "PID0164",
+    "displayOrder": 7,
+    "isDeceased": false,
+    "pid": "PID0173",
+    "spouseIds": [
+      "PID0174"
+    ],
+    "deathDate": ""
+  },
+  {
+    "firstName": "Gopal ",
+    "surName": "BS",
+    "gender": "Male",
+    "spouseIds": [
+      "PID0173"
+    ],
+    "isDeceased": false,
+    "pid": "PID0174",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Subramanyam",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0163",
+    "motherId": "PID0164",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0175",
+    "spouseIds": [
+      "PID0176"
+    ],
+    "deathDate": ""
+  },
+  {
+    "firstName": "Seeta Lakshmi",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0175"
+    ],
+    "isDeceased": false,
+    "pid": "PID0176",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Ram Kumar",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0165",
+    "motherId": "PID0166",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0177",
+    "spouseIds": []
+  },
+  {
+    "firstName": "Hema",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0165",
+    "motherId": "PID0166",
+    "displayOrder": 2,
+    "isDeceased": false,
+    "pid": "PID0178",
+    "spouseIds": [
+      "PID0179"
+    ]
+  },
+  {
+    "firstName": "Bheemasen Rao",
+    "surName": "Paluru",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0178"
+    ],
+    "isDeceased": false,
+    "pid": "PID0179",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Srividhya",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0165",
+    "motherId": "PID0166",
+    "displayOrder": 3,
+    "isDeceased": false,
+    "pid": "PID0180",
+    "spouseIds": [
+      "PID0181"
+    ]
+  },
+  {
+    "firstName": "Mohan Krishna",
+    "surName": "Paluru",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0180"
+    ],
+    "isDeceased": false,
+    "pid": "PID0181",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Lakshmana",
+    "surName": "Suswaram",
+    "gender": "Male",
+    "fatherId": "PID0155",
+    "motherId": "PID0156",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0182",
+    "spouseIds": []
+  },
+  {
+    "firstName": "Saroja",
+    "surName": "Suswaram",
+    "gender": "Female",
+    "fatherId": "PID0155",
+    "motherId": "PID0156",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0183",
+    "spouseIds": [
+      "PID0184"
+    ],
+    "deathDate": ""
+  },
+  {
+    "firstName": "Kumar",
+    "surName": "Dharmavaram",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0183"
+    ],
+    "isDeceased": false,
+    "pid": "PID0184",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Raghavendra Rao",
+    "surName": "Suswaram",
+    "gender": "Male",
+    "fatherId": "PID0155",
+    "motherId": "PID0156",
+    "displayOrder": 3,
+    "isDeceased": false,
+    "pid": "PID0185",
+    "spouseIds": [
+      "PID0186"
+    ]
+  },
+  {
+    "firstName": "Bharathi",
+    "surName": "Kongatam",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0185"
+    ],
+    "isDeceased": false,
+    "pid": "PID0186",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Raghavendra",
+    "surName": "Peddirajula",
+    "gender": "Male",
+    "fatherId": "PID0172",
+    "motherId": "PID0171",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0187",
+    "spouseIds": []
+  },
+  {
+    "firstName": "Ragini",
+    "surName": "BS",
+    "gender": "Female",
+    "fatherId": "PID0174",
+    "motherId": "PID0173",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0188",
+    "spouseIds": []
+  },
+  {
+    "firstName": "Anush Kumar",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0175",
+    "motherId": "PID0176",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0189",
+    "spouseIds": [
+      "PID0190"
+    ]
+  },
+  {
+    "firstName": "Bindu",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0189"
+    ],
+    "isDeceased": false,
+    "pid": "PID0190",
+    "displayOrder": 1
+  },
+  {
+    "firstName": "Abhilash",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0175",
+    "motherId": "PID0176",
+    "displayOrder": 2,
+    "isDeceased": false,
+    "pid": "PID0191",
+    "spouseIds": []
+  },
+  {
+    "firstName": "Akhilesh",
+    "surName": "Hoturu",
+    "gender": "Male",
+    "fatherId": "PID0175",
+    "motherId": "PID0176",
+    "displayOrder": 3,
+    "isDeceased": false,
+    "pid": "PID0192",
+    "spouseIds": []
   }
 ]

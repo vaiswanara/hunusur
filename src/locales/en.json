@@ -73,7 +73,10 @@
     "safety_bullet2": "No permissions are requested.",
     "safety_bullet3": "No personal information is collected.",
     "safety_bullet4": "You can remove it anytime by deleting the icon.",
-    "safety_footer": "Your phone security and privacy remain completely safe."
+    "safety_footer": "Your phone security and privacy remain completely safe.",
+    "birthday_gen_limit": "Birthday Generation Limit",
+    "birthday_gen_desc": "Limit the birthday list to family members within a certain number of generations from the Home Person.",
+    "birthday_gen_option": "{num} Generations"
   },
   "tree": {
     "no_data": "No Data Available",
@@ -102,6 +105,12 @@
     "celebrating": "celebrates on {date}",
     "turning": "turning {age}",
     "days_away": "days away",
-    "today": "Today!"
+    "today": "Today!",
+    "tomorrow": "Tomorrow!",
+    "days_left": "{days} days left",
+    "no_home_person": "Please select a Home Person to filter birthdays by generation.",
+    "set_home_btn": "Set Home Person",
+    "whatsapp_wish_msg": "Happy Birthday, {name}! Wishing you a wonderful year ahead.",
+    "email_wish_subj": "Happy Birthday!"
   }
 }

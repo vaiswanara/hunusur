@@ -19,8 +19,8 @@ const getRelationshipTag = (person, type, focusedPerson, isElder, t) => {
 };
 
 const PersonIcon = ({ person, type, focusedPerson, isElder, onFocus, onInfo, isFocused }) => {
-  if (!person) return null;
   const { t } = useLanguage();
+  if (!person) return null;
 
   const iconSrc = person.photoUrl
     ? person.photoUrl
@@ -106,23 +106,42 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
     const spouses = (person.spouseIds || [])
       .map(id => profiles.find(p => p.pid === id))
       .filter(Boolean);
-    const children = profiles.filter(p => p.fatherId === focusedPid || p.motherId === focusedPid)
-      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    const sortPeople = (a, b) => {
+      const orderA = a.displayOrder || 0;
+      const orderB = b.displayOrder || 0;
+      if (orderA !== orderB) return orderA - orderB;
 
-    let siblings = [];
-    let focusedDisplayOrder = person.displayOrder || 0;
+      // Secondary fallback: DOB (older first)
+      if (a.dob && b.dob) {
+        return a.dob.localeCompare(b.dob);
+      }
+      if (a.dob) return -1;
+      if (b.dob) return 1;
+
+      // Stable fallback: PID
+      return a.pid.localeCompare(b.pid);
+    };
+
+    const children = profiles.filter(p => p.fatherId === focusedPid || p.motherId === focusedPid)
+      .sort(sortPeople);
+
+    let elderSiblings = [];
+    let youngerSiblings = [];
     if (person.fatherId || person.motherId) {
-      const allSiblings = profiles.filter(p => {
-        if (p.pid === focusedPid) return false;
+      const allSiblingsAndSelf = profiles.filter(p => {
         if (person.fatherId && p.fatherId === person.fatherId) return true;
         if (person.motherId && p.motherId === person.motherId) return true;
         return false;
-      });
-      // If all siblings share same parent, sort and determine elder/younger by displayOrder
-      siblings = allSiblings.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      }).sort(sortPeople);
+
+      const selfIdx = allSiblingsAndSelf.findIndex(p => p.pid === focusedPid);
+      if (selfIdx >= 0) {
+        elderSiblings = allSiblingsAndSelf.slice(0, selfIdx);
+        youngerSiblings = allSiblingsAndSelf.slice(selfIdx + 1);
+      }
     }
 
-    return { person, parents, spouses, children, siblings, focusedDisplayOrder };
+    return { person, parents, spouses, children, elderSiblings, youngerSiblings };
   }, [focusedPid, profiles]);
 
   if (!treeData) return <div className="tree-container">{t('tree.no_data')}</div>;
@@ -152,16 +171,16 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
 
       <div className="tree-card">
         <div className="card-content row-flex wrap">
-          {/* Elder Siblings — lower displayOrder than focused person */}
-          {treeData.siblings.filter(s => (s.displayOrder || 0) < (treeData.person.displayOrder || 0)).map(s => (
+          {/* Elder Siblings */}
+          {treeData.elderSiblings.map(s => (
             <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
           ))}
 
           {/* Focused Person */}
           <PersonIcon person={treeData.person} isFocused={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
 
-          {/* Younger Siblings — higher displayOrder than focused person */}
-          {treeData.siblings.filter(s => (s.displayOrder || 0) > (treeData.person.displayOrder || 0)).map(s => (
+          {/* Younger Siblings */}
+          {treeData.youngerSiblings.map(s => (
             <PersonIcon key={s.pid} person={s} type="sibling" isElder={false} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
           ))}
         </div>

@@ -44,7 +44,11 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit }
       if (name === 'fatherId' || name === 'motherId') {
         const fatherId = name === 'fatherId' ? value : prev.fatherId;
         const motherId = name === 'motherId' ? value : prev.motherId;
-        if (fatherId || motherId) {
+        
+        const originalProfile = profiles.find(p => p.pid === prev.pid);
+        if (originalProfile && originalProfile.fatherId === fatherId && originalProfile.motherId === motherId) {
+          updated.displayOrder = originalProfile.displayOrder || 1;
+        } else if (fatherId || motherId) {
           const siblingsCount = profiles.filter(p =>
             p.pid !== prev.pid &&
             ((fatherId && p.fatherId === fatherId) || (motherId && p.motherId === motherId))

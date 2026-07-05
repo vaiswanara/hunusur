@@ -12,6 +12,16 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
   const [expandedSection, setExpandedSection] = useState(null);
   const navigate = useNavigate();
 
+  const [bdayGenLimit, setBdayGenLimit] = useState(() => {
+    return parseInt(localStorage.getItem('vamsha_birthday_gen_limit') || '6', 10);
+  });
+
+  const handleBdayGenLimitChange = (e) => {
+    const limit = parseInt(e.target.value, 10);
+    setBdayGenLimit(limit);
+    localStorage.setItem('vamsha_birthday_gen_limit', limit);
+  };
+
   const handleInstallClick = () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -156,6 +166,47 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
                     {opt.name}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Birthday Generation Limit Card */}
+            <div style={{
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #EFE4DC',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              marginBottom: '2rem'
+            }}>
+              <h4 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🎂 {t('settings.birthday_gen_limit')}
+              </h4>
+              <p style={{ margin: '0 0 1.25rem', color: '#666', fontSize: '0.88rem', lineHeight: 1.45 }}>
+                {t('settings.birthday_gen_desc')}
+              </p>
+              <div style={{ maxWidth: '300px' }}>
+                <select
+                  value={bdayGenLimit}
+                  onChange={handleBdayGenLimitChange}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #EFE4DC',
+                    backgroundColor: '#ffffff',
+                    color: '#333',
+                    fontWeight: '600',
+                    fontSize: '0.95rem',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(num => (
+                    <option key={num} value={num}>
+                      {t('settings.birthday_gen_option', { num })}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

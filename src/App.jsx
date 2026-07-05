@@ -316,6 +316,7 @@ export function enrichProfiles(rawProfiles) {
 
 function App() {
   const [profiles, setProfiles] = useState(initialData);
+  const [savedProfilesBaseline, setSavedProfilesBaseline] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
@@ -364,6 +365,7 @@ function App() {
     try {
       const data = await fetchProfiles();
       setProfiles(data);
+      setSavedProfilesBaseline(data);
       setUpdateAvailable(false);
       setLoadError(null);
     } catch (err) {
@@ -404,10 +406,12 @@ function App() {
     fetchProfiles()
       .then((data) => {
         setProfiles(data);
+        setSavedProfilesBaseline(data);
         setLoadError(null);
       })
       .catch((err) => {
         console.warn('Could not fetch remote profiles, using bundled data:', err.message);
+        setSavedProfilesBaseline(initialData);
         // Keep initialData as fallback — app still works
         setLoadError(err.message);
       })
@@ -427,6 +431,23 @@ function App() {
       }
     }
   }, [profiles]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!savedProfilesBaseline) return false;
+    return JSON.stringify(profiles) !== JSON.stringify(savedProfilesBaseline);
+  }, [profiles, savedProfilesBaseline]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const updateProfiles = (newProfiles) => {
     setProfiles(newProfiles);
@@ -520,6 +541,8 @@ function App() {
           <Route path="/" element={
             <HomePage 
               profiles={enrichedProfiles} 
+              deferredPrompt={deferredPrompt}
+              setDeferredPrompt={setDeferredPrompt}
             />
           } />
           <Route path="/home-person" element={
@@ -549,7 +572,12 @@ function App() {
           } />
           <Route path="/admin" element={
             <AdminGate>
-              <AdminPage profiles={profiles} setProfiles={updateProfiles} />
+              <AdminPage 
+                profiles={profiles} 
+                setProfiles={updateProfiles} 
+                savedProfilesBaseline={savedProfilesBaseline}
+                setSavedProfilesBaseline={setSavedProfilesBaseline}
+              />
             </AdminGate>
           } />
         </Routes>

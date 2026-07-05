@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GitBranch, ArrowRight, RefreshCw } from 'lucide-react';
+import { GitBranch, ArrowRight, RefreshCw, Download } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const Home = ({ profiles }) => {
+const Home = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -14,6 +14,17 @@ const Home = ({ profiles }) => {
 
   const handleExploreClick = () => {
     navigate('/home-person');
+  };
+
+  const handleInstallClick = () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted PWA installation');
+      }
+      setDeferredPrompt(null);
+    });
   };
 
   const handleHardRefresh = () => {
@@ -110,7 +121,7 @@ const Home = ({ profiles }) => {
         </div>
 
         {/* Dynamic Interactive Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center', width: '100%' }}>
           <button
             className="btn btn-primary"
             onClick={handleExploreClick}
@@ -130,6 +141,38 @@ const Home = ({ profiles }) => {
             {t('home.explore_btn')}
             <ArrowRight size={18} />
           </button>
+
+          {deferredPrompt && (
+            <button
+              className="btn"
+              onClick={handleInstallClick}
+              style={{
+                width: '100%',
+                padding: '0.9rem 2rem',
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                borderRadius: '10px',
+                border: '1.5px solid var(--color-maroon, #63131D)',
+                color: 'var(--color-maroon, #63131D)',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                fontWeight: 700
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'rgba(99, 19, 29, 0.05)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <Download size={20} />
+              {t('settings.install_btn')}
+            </button>
+          )}
         </div>
       </div>
 

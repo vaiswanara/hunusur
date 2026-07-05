@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Users, Edit3, UserPlus, Save, CheckCircle, AlertCircle, LogOut, Camera, Moon, GitBranch, Sliders } from 'lucide-react';
+import { Users, Edit3, UserPlus, Save, CheckCircle, AlertCircle, LogOut, Camera, Moon, GitBranch, Sliders, X, Eye, EyeOff } from 'lucide-react';
 import BulkEditor from '../components/BulkEditor';
 import SingleEditor from '../components/SingleEditor';
 import PhotoEditor from '../components/PhotoEditor';
@@ -141,12 +141,14 @@ function PasswordModal({ onConfirm, onCancel, saving }) {
 }
 
 // ── Main Admin Page ───────────────────────────────────────────────────────────
-const AdminPage = ({ profiles, setProfiles }) => {
+const AdminPage = ({ profiles, setProfiles, savedProfilesBaseline, setSavedProfilesBaseline }) => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('single');
   const [profileToEdit, setProfileToEdit] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null); // { message, type }
+
+  const hasUnsavedChanges = savedProfilesBaseline && JSON.stringify(profiles) !== JSON.stringify(savedProfilesBaseline);
 
   // Handle editProfile redirected from Settings Data Consistency check
   useEffect(() => {
@@ -167,6 +169,9 @@ const AdminPage = ({ profiles, setProfiles }) => {
     setSaving(true);
     try {
       const result = await saveProfiles(profiles, password);
+      if (setSavedProfilesBaseline) {
+        setSavedProfilesBaseline(profiles);
+      }
       setToast({ message: `✅ Saved ${result.profiles_saved} profiles to server!`, type: 'success' });
     } catch (err) {
       setToast({ message: `❌ Save failed: ${err.message}`, type: 'error' });
@@ -263,6 +268,11 @@ const AdminPage = ({ profiles, setProfiles }) => {
           </button>
         </nav>
         <div className="admin-topbar-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {hasUnsavedChanges && (
+            <span style={{ color: '#DC3545', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.82rem', fontWeight: 'bold', marginRight: '0.4rem', backgroundColor: '#FDF2F2', padding: '0.35rem 0.65rem', borderRadius: '20px', border: '1px solid #FDE8E8' }} title="There are unsaved changes. Click Save to Server to persist.">
+              ⚠️ Unsaved changes
+            </span>
+          )}
           <button className="btn btn-primary" onClick={handleSaveClick} disabled={saving}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {saving ? (

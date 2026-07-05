@@ -8,9 +8,11 @@ import {
   getRelationshipCode, findRelationship, parseDate, resolveRelationName
 } from '../lib/relationshipEngine';
 import { useLanguage } from '../context/LanguageContext';
+import { useNavigate } from 'react-router-dom';
 
 const Reports = ({ profiles }) => {
   const { language, t } = useLanguage();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'lineage'
   
   // State for lineage reports
@@ -462,13 +464,58 @@ const Reports = ({ profiles }) => {
         ? p.photoUrl
         : `${import.meta.env.BASE_URL}icons/${p.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
 
+      let birthYear = "";
+      if (p.dob) {
+        const dObj = parseDate(p.dob);
+        if (dObj && !isNaN(dObj.getFullYear())) {
+          birthYear = dObj.getFullYear();
+        }
+      }
+
       return (
         <div className="ca-node-wrapper" key={pid}>
-          <div className={`ca-node ${isRoot ? 'root' : ''}`} style={{ border: isRoot ? '2px solid #FF9800' : `2px solid ${p.gender === 'Male' ? '#4A90E2' : '#E91E63'}` }}>
+          <div 
+            className={`ca-node ${isRoot ? 'root' : ''}`} 
+            style={{ 
+              border: isRoot ? '2px solid #FF9800' : `2px solid ${p.gender === 'Male' ? '#4A90E2' : '#E91E63'}`,
+              cursor: 'pointer',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            onClick={() => {
+              localStorage.setItem('vamsha_home_pid', p.pid);
+              navigate('/tree');
+            }}
+            title="Click to view in Tree"
+          >
             {label && <div className="ca-node-role">{label}</div>}
-            <img src={avatarUrl} alt={p.firstName} style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} />
+            <div style={{ position: 'relative' }}>
+              <img src={avatarUrl} alt={p.firstName} style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #eee' }} />
+              {p.isDeceased && (
+                <span 
+                  title="Deceased"
+                  style={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    right: 0, 
+                    fontSize: '0.85rem', 
+                    background: 'white', 
+                    borderRadius: '50%', 
+                    padding: '2px',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  🪔
+                </span>
+              )}
+            </div>
             <div className="ca-node-name" style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{displayName}</div>
-            <div className="ca-node-id" style={{ fontSize: '0.7rem', color: '#999' }}>{p.pid}</div>
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '2px' }}>
+              {birthYear && <span style={{ fontSize: '0.7rem', color: '#666', background: '#f0ede6', padding: '1px 5px', borderRadius: '4px', fontWeight: '600' }}>{birthYear}</span>}
+              <span className="ca-node-id" style={{ fontSize: '0.7rem', color: '#999' }}>{p.pid}</span>
+            </div>
           </div>
         </div>
       );
@@ -476,27 +523,153 @@ const Reports = ({ profiles }) => {
 
     const finalRel = findRelationship(profiles, id1, id2, language);
 
+    // Compute step-by-step descriptions
+    const stepSentences = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      const u = path[i];
+      const v = path[i+1];
+      const pU = getPerson(profiles, u);
+      const pV = getPerson(profiles, v);
+      if (pU && pV) {
+        const relationCode = getRelationshipCode(profiles, u, v);
+        const relTerm = resolveRelationName(profiles, relationCode, pU, pV, language);
+        
+        let sentence = "";
+        if (language === 'te') {
+          sentence = t('reports.step_connect_te')
+            .replace('{name1}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
+            .replace('{name2}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{relation}', relTerm);
+        } else if (language === 'kn') {
+          sentence = t('reports.step_connect_kn')
+            .replace('{name1}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
+            .replace('{name2}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{relation}', relTerm);
+        } else {
+          sentence = t('reports.step_connect_en')
+            .replace('{name1}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
+            .replace('{name2}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{relation}', relTerm);
+        }
+        stepSentences.push(sentence);
+      }
+    }
+
+    let conclusion = "";
+    if (language === 'te') {
+      conclusion = t('reports.conclusion_te')
+        .replace('{name1}', `${p1.firstName} ${p1.surName}`)
+        .replace('{name2}', `${p2.firstName} ${p2.surName}`)
+        .replace('{relation}', finalRel);
+    } else if (language === 'kn') {
+      conclusion = t('reports.conclusion_kn')
+        .replace('{name1}', `${p1.firstName} ${p1.surName}`)
+        .replace('{name2}', `${p2.firstName} ${p2.surName}`)
+        .replace('{relation}', finalRel);
+    } else {
+      conclusion = t('reports.conclusion_en')
+        .replace('{name1}', `${p1.firstName} ${p1.surName}`)
+        .replace('{name2}', `${p2.firstName} ${p2.surName}`)
+        .replace('{relation}', finalRel);
+    }
+
+    // Clean text for copy/share (stripping HTML tags)
+    const getCleanText = () => {
+      const cleanSteps = [];
+      for (let i = 0; i < path.length - 1; i++) {
+        const u = path[i];
+        const v = path[i+1];
+        const pU = getPerson(profiles, u);
+        const pV = getPerson(profiles, v);
+        if (pU && pV) {
+          const relationCode = getRelationshipCode(profiles, u, v);
+          const relTerm = resolveRelationName(profiles, relationCode, pU, pV, language);
+          
+          let cleanSentence = "";
+          if (language === 'te') {
+            cleanSentence = `${pU.firstName} ${pU.surName} అనేది ${pV.firstName} ${pV.surName} కు "${relTerm}" అవుతారు`;
+          } else if (language === 'kn') {
+            cleanSentence = `${pU.firstName} ${pU.surName} ಅವರು ${pV.firstName} ${pV.surName} ಗೆ "${relTerm}" ಆಗುತ್ತಾರೆ`;
+          } else {
+            cleanSentence = `${pU.firstName} ${pU.surName} is the ${relTerm} of ${pV.firstName} ${pV.surName}`;
+          }
+          cleanSteps.push(cleanSentence);
+        }
+      }
+
+      let cleanConclusion = "";
+      if (language === 'te') {
+        cleanConclusion = `కావున, ${p2.firstName} ${p2.surName} అనేది ${p1.firstName} ${p1.surName} కు "${finalRel}" అవుతారు.`;
+      } else if (language === 'kn') {
+        cleanConclusion = `ಆದ್ದರಿಂದ, ${p2.firstName} ${p2.surName} ಅವರು ${p1.firstName} ${p1.surName} ಗೆ "${finalRel}" ಆಗುತ್ತಾರೆ.`;
+      } else {
+        cleanConclusion = `Therefore, ${p2.firstName} ${p2.surName} is the ${finalRel} of ${p1.firstName} ${p1.surName}.`;
+      }
+
+      return { cleanSteps, cleanConclusion };
+    };
+
+    const handleCopyPath = () => {
+      const { cleanSteps, cleanConclusion } = getCleanText();
+      const textToCopy = `*${p1.firstName} & ${p2.firstName} బంధుత్వ విశ్లేషణ:*\n\n` + 
+        cleanSteps.map((s, idx) => `${idx + 1}. ${s}`).join('\n') + 
+        `\n\n👉 *${cleanConclusion}*`;
+      navigator.clipboard.writeText(textToCopy);
+      alert(t('reports.path_copied'));
+    };
+
+    const handleShareWhatsApp = () => {
+      const { cleanSteps, cleanConclusion } = getCleanText();
+      const textToShare = `*${p1.firstName} & ${p2.firstName} బంధుత్వ విశ్లేషణ:*\n\n` + 
+        cleanSteps.map((s, idx) => `${idx + 1}. ${s}`).join('\n') + 
+        `\n\n👉 *${cleanConclusion}*`;
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(textToShare)}`;
+      window.open(url, '_blank');
+    };
+
     return (
       <div style={{ padding: '1rem', overflowX: 'auto' }}>
         <style>{`
           .ca-diagram { display: flex; flex-direction: column; align-items: center; padding: 20px 10px; font-family: sans-serif; }
           .ca-node {
               border-radius: 12px; padding: 10px; text-align: center;
-              width: 130px; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.06);
+              width: 130px; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.04);
               z-index: 2; position: relative; display: flex; flex-direction: column; align-items: center;
+              border: 2px solid var(--color-sandalwood);
+              transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           }
-          .ca-node.root { background: #fff8e1; }
+          .ca-node:hover {
+              transform: translateY(-4px);
+              box-shadow: 0 8px 20px rgba(99, 19, 29, 0.08);
+          }
+          .ca-node.root { background: #fffde7; border-color: #fbc02d !important; }
           .ca-node img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 5px; border: 1px solid #eee; }
           .ca-node-name { font-weight: bold; color: #333; line-height: 1.2; }
           .ca-node-role { 
-              font-size: 9px; color: #E91E63; font-weight: bold; background: #fff0f5; 
-              padding: 1px 6px; border-radius: 10px; margin-bottom: 4px; border: 1px solid #f8bbd0;
+              font-size: 9px; color: var(--color-maroon); font-weight: bold; background: #FFF3F3; 
+              padding: 2px 8px; border-radius: 10px; margin-bottom: 6px; border: 1px solid #FFDCDC;
               text-transform: uppercase; letter-spacing: 0.5px;
           }
           .ca-pivot-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; margin-bottom: 30px; }
+          
+          @keyframes linePulse {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 0% 200%; }
+          }
+
+          .ca-pivot-wrapper::after,
+          .ca-node-wrapper::after,
+          .ca-branch::after,
+          .ca-sibling-container::before {
+              content: ''; position: absolute;
+              background: linear-gradient(180deg, #D3BCA2 0%, var(--color-maroon) 50%, #D3BCA2 100%);
+              background-size: 100% 200%;
+              animation: linePulse 1.5s linear infinite;
+          }
+
           .ca-pivot-wrapper::after {
-              content: ''; position: absolute; top: 100%; left: 50%; width: 2px; height: 30px;
-              background: #bbb; transform: translateX(-50%);
+              top: 100%; left: 50%; width: 2px; height: 30px;
+              transform: translateX(-50%);
           }
           .ca-branches { display: flex; justify-content: center; gap: 40px; position: relative; }
           .ca-branch { display: flex; flex-direction: column; align-items: center; position: relative; padding-top: 30px; }
@@ -504,14 +677,14 @@ const Reports = ({ profiles }) => {
           .ca-branch.left::before { right: -20px; width: calc(50% + 20px); }
           .ca-branch.right::before { left: -20px; width: calc(50% + 20px); }
           .ca-branch::after {
-              content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 30px;
-              background: #bbb; transform: translateX(-50%);
+              top: 0; left: 50%; width: 2px; height: 30px;
+              transform: translateX(-50%);
           }
           .ca-node-wrapper { position: relative; margin-bottom: 30px; }
           .ca-node-wrapper:last-child { margin-bottom: 0; }
           .ca-node-wrapper::after {
-              content: ''; position: absolute; top: 100%; left: 50%; width: 2px; height: 30px;
-              background: #bbb; transform: translateX(-50%);
+              top: 100%; left: 50%; width: 2px; height: 30px;
+              transform: translateX(-50%);
           }
           .ca-node-wrapper:last-child::after { display: none; }
           .ca-node-wrapper::before {
@@ -530,8 +703,8 @@ const Reports = ({ profiles }) => {
           .ca-single-col::before, .ca-single-col::after { display: none; }
           .ca-sibling-container { display: flex; justify-content: center; gap: 60px; position: relative; margin-top: 10px; }
           .ca-sibling-container::before {
-              content: ''; position: absolute; top: 45px; left: 50%; transform: translateX(-50%);
-              width: 60px; height: 2px; background: #bbb; z-index: 1;
+              top: 45px; left: 50%; transform: translateX(-50%);
+              width: 60px; height: 2px; z-index: 1;
           }
           .ca-sibling-side { display: flex; flex-direction: column; align-items: center; position: relative; }
           .ca-sibling-side .ca-single-col { padding-top: 30px; }
@@ -568,7 +741,6 @@ const Reports = ({ profiles }) => {
           ) : (
             // Common ancestor layout
             (() => {
-              // Calculate generation steps
               let gens = [0];
               let currGen = 0;
               for (let i = 0; i < path.length - 1; i++) {
@@ -611,12 +783,103 @@ const Reports = ({ profiles }) => {
           )}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '2rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '8px', border: '1px solid #eee' }}>
-          <div style={{ fontSize: '1.1rem', color: '#333' }}>
-            <strong>{p2.firstName} {p2.surName}</strong> is your <strong>{finalRel}</strong>.
+        {/* Step-by-Step Explanation Card */}
+        <div style={{
+          marginTop: '2rem',
+          padding: '1.5rem',
+          backgroundColor: '#FCFAF7',
+          borderRadius: '12px',
+          border: '1.5px solid var(--color-sandalwood, #EADDCA)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+        }}>
+          <h4 style={{ color: 'var(--color-maroon)', marginTop: 0, marginBottom: '1.25rem', fontSize: '1.1rem', fontWeight: 800 }}>
+            📜 {t('reports.relation_path') || 'Step-by-Step Relationship Pathway'}
+          </h4>
+
+          {/* Quick Actions (WhatsApp Share & Copy) */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '1.5rem' }}>
+            <button 
+              onClick={handleShareWhatsApp}
+              style={{
+                padding: '0.6rem 1.2rem',
+                backgroundColor: '#25D366',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(37, 211, 102, 0.2)',
+                transition: 'filter 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.08)'}
+              onMouseOut={(e) => e.currentTarget.style.filter = 'none'}
+            >
+              💬 {t('reports.share_whatsapp')}
+            </button>
+            <button 
+              onClick={handleCopyPath}
+              style={{
+                padding: '0.6rem 1.2rem',
+                backgroundColor: 'var(--color-maroon)',
+                color: 'var(--color-gold)',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(99, 19, 29, 0.15)',
+                transition: 'filter 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.filter = 'brightness(1.08)'}
+              onMouseOut={(e) => e.currentTarget.style.filter = 'none'}
+            >
+              📋 {t('reports.copy_path')}
+            </button>
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.4rem', fontFamily: 'monospace' }}>
-            Path Code: {result.code}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {stepSentences.map((s, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '12px', fontSize: '0.92rem', color: '#444', lineHeight: '1.5' }}>
+                <span style={{ 
+                  minWidth: '24px', 
+                  height: '24px', 
+                  borderRadius: '50%', 
+                  backgroundColor: 'var(--color-sandalwood)', 
+                  color: 'var(--color-maroon)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontWeight: 'bold', 
+                  fontSize: '0.82rem', 
+                  flexShrink: 0,
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.03)'
+                }}>
+                  {idx + 1}
+                </span>
+                <span dangerouslySetInnerHTML={{ __html: s }} />
+              </div>
+            ))}
+          </div>
+
+          <div style={{
+            marginTop: '1.5rem',
+            paddingTop: '1.25rem',
+            borderTop: '1px dashed var(--color-sandalwood)',
+            fontSize: '1.1rem',
+            fontWeight: 800,
+            color: 'var(--color-maroon)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            👉 {conclusion}
           </div>
         </div>
       </div>

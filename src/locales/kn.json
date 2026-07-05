@@ -144,7 +144,16 @@
     "select_primary": "ಮೊದಲ ವ್ಯಕ್ತಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
     "select_secondary": "ಎರಡನೇ ವ್ಯಕ್ತಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
     "choose_report": "ವರದಿ ಪ್ರಕಾರವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
-    "print_btn": "PDF ಆಗಿ ಉಳಿಸಿ / ಪ್ರಿಂಟ್ ಮಾಡಿ"
+    "print_btn": "PDF ಆಗಿ ಉಳಿಸಿ / ಪ್ರಿಂಟ್ ಮಾಡಿ",
+    "share_whatsapp": "ವಾಟ್ಸಾಪ್ ಮೂಲಕ ಹಂಚಿಕೊಳ್ಳಿ",
+    "copy_path": "ಪಠ್ಯ ನಕಲಿಸಿ",
+    "path_copied": "ಸಂಬಂಧದ ಹಾದಿ ನಕಲಿಸಲಾಗಿದೆ!",
+    "step_connect_en": "{name1} is the {relation} of {name2}",
+    "step_connect_te": "{name1} అనేది {name2} కు \"{relation}\" అవుతారు",
+    "step_connect_kn": "{name1} ಅವರು {name2} ಗೆ \"{relation}\" ಆಗುತ್ತಾರೆ",
+    "conclusion_en": "Therefore, {name2} is the {relation} of {name1}.",
+    "conclusion_te": "కావున, {name2} అనేది {name1} కు \"{relation}\" అవుతారు.",
+    "conclusion_kn": "ಆದ್ದರಿಂದ, {name2} ಅವರು {name1} ಗೆ \"{relation}\" ಆಗುತ್ತಾರೆ."
   },
   "memories": {
     "title": "ಕುಟುಂಬ ನೆನಪುಗಳ ಗೋಡೆ",

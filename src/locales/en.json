@@ -144,7 +144,16 @@
     "select_primary": "Select Primary Person",
     "select_secondary": "Select Secondary Person",
     "choose_report": "Choose Report Type",
-    "print_btn": "Save as PDF / Print"
+    "print_btn": "Save as PDF / Print",
+    "share_whatsapp": "Share on WhatsApp",
+    "copy_path": "Copy Text",
+    "path_copied": "Relationship path copied!",
+    "step_connect_en": "{name1} is the {relation} of {name2}",
+    "step_connect_te": "{name1} అనేది {name2} కు \"{relation}\" అవుతారు",
+    "step_connect_kn": "{name1} ಅವರು {name2} ಗೆ \"{relation}\" ಆಗುತ್ತಾರೆ",
+    "conclusion_en": "Therefore, {name2} is the {relation} of {name1}.",
+    "conclusion_te": "కావున, {name2} అనేది {name1} కు \"{relation}\" అవుతారు.",
+    "conclusion_kn": "ಆದ್ದರಿಂದ, {name2} ಅವರು {name1} ಗೆ \"{relation}\" ಆಗುತ್ತಾರೆ."
   },
   "memories": {
     "title": "Family Memory Wall",

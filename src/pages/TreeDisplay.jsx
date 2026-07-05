@@ -10,8 +10,26 @@ import { useLanguage } from '../context/LanguageContext';
 const getRelationshipTag = (person, type, focusedPerson, isElder, t) => {
   if (type === 'father') return t('tree.relationships.father');
   if (type === 'mother') return t('tree.relationships.mother');
-  if (type === 'spouse') return person.gender === 'Female' ? t('tree.relationships.spouse_female') : t('tree.relationships.spouse_male');
-  if (type === 'child') return person.gender === 'Male' ? t('tree.relationships.child_male') : t('tree.relationships.child_female');
+  if (type === 'spouse') {
+    const label = person.gender === 'Female' ? t('tree.relationships.spouse_female') : t('tree.relationships.spouse_male');
+    if (focusedPerson) {
+      const lang = localStorage.getItem('vamsha_lang') || 'en';
+      if (lang === 'te') return `${focusedPerson.firstName} గారి ${label}`;
+      if (lang === 'kn') return `${focusedPerson.firstName} ಅವರ ${label}`;
+      return `${focusedPerson.firstName}'s ${label}`;
+    }
+    return label;
+  }
+  if (type === 'child') {
+    const label = person.gender === 'Male' ? t('tree.relationships.child_male') : t('tree.relationships.child_female');
+    if (focusedPerson) {
+      const lang = localStorage.getItem('vamsha_lang') || 'en';
+      if (lang === 'te') return `${focusedPerson.firstName} గారి ${label}`;
+      if (lang === 'kn') return `${focusedPerson.firstName} ಅವರ ${label}`;
+      return `${focusedPerson.firstName}'s ${label}`;
+    }
+    return label;
+  }
   if (type === 'sibling') {
     if (person.gender === 'Male') return isElder ? t('tree.relationships.brother_elder') : t('tree.relationships.brother_younger');
     return isElder ? t('tree.relationships.sister_elder') : t('tree.relationships.sister_younger');
@@ -266,6 +284,7 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
                   key={p.pid}
                   person={p}
                   type={p.gender === 'Male' ? 'father' : 'mother'}
+                  focusedPerson={treeData.person}
                   onFocus={setFocusedPid}
                   onInfo={setSidebarPerson}
                 />
@@ -281,15 +300,15 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
           <div className="card-content row-flex wrap">
             {/* Elder Siblings */}
             {treeData.elderSiblings.map(s => (
-              <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+              <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
             ))}
 
             {/* Focused Person */}
-            <PersonIcon person={treeData.person} isFocused={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+            <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
 
             {/* Younger Siblings */}
             {treeData.youngerSiblings.map(s => (
-              <PersonIcon key={s.pid} person={s} type="sibling" isElder={false} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+              <PersonIcon key={s.pid} person={s} type="sibling" isElder={false} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
             ))}
           </div>
         </div>
@@ -305,7 +324,7 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
               {treeData.spouses.length > 0 && (
                 <div className="spouse-section">
                   {treeData.spouses.map(sp => (
-                    <PersonIcon key={sp.pid} person={sp} type="spouse" onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                    <PersonIcon key={sp.pid} person={sp} type="spouse" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
                   ))}
                 </div>
               )}
@@ -321,7 +340,7 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
               {treeData.children.length > 0 && (
                 <div className="children-section row-flex wrap">
                   {treeData.children.map(c => (
-                    <PersonIcon key={c.pid} person={c} type="child" onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                    <PersonIcon key={c.pid} person={c} type="child" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
                   ))}
                 </div>
               )}

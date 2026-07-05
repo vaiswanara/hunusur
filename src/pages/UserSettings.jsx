@@ -432,6 +432,27 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
           </div>
         )}
       </div>
+
+      {/* Settings Footer / Version Info */}
+      <div style={{
+        marginTop: '2.5rem',
+        paddingTop: '1.25rem',
+        borderTop: '1px solid #EFE4DC',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '0.8rem',
+        color: '#999'
+      }}>
+        <span>Vamsha Family Tree App</span>
+        <span>
+          Version: <strong>{import.meta.env.VITE_APP_VERSION || '1.3.0'}</strong>
+          {import.meta.env.VITE_COMMIT_HASH && (
+            <> | Commit: <strong>{import.meta.env.VITE_COMMIT_HASH}</strong></>
+          )}
+        </span>
+      </div>
+
     </div>
   );
 };

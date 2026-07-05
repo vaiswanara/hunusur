@@ -63,6 +63,38 @@ export default defineConfig(({ command, mode }) => {
         devOptions: {
           enabled: true
         },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+          runtimeCaching: [
+            {
+              // Cache external profile pictures (GitHub raw URLs or others)
+              urlPattern: /^https:\/\/.*\/photos\/.*\.(?:png|jpg|jpeg|webp)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'vamsha-external-photos',
+                expiration: {
+                  maxEntries: 300,
+                  maxAgeSeconds: 30 * 24 * 60 * 60 // 30 Days
+                },
+                cacheableResponse: {
+                  statuses: [0, 200]
+                }
+              }
+            },
+            {
+              // Cache local uploaded images (if served from same host)
+              urlPattern: /\.(?:png|jpg|jpeg|svg|webp)$/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'vamsha-local-photos',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 30 * 24 * 60 * 60 // 30 Days
+                }
+              }
+            }
+          ]
+        },
         includeAssets: [
           'favicon.svg',
           'icons/male_icon.png',

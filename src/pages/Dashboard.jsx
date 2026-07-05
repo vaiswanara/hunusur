@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Users, BarChart2, Calendar, FileText, ChevronDown, ChevronRight
+  Users, BarChart2, Calendar, FileText, ChevronDown, ChevronRight, GitBranch
 } from 'lucide-react';
 import { parseDate } from '../lib/relationshipEngine';
 import { useLanguage } from '../context/LanguageContext';

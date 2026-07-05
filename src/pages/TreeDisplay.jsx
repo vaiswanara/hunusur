@@ -236,68 +236,6 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         }
       `}</style>
 
-      {/* Export Action Bar */}
-      <div className="tree-export-bar" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.75rem 1rem',
-        backgroundColor: '#FCFAF7',
-        border: '1.5px solid var(--color-sandalwood)',
-        borderRadius: '12px',
-        marginBottom: '1.5rem',
-        gap: '12px',
-        flexWrap: 'wrap'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.9rem', color: 'var(--color-maroon)', fontWeight: 'bold' }}>
-            🌳 {t('tree.export_title')}
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button 
-            onClick={handleExportPNG}
-            disabled={isExporting}
-            style={{
-              padding: '0.5rem 1.25rem',
-              backgroundColor: 'var(--color-maroon)',
-              color: 'var(--color-gold)',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: isExporting ? 'not-allowed' : 'pointer',
-              fontWeight: '700',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s',
-              opacity: isExporting ? 0.7 : 1
-            }}
-          >
-            🖼️ {isExporting ? t('tree.exporting') : t('tree.export_png')}
-          </button>
-          <button 
-            onClick={handlePrintPDF}
-            style={{
-              padding: '0.5rem 1.25rem',
-              backgroundColor: 'var(--color-maroon)',
-              color: 'var(--color-gold)',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '700',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s'
-            }}
-          >
-            📄 {t('tree.export_pdf')}
-          </button>
-        </div>
-      </div>
-
       <div className={`tree-layout-wrapper ${isExportingMode ? 'is-exporting-view' : ''}`} ref={treeRef} style={{ padding: '2rem 1.5rem', backgroundColor: '#FAF8F5', borderRadius: '16px', border: '1px solid var(--color-sandalwood)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
 
         {/* Dynamic Title for Print/Export */}
@@ -392,6 +330,68 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
           </>
         )}
 
+      </div>
+
+      {/* Export Action Bar at the bottom */}
+      <div className="tree-export-bar" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.75rem 1rem',
+        backgroundColor: '#FCFAF7',
+        border: '1.5px solid var(--color-sandalwood)',
+        borderRadius: '12px',
+        marginTop: '1.5rem',
+        gap: '12px',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--color-maroon)', fontWeight: 'bold' }}>
+            🌳 {t('tree.export_title')}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={handleExportPNG}
+            disabled={isExporting}
+            style={{
+              padding: '0.5rem 1.25rem',
+              backgroundColor: 'var(--color-maroon)',
+              color: 'var(--color-gold)',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              opacity: isExporting ? 0.7 : 1
+            }}
+          >
+            🖼️ {isExporting ? t('tree.exporting') : t('tree.export_png')}
+          </button>
+          <button 
+            onClick={handlePrintPDF}
+            style={{
+              padding: '0.5rem 1.25rem',
+              backgroundColor: 'var(--color-maroon)',
+              color: 'var(--color-gold)',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            📄 {t('tree.export_pdf')}
+          </button>
+        </div>
       </div>
 
       <Sidebar

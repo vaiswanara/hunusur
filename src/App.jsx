@@ -202,7 +202,7 @@ function SplashScreen() {
 }
 
 // Helper to enrich female profiles with maiden names and married surnames, and resolve Gotram inheritance dynamically
-export function enrichProfiles(rawProfiles) {
+function enrichProfiles(rawProfiles) {
   // Memoized lookup for birth gotram to handle multi-generational inheritance safely & efficiently
   const resolvedBirthGotramMap = {};
 

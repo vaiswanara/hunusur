@@ -6,7 +6,8 @@
     "birthdays": "పుట్టినరోజులు",
     "reports": "రిపోర్టులు",
     "settings": "సెట్టింగ్స్",
-    "memories": "జ్ఞాపకాల గోడ"
+    "memories": "జ్ఞాపకాల గోడ",
+    "timeline": "కాలక్రమం"
   },
   "home": {
     "title": "వంశం",
@@ -187,5 +188,20 @@
     "read_less": "తక్కువగా చూపించు",
     "about_person": "{name} గురించి",
     "written_by": "{date}న {author} ద్వారా వ్రాయబడింది"
+  },
+  "timeline": {
+    "title": "వంశ చరిత్ర & కాలక్రమం",
+    "subtitle": "మన కుటుంబ సభ్యుల జీవిత విశేషాలను మరియు ప్రధాన మైలురాళ్లను ఇక్కడ కాలక్రమ పద్ధతిలో వీక్షించండి.",
+    "filter_search": "సభ్యుని పేరుతో వెతకండి...",
+    "filter_all": "అన్ని ఈవెంట్లు",
+    "filter_births": "జననాలు",
+    "filter_deaths": "స్మరణలు",
+    "decades_all": "అన్ని దశాబ్దాలు",
+    "birth_event": "జననం",
+    "death_event": "స్మరణ (స్వర్గస్థులు)",
+    "birth_anniversary": "జన్మదిన జయంతి",
+    "age_at_death": "వయస్సు: {age} సం.",
+    "years_ago": "{years} సంవత్సరాల క్రితం",
+    "view_in_tree": "వృక్షంలో చూడు"
   }
 }

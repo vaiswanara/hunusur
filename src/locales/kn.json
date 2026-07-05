@@ -6,7 +6,8 @@
     "birthdays": "ಜನ್ಮದಿನಗಳು",
     "reports": "ವರದಿಗಳು",
     "settings": "ಸೆಟ್ಟಿಂಗ್ಸ್",
-    "memories": "ನೆನಪುಗಳ ಗೋಡೆ"
+    "memories": "ನೆನಪುಗಳ ಗೋಡೆ",
+    "timeline": "ಕಾಲಗತಿಯ ವಿವರ"
   },
   "home": {
     "title": "ವಂಶ",
@@ -187,5 +188,20 @@
     "read_less": "ಕಡಿಮೆ ತೋರಿಸು",
     "about_person": "{name} ಬಗ್ಗೆ",
     "written_by": "{date} ರಂದು {author} ಅವರಿಂದ ಬರೆಯಲ್ಪಟ್ಟಿದೆ"
+  },
+  "timeline": {
+    "title": "ವಂಶದ ಇತಿಹಾಸ ಮತ್ತು ಕಾಲಗತಿ",
+    "subtitle": "ನಮ್ಮ ಕುಟುಂಬದ ಇತಿಹಾಸದ ಪ್ರಮುಖ ಮೈಲಿಗಲ್ಲುಗಳನ್ನು ಮತ್ತು ಜನ್ಮ ವಿವರಗಳನ್ನು ಇಲ್ಲಿ ಕಾಲಾನುಕ್ರಮದಲ್ಲಿ ವೀಕ್ಷಿಸಿ.",
+    "filter_search": "ಹೆಸರಿನ ಮೂಲಕ ಹುಡುಕಿ...",
+    "filter_all": "ಎಲ್ಲಾ ಈವೆಂಟ್‌ಗಳು",
+    "filter_births": "ಜನನಗಳು",
+    "filter_deaths": "ಸ್ಮರಣೆಗಳು",
+    "decades_all": "ಎಲ್ಲಾ ದಶಕಗಳು",
+    "birth_event": "ಜನನ",
+    "death_event": "ಸ್ಮರಣೆ (ಸ್ವರ್ಗಸ್ಥರು)",
+    "birth_anniversary": "ಜನ್ಮದಿನ ಜಯಂತಿ",
+    "age_at_death": "ವಯಸ್ಸು: {age} ವರ್ಷ",
+    "years_ago": "{years} ವರ್ಷಗಳ ಹಿಂದೆ",
+    "view_in_tree": "ವೃಕ್ಷದಲ್ಲಿ ನೋಡಿ"
   }
 }

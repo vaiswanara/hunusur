@@ -6,7 +6,8 @@
     "birthdays": "Birthdays",
     "reports": "Reports",
     "settings": "Settings",
-    "memories": "Memory Wall"
+    "memories": "Memory Wall",
+    "timeline": "Timeline"
   },
   "home": {
     "title": "VAMSHA",
@@ -187,5 +188,20 @@
     "read_less": "Show Less",
     "about_person": "About {name}",
     "written_by": "By {author} on {date}"
+  },
+  "timeline": {
+    "title": "Family Timeline & History",
+    "subtitle": "Discover the historical journey of our family and celebrate key life events chronologically.",
+    "filter_search": "Search by member name...",
+    "filter_all": "All Events",
+    "filter_births": "Births",
+    "filter_deaths": "Remembrances",
+    "decades_all": "All Decades",
+    "birth_event": "Birth",
+    "death_event": "Passing",
+    "birth_anniversary": "Birth Anniversary",
+    "age_at_death": "Age: {age}",
+    "years_ago": "{years} years ago",
+    "view_in_tree": "View in Tree"
   }
 }

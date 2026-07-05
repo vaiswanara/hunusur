@@ -1496,3 +1496,42 @@ input:checked+.slider:before {
     font-size: 16px !important;
   }
 }
+
+/* --- Family Timeline & History Styling --- */
+.vertical-timeline-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.timeline-card {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(99, 19, 29, 0.08) !important;
+}
+
+@media (min-width: 768px) {
+  /* Alternating left and right arrow elements for timeline cards */
+  .timeline-item-wrapper:nth-child(even) .timeline-card::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    right: -10px;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid var(--color-sandalwood);
+    z-index: 2;
+  }
+  .timeline-item-wrapper:nth-child(odd) .timeline-card::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    left: -10px;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid var(--color-sandalwood);
+    z-index: 2;
+  }
+}

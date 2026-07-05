@@ -8,10 +8,11 @@ import HomePerson from './pages/HomePerson';
 import Reports from './pages/Reports';
 import UserSettings from './pages/UserSettings';
 import Memories from './pages/Memories';
+import Timeline from './pages/Timeline';
 import AdminGate from './components/AdminGate';
 import { fetchProfiles } from './lib/api';
 import initialData from './data.json';
-import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2, BookOpen } from 'lucide-react';
+import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2, BookOpen, Calendar } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
 function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
@@ -57,6 +58,7 @@ function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
         <Link to="/birthdays" className={location.pathname.includes('/birthdays') ? 'active' : ''}>{t('nav.birthdays')}</Link>
         <Link to="/reports" className={location.pathname.includes('/reports') ? 'active' : ''}>{t('nav.reports')}</Link>
         <Link to="/memories" className={location.pathname.includes('/memories') ? 'active' : ''}>{t('nav.memories')}</Link>
+        <Link to="/timeline" className={location.pathname.includes('/timeline') ? 'active' : ''}>{t('nav.timeline')}</Link>
         <Link to="/settings" className={location.pathname.includes('/settings') ? 'active' : ''}>{t('nav.settings')}</Link>
       </nav>
     </header>
@@ -118,6 +120,13 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
     }
   };
 
+  const handleTimelineClick = () => {
+    setSidebarPerson(null);
+    if (location.pathname !== '/timeline') {
+      navigate('/timeline');
+    }
+  };
+
   const handleSettingsClick = () => {
     setSidebarPerson(null);
     if (location.pathname !== '/settings') {
@@ -150,6 +159,10 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
       <button className={`nav-item-btn ${location.pathname.includes('/memories') ? 'active' : ''}`} onClick={handleMemoriesClick}>
         <BookOpen size={23} />
         <span>{t('nav.memories')}</span>
+      </button>
+      <button className={`nav-item-btn ${location.pathname.includes('/timeline') ? 'active' : ''}`} onClick={handleTimelineClick}>
+        <Calendar size={23} />
+        <span>{t('nav.timeline')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/settings') ? 'active' : ''}`} onClick={handleSettingsClick}>
         <Settings size={23} />
@@ -583,6 +596,7 @@ function App() {
               setSavedProfilesBaseline={setSavedProfilesBaseline}
             />
           } />
+          <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} />} />
           <Route path="/settings" element={
             <UserSettings 
               profiles={enrichedProfiles} 

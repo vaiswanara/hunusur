@@ -85,6 +85,9 @@
   },
   "tree": {
     "no_data": "ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ",
+    "parents": "ಪೋಷಕರು",
+    "siblings": "ಸಹೋದರ ಸಹೋದರಿಯರು",
+    "spouse": "ಜೀವನ ಸಂಗಾತಿ",
     "children": "ಮಕ್ಕಳು",
     "export_title": "ವಂಶ ವೃಕ್ಷ ರಫ್ತು",
     "export_png": "PNG ರೂಪದಲ್ಲಿ ಉಳಿಸಿ (High Res)",

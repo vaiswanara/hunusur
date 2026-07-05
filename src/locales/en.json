@@ -85,6 +85,9 @@
   },
   "tree": {
     "no_data": "No Data Available",
+    "parents": "Parents",
+    "siblings": "Siblings",
+    "spouse": "Spouse",
     "children": "Children",
     "export_title": "Tree Actions / Export",
     "export_png": "Save PNG (High Res)",

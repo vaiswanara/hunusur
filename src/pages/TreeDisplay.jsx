@@ -278,6 +278,9 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         {/* Parents Section */}
         {treeData.parents.length > 0 && (
           <div className="tree-card">
+            <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
+              <div className="internal-label">{t('tree.parents')}</div>
+            </div>
             <div className="card-content row-flex">
               {treeData.parents.map(p => (
                 <PersonIcon
@@ -297,6 +300,9 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         {treeData.parents.length > 0 && <VerticalConnector />}
 
         <div className="tree-card">
+          <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
+            <div className="internal-label">{t('tree.siblings')}</div>
+          </div>
           <div className="card-content row-flex wrap">
             {/* Elder Siblings */}
             {treeData.elderSiblings.map(s => (
@@ -318,6 +324,9 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
           <>
             <VerticalConnector />
             <div className="tree-card">
+              <div className="vertical-connector-internal" style={{ margin: '0.5rem 0 1.5rem 0' }}>
+                <div className="internal-label">{t('tree.spouse')}</div>
+              </div>
               <div className="card-content row-flex" style={{ flexWrap: 'nowrap', gap: '0.25rem', justifyContent: 'center' }}>
                 {/* Selected Person Profile again */}
                 <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />

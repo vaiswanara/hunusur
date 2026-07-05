@@ -9,10 +9,11 @@ import Reports from './pages/Reports';
 import UserSettings from './pages/UserSettings';
 import Memories from './pages/Memories';
 import Timeline from './pages/Timeline';
+import MenuPage from './pages/MenuPage';
 import AdminGate from './components/AdminGate';
 import { fetchProfiles } from './lib/api';
 import initialData from './data.json';
-import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2, BookOpen, Calendar } from 'lucide-react';
+import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2, BookOpen, Calendar, Menu as MenuIcon } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
 function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
@@ -77,10 +78,10 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
     }
   };
 
-  const handleHomePersonClick = () => {
+  const handleMenuClick = () => {
     setSidebarPerson(null);
-    if (location.pathname !== '/home-person') {
-      navigate('/home-person');
+    if (location.pathname !== '/menu') {
+      navigate('/menu');
     }
   };
 
@@ -99,34 +100,6 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
     }
   };
 
-  const handleBirthdaysClick = () => {
-    setSidebarPerson(null);
-    if (location.pathname !== '/birthdays') {
-      navigate('/birthdays');
-    }
-  };
-
-  const handleReportsClick = () => {
-    setSidebarPerson(null);
-    if (location.pathname !== '/reports') {
-      navigate('/reports');
-    }
-  };
-
-  const handleMemoriesClick = () => {
-    setSidebarPerson(null);
-    if (location.pathname !== '/memories') {
-      navigate('/memories');
-    }
-  };
-
-  const handleTimelineClick = () => {
-    setSidebarPerson(null);
-    if (location.pathname !== '/timeline') {
-      navigate('/timeline');
-    }
-  };
-
   const handleSettingsClick = () => {
     setSidebarPerson(null);
     if (location.pathname !== '/settings') {
@@ -140,29 +113,13 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
         <HomeIcon size={23} />
         <span>{t('nav.home')}</span>
       </button>
-      <button className={`nav-item-btn ${location.pathname.includes('/home-person') ? 'active' : ''}`} onClick={handleHomePersonClick}>
-        <User size={23} />
-        <span>{t('nav.home_person')}</span>
+      <button className={`nav-item-btn ${location.pathname.includes('/menu') ? 'active' : ''}`} onClick={handleMenuClick}>
+        <MenuIcon size={23} />
+        <span>{t('nav.menu')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname === '/tree' ? 'active' : ''}`} onClick={handleRootTreeClick}>
         <GitBranch size={23} />
         <span>{t('nav.tree')}</span>
-      </button>
-      <button className={`nav-item-btn ${location.pathname.includes('/birthdays') ? 'active' : ''}`} onClick={handleBirthdaysClick}>
-        <Cake size={23} />
-        <span>{t('nav.birthdays')}</span>
-      </button>
-      <button className={`nav-item-btn ${location.pathname.includes('/reports') ? 'active' : ''}`} onClick={handleReportsClick}>
-        <BarChart2 size={23} />
-        <span>{t('nav.reports')}</span>
-      </button>
-      <button className={`nav-item-btn ${location.pathname.includes('/memories') ? 'active' : ''}`} onClick={handleMemoriesClick}>
-        <BookOpen size={23} />
-        <span>{t('nav.memories')}</span>
-      </button>
-      <button className={`nav-item-btn ${location.pathname.includes('/timeline') ? 'active' : ''}`} onClick={handleTimelineClick}>
-        <Calendar size={23} />
-        <span>{t('nav.timeline')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/settings') ? 'active' : ''}`} onClick={handleSettingsClick}>
         <Settings size={23} />
@@ -597,6 +554,7 @@ function App() {
             />
           } />
           <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} />} />
+          <Route path="/menu" element={<MenuPage />} />
           <Route path="/settings" element={
             <UserSettings 
               profiles={enrichedProfiles} 

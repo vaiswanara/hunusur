@@ -7,7 +7,9 @@
     "reports": "Reports",
     "settings": "Settings",
     "memories": "Memory Wall",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "menu": "Menu",
+    "directory": "Vamsha Directory"
   },
   "home": {
     "title": "VAMSHA",

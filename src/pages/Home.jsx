@@ -13,7 +13,7 @@ const Home = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
   const primarySurname = homePerson ? (homePerson.surName || '').trim() : '';
 
   const handleExploreClick = () => {
-    navigate('/home-person');
+    navigate('/menu');
   };
 
   const handleInstallClick = () => {

@@ -138,6 +138,7 @@
     "gen_dist": "Generations Distribution",
     "age_demographics": "Age Demographics",
     "astro_dist": "Astrological Distribution (Nakshatra & Rashi)",
+    "unknown_dob": "Unknown DOB",
     "gender_ratio": "Gender Ratio",
     "top_gotrams": "Top Gotrams",
     "top_surnames": "Top Surnames",

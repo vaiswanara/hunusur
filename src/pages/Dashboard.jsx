@@ -440,16 +440,18 @@ const Dashboard = ({ profiles }) => {
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {ageData.map(group => {
-                if (group.name === 'Unknown DOB') return null;
                 const pct = livingCount > 0 ? Math.round((group.count / livingCount) * 100) : 0;
+                const isUnknown = group.name === 'Unknown DOB';
+                const label = isUnknown ? t('reports.unknown_dob') : group.name;
+                const barColor = isUnknown ? '#7F8C8D' : '#27ae60';
                 return (
                   <div key={group.name} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
-                      <span style={{ color: '#555' }}>{group.name}</span>
+                      <span style={{ color: '#555' }}>{label}</span>
                       <span style={{ color: 'var(--color-maroon)' }}>{group.count} ({pct}%)</span>
                     </div>
                     <div style={{ height: '8px', borderRadius: '4px', background: '#EAEAEA', overflow: 'hidden' }}>
-                      <div style={{ width: `${pct}%`, background: '#27ae60', height: '100%', borderRadius: '4px' }} />
+                      <div style={{ width: `${pct}%`, background: barColor, height: '100%', borderRadius: '4px' }} />
                     </div>
                   </div>
                 );
@@ -591,7 +593,7 @@ const Dashboard = ({ profiles }) => {
               {ageData.map(group => (
                 <div className="accordion-group-item" key={group.name}>
                   <div className="group-header" onClick={() => handleToggleItem(`age-${group.name}`)}>
-                    <span>{group.name}</span>
+                    <span>{group.name === 'Unknown DOB' ? t('reports.unknown_dob') : group.name}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <span style={{ fontSize: '0.82rem', background: '#eaeaea', padding: '2px 8px', borderRadius: '20px' }}>{group.count}</span>
                       <ChevronDown size={14} style={{ transform: expandedItems[`age-${group.name}`] ? 'rotate(180deg)' : 'none' }} />

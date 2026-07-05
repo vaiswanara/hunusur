@@ -82,6 +82,11 @@
   "tree": {
     "no_data": "ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ",
     "children": "ಮಕ್ಕಳು",
+    "export_title": "ವಂಶ ವೃಕ್ಷ ರಫ್ತು",
+    "export_png": "PNG ರೂಪದಲ್ಲಿ ಉಳಿಸಿ (High Res)",
+    "export_pdf": "PDF / ಪ್ರಿಂಟ್",
+    "exporting": "ರಫ್ತು ಮಾಡಲಾಗುತ್ತಿದೆ...",
+    "export_success": "ವಂಶ ವೃಕ್ಷದ ಚಿತ್ರ ಯಶಸ್ವಿಯಾಗಿ ರಫ್ತು ಮಾಡಲಾಗಿದೆ!",
     "relationships": {
       "father": "ತಂದೆ",
       "mother": "ತಾಯಿ",

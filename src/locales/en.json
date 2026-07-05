@@ -82,6 +82,11 @@
   "tree": {
     "no_data": "No Data Available",
     "children": "Children",
+    "export_title": "Tree Actions / Export",
+    "export_png": "Save PNG (High Res)",
+    "export_pdf": "Print / PDF",
+    "exporting": "Exporting...",
+    "export_success": "Tree image exported successfully!",
     "relationships": {
       "father": "Father",
       "mother": "Mother",

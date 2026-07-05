@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Info, Home, UserCheck } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import initialData from '../data.json';
 import Sidebar from '../components/Sidebar';
 import { useLanguage } from '../context/LanguageContext';
@@ -85,6 +86,36 @@ const VerticalConnector = () => (
 const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sidebarPerson, setSidebarPerson }) => {
   const profiles = profilesProp || initialData;
   const { t } = useLanguage();
+  const treeRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPNG = async () => {
+    if (!treeRef.current) return;
+    setIsExporting(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const canvas = await html2canvas(treeRef.current, {
+        useCORS: true,
+        scale: 3, // High resolution scale factor
+        backgroundColor: '#FAF8F5',
+        logging: false
+      });
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const link = document.createElement('a');
+      link.download = `vamsha_tree_${focusedPid || 'focused'}.png`;
+      link.href = imgData;
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert('Error exporting image: ' + err.message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handlePrintPDF = () => {
+    window.print();
+  };
 
   // If profiles change externally and focusedPid no longer exists, reset to first
   useEffect(() => {
@@ -147,82 +178,168 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
   if (!treeData) return <div className="tree-container">{t('tree.no_data')}</div>;
 
   return (
-    <div className="tree-layout-wrapper">
+    <div style={{ position: 'relative' }}>
+      
+      {/* Printable CSS override */}
+      <style>{`
+        @media print {
+          /* Hide non-tree elements completely */
+          header, .app-header, .mobile-bottom-nav, .tree-export-bar, .info-badge, .deceased-diya-badge {
+            display: none !important;
+          }
+          body {
+            background-color: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .tree-layout-wrapper {
+            box-shadow: none !important;
+            border: none !important;
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+        }
+      `}</style>
 
-      {/* Parents Section */}
-      {treeData.parents.length > 0 && (
-        <div className="tree-card">
-          <div className="card-content row-flex">
-            {treeData.parents.map(p => (
-              <PersonIcon
-                key={p.pid}
-                person={p}
-                type={p.gender === 'Male' ? 'father' : 'mother'}
-                onFocus={setFocusedPid}
-                onInfo={setSidebarPerson}
-              />
-            ))}
-          </div>
+      {/* Export Action Bar */}
+      <div className="tree-export-bar" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.75rem 1rem',
+        backgroundColor: '#FCFAF7',
+        border: '1.5px solid var(--color-sandalwood)',
+        borderRadius: '12px',
+        marginBottom: '1.5rem',
+        gap: '12px',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--color-maroon)', fontWeight: 'bold' }}>
+            🌳 {t('tree.export_title')}
+          </span>
         </div>
-      )}
-
-      {/* Siblings & Focused Node Section */}
-      {treeData.parents.length > 0 && <VerticalConnector />}
-
-      <div className="tree-card">
-        <div className="card-content row-flex wrap">
-          {/* Elder Siblings */}
-          {treeData.elderSiblings.map(s => (
-            <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-          ))}
-
-          {/* Focused Person */}
-          <PersonIcon person={treeData.person} isFocused={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-
-          {/* Younger Siblings */}
-          {treeData.youngerSiblings.map(s => (
-            <PersonIcon key={s.pid} person={s} type="sibling" isElder={false} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-          ))}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={handleExportPNG}
+            disabled={isExporting}
+            style={{
+              padding: '0.5rem 1.25rem',
+              backgroundColor: 'var(--color-maroon)',
+              color: 'var(--color-gold)',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+              opacity: isExporting ? 0.7 : 1
+            }}
+          >
+            🖼️ {isExporting ? t('tree.exporting') : t('tree.export_png')}
+          </button>
+          <button 
+            onClick={handlePrintPDF}
+            style={{
+              padding: '0.5rem 1.25rem',
+              backgroundColor: 'var(--color-maroon)',
+              color: 'var(--color-gold)',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s'
+            }}
+          >
+            📄 {t('tree.export_pdf')}
+          </button>
         </div>
       </div>
 
-      {/* Spouses & Children Section */}
-      {(treeData.spouses.length > 0 || treeData.children.length > 0) && (
-        <>
-          <VerticalConnector />
+      <div className="tree-layout-wrapper" ref={treeRef} style={{ padding: '2rem 1.5rem', backgroundColor: '#FAF8F5', borderRadius: '16px', border: '1px solid var(--color-sandalwood)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
 
-          <div className="tree-card spouse-children-card">
-
-            {/* Spouses */}
-            {treeData.spouses.length > 0 && (
-              <div className="spouse-section">
-                {treeData.spouses.map(sp => (
-                  <PersonIcon key={sp.pid} person={sp} type="spouse" onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-                ))}
-              </div>
-            )}
-
-            {/* Connecting line to children */}
-            {treeData.spouses.length > 0 && treeData.children.length > 0 && (
-              <div className="vertical-connector-internal">
-                <div className="internal-label">{t('tree.children')}</div>
-              </div>
-            )}
-
-            {/* Children */}
-            {treeData.children.length > 0 && (
-              <div className="children-section row-flex wrap">
-                {treeData.children.map(c => (
-                  <PersonIcon key={c.pid} person={c} type="child" onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-                ))}
-              </div>
-            )}
-
+        {/* Parents Section */}
+        {treeData.parents.length > 0 && (
+          <div className="tree-card">
+            <div className="card-content row-flex">
+              {treeData.parents.map(p => (
+                <PersonIcon
+                  key={p.pid}
+                  person={p}
+                  type={p.gender === 'Male' ? 'father' : 'mother'}
+                  onFocus={setFocusedPid}
+                  onInfo={setSidebarPerson}
+                />
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        )}
 
+        {/* Siblings & Focused Node Section */}
+        {treeData.parents.length > 0 && <VerticalConnector />}
 
+        <div className="tree-card">
+          <div className="card-content row-flex wrap">
+            {/* Elder Siblings */}
+            {treeData.elderSiblings.map(s => (
+              <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+            ))}
+
+            {/* Focused Person */}
+            <PersonIcon person={treeData.person} isFocused={true} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+
+            {/* Younger Siblings */}
+            {treeData.youngerSiblings.map(s => (
+              <PersonIcon key={s.pid} person={s} type="sibling" isElder={false} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+            ))}
+          </div>
+        </div>
+
+        {/* Spouses & Children Section */}
+        {(treeData.spouses.length > 0 || treeData.children.length > 0) && (
+          <>
+            <VerticalConnector />
+
+            <div className="tree-card spouse-children-card">
+
+              {/* Spouses */}
+              {treeData.spouses.length > 0 && (
+                <div className="spouse-section">
+                  {treeData.spouses.map(sp => (
+                    <PersonIcon key={sp.pid} person={sp} type="spouse" onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                  ))}
+                </div>
+              )}
+
+              {/* Connecting line to children */}
+              {treeData.spouses.length > 0 && treeData.children.length > 0 && (
+                <div className="vertical-connector-internal">
+                  <div className="internal-label">{t('tree.children')}</div>
+                </div>
+              )}
+
+              {/* Children */}
+              {treeData.children.length > 0 && (
+                <div className="children-section row-flex wrap">
+                  {treeData.children.map(c => (
+                    <PersonIcon key={c.pid} person={c} type="child" onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                  ))}
+                </div>
+              )}
+
+            </div>
+          </>
+        )}
+
+      </div>
 
       <Sidebar
         person={sidebarPerson}

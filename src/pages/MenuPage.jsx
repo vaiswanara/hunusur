@@ -34,30 +34,47 @@ const MenuPage = ({ profiles }) => {
       paddingLeft: '1rem',
       paddingRight: '1rem'
     }}>
-      {/* Refresh/Reload Button */}
-      <button 
-        onClick={() => window.location.reload()}
-        style={{
-          position: 'absolute',
-          top: '1.25rem',
-          right: '1.25rem',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          backgroundColor: '#F9F6F0',
-          border: '1.5px solid var(--color-sandalwood, #D3BCA2)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          cursor: 'pointer',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-          transition: 'all 0.2s',
-          color: 'var(--color-maroon, #63131D)'
-        }}
-        title="Refresh App"
-      >
-        <RotateCw size={18} strokeWidth={2.5} />
-      </button>
+      {/* Refresh/Reload Button & Label Group */}
+      <div style={{
+        position: 'absolute',
+        top: '1.25rem',
+        right: '1.25rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        zIndex: 10
+      }}>
+        <button 
+          onClick={() => window.location.reload()}
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: '#F9F6F0',
+            border: '1.5px solid var(--color-sandalwood, #D3BCA2)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            transition: 'all 0.2s',
+            color: 'var(--color-maroon, #63131D)'
+          }}
+          title="Refresh App"
+        >
+          <RotateCw size={18} strokeWidth={2.5} />
+        </button>
+        <span style={{
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          color: '#8C6A53',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px'
+        }}>
+          Refresh
+        </span>
+      </div>
       <style>{`
         .menu-page-item-btn {
           -webkit-tap-highlight-color: transparent;

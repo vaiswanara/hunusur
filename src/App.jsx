@@ -556,7 +556,7 @@ function App() {
             />
           } />
           <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} />} />
-          <Route path="/menu" element={<MenuPage />} />
+          <Route path="/menu" element={<MenuPage profiles={enrichedProfiles} />} />
           <Route path="/dashboard" element={<Dashboard profiles={enrichedProfiles} />} />
           <Route path="/settings" element={
             <UserSettings 

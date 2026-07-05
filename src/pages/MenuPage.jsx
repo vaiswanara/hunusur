@@ -3,9 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const MenuPage = () => {
+const MenuPage = ({ profiles }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+
+  // Find the primary surname from the home person (if configured)
+  const homePid = localStorage.getItem('vamsha_home_pid');
+  const homePerson = homePid && profiles ? profiles.find(p => p.pid === homePid) : null;
+  const primarySurname = homePerson ? (homePerson.surName || '').trim() : '';
 
   const menuItems = [
     { path: '/home-person', label: t('nav.home_person'), icon: UserCheck, color: '#A04000' },
@@ -36,33 +41,36 @@ const MenuPage = () => {
 
       {/* Directory Branding Logo */}
       <div style={{ textAlign: 'center', marginBottom: '2.5rem', marginTop: '1.5rem' }}>
-        <div style={{
-          display: 'inline-flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: '110px',
-          height: '110px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #FFF8F0 0%, #F5E6D3 100%)',
-          border: '3px solid var(--color-sandalwood, #EADDCA)',
-          boxShadow: '0 8px 24px rgba(99, 19, 29, 0.06)',
-          position: 'relative'
+        <img
+          src={`${import.meta.env.BASE_URL}icons/icon-maskable-512.png`}
+          alt="Vamsha Logo"
+          style={{
+            width: '110px',
+            height: '110px',
+            objectFit: 'contain',
+            marginBottom: '1.25rem',
+            filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.06))'
+          }}
+        />
+        <h2 style={{
+          color: 'var(--color-maroon, #63131D)',
+          fontSize: '2rem',
+          fontWeight: 800,
+          margin: '0 0 0.25rem',
+          letterSpacing: '1px',
+          fontFamily: "'Outfit', 'Inter', sans-serif"
         }}>
-          <img
-            src={`${import.meta.env.BASE_URL}icons/icon-maskable-512.png`}
-            alt="Vamsha Logo"
-            style={{
-              width: '75px',
-              height: '75px',
-              objectFit: 'contain'
-            }}
-          />
-        </div>
-        <h2 style={{ color: 'var(--color-maroon, #63131D)', fontSize: '1.75rem', fontWeight: 800, margin: '1rem 0 0.25rem' }}>
-          {t('nav.directory')}
+          {t('home.title')}
         </h2>
-        <p style={{ color: '#8C7A70', fontSize: '0.88rem', fontStyle: 'italic', margin: 0 }}>
-          Vamsha Family Tree Directory
+        <p style={{
+          color: '#8C6A53',
+          fontSize: '0.88rem',
+          fontWeight: 600,
+          margin: 0,
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          {primarySurname ? `${primarySurname.toUpperCase()} ${t('home.subtitle_family_tree')}` : t('home.subtitle_family_tree')}
         </p>
       </div>
 

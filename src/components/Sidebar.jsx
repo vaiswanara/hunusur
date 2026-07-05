@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 
 const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const [isHome, setIsHome] = useState(() => {
     return person ? localStorage.getItem('vamsha_home_pid') === person.pid : false;
@@ -201,6 +203,60 @@ const Sidebar = ({ person, profiles, onClose, onSelectPerson }) => {
               <p className="info-value notes-text">{person.notes}</p>
             </div>
           )}
+
+          {/* Memories / Stories Section */}
+          <div className="sidebar-section-title" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{t('memories.sidebar_title')}</span>
+            <span style={{ fontSize: '0.8rem', background: '#EFE4DC', padding: '2px 8px', borderRadius: '12px', color: 'var(--color-maroon)', fontWeight: 'bold' }}>
+              {(person.memories || []).length}
+            </span>
+          </div>
+
+          {(person.memories || []).length === 0 ? (
+            <div style={{ fontSize: '0.85rem', color: '#888', fontStyle: 'italic', padding: '0.5rem 0', textAlign: 'center' }}>
+              {t('memories.no_memories')}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '200px', overflowY: 'auto', padding: '0.25rem 0' }}>
+              {(person.memories || []).map(m => (
+                <div key={m.id} style={{ background: '#FAF8F6', padding: '0.75rem', borderRadius: '8px', border: '1px dashed var(--color-sandalwood)' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-maroon)', marginBottom: '0.25rem' }}>{m.title}</div>
+                  <div style={{ fontSize: '0.82rem', color: '#444', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{m.content}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '0.4rem', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>By: {m.author}</span>
+                    <span>{m.date}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <button 
+              onClick={() => {
+                onClose();
+                navigate('/memories', { state: { preselectPid: person.pid, openForm: true } });
+              }}
+              style={{
+                width: '100%',
+                padding: '0.6rem 1rem',
+                backgroundColor: 'var(--color-maroon)',
+                color: 'var(--color-gold)',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              ✍️ {t('memories.btn_share')}
+            </button>
+          </div>
         </div>
       </div>
     </>

@@ -7,10 +7,11 @@ import HomePage from './pages/Home';
 import HomePerson from './pages/HomePerson';
 import Reports from './pages/Reports';
 import UserSettings from './pages/UserSettings';
+import Memories from './pages/Memories';
 import AdminGate from './components/AdminGate';
 import { fetchProfiles } from './lib/api';
 import initialData from './data.json';
-import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2 } from 'lucide-react';
+import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2, BookOpen } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
 
 function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
@@ -55,6 +56,7 @@ function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
         <a href="/tree" onClick={handleTreeClick} className={location.pathname === '/tree' && !location.pathname.includes('/admin') && !location.pathname.includes('/birthdays') && !location.pathname.includes('/reports') && !location.pathname.includes('/home-person') ? 'active' : ''}>{t('nav.tree')}</a>
         <Link to="/birthdays" className={location.pathname.includes('/birthdays') ? 'active' : ''}>{t('nav.birthdays')}</Link>
         <Link to="/reports" className={location.pathname.includes('/reports') ? 'active' : ''}>{t('nav.reports')}</Link>
+        <Link to="/memories" className={location.pathname.includes('/memories') ? 'active' : ''}>{t('nav.memories')}</Link>
         <Link to="/settings" className={location.pathname.includes('/settings') ? 'active' : ''}>{t('nav.settings')}</Link>
       </nav>
     </header>
@@ -109,6 +111,13 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
     }
   };
 
+  const handleMemoriesClick = () => {
+    setSidebarPerson(null);
+    if (location.pathname !== '/memories') {
+      navigate('/memories');
+    }
+  };
+
   const handleSettingsClick = () => {
     setSidebarPerson(null);
     if (location.pathname !== '/settings') {
@@ -137,6 +146,10 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
       <button className={`nav-item-btn ${location.pathname.includes('/reports') ? 'active' : ''}`} onClick={handleReportsClick}>
         <BarChart2 size={23} />
         <span>{t('nav.reports')}</span>
+      </button>
+      <button className={`nav-item-btn ${location.pathname.includes('/memories') ? 'active' : ''}`} onClick={handleMemoriesClick}>
+        <BookOpen size={23} />
+        <span>{t('nav.memories')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/settings') ? 'active' : ''}`} onClick={handleSettingsClick}>
         <Settings size={23} />
@@ -563,6 +576,13 @@ function App() {
           } />
           <Route path="/birthdays" element={<Birthdays profiles={enrichedProfiles} />} />
           <Route path="/reports" element={<Reports profiles={enrichedProfiles} />} />
+          <Route path="/memories" element={
+            <Memories 
+              profiles={profiles} 
+              setProfiles={updateProfiles}
+              setSavedProfilesBaseline={setSavedProfilesBaseline}
+            />
+          } />
           <Route path="/settings" element={
             <UserSettings 
               profiles={enrichedProfiles} 

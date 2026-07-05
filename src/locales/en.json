@@ -5,7 +5,8 @@
     "tree": "Tree",
     "birthdays": "Birthdays",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "memories": "Memory Wall"
   },
   "home": {
     "title": "VAMSHA",
@@ -144,5 +145,33 @@
     "select_secondary": "Select Secondary Person",
     "choose_report": "Choose Report Type",
     "print_btn": "Save as PDF / Print"
+  },
+  "memories": {
+    "title": "Family Memory Wall",
+    "sidebar_title": "Memories & Stories",
+    "subtitle": "Share and read precious stories, memories, and life achievements of our family members.",
+    "filter_placeholder": "All family members",
+    "filter_label": "Filter by member:",
+    "no_memories": "No memories shared for this person yet. Be the first to add one!",
+    "no_memories_general": "No memories shared in the family tree yet. Start by writing the first memory!",
+    "share_title": "Share a Memory",
+    "btn_share": "Share a Memory",
+    "form_member": "Select Family Member",
+    "form_title": "Memory Title",
+    "form_title_placeholder": "e.g. His love for books / Childhood story",
+    "form_content": "Story / Memory",
+    "form_content_placeholder": "Write the story or memory here...",
+    "form_author": "Your Name (Shared By)",
+    "form_author_placeholder": "e.g. Grandson / Daughter",
+    "form_passcode": "Family Passcode",
+    "form_passcode_placeholder": "Enter password to publish",
+    "btn_submit": "Publish Memory",
+    "btn_cancel": "Cancel",
+    "toast_success": "Success! Memory published on the wall.",
+    "toast_error": "Failed to save: {error}",
+    "read_more": "Read More",
+    "read_less": "Show Less",
+    "about_person": "About {name}",
+    "written_by": "By {author} on {date}"
   }
 }

@@ -10,6 +10,7 @@ import UserSettings from './pages/UserSettings';
 import Memories from './pages/Memories';
 import Timeline from './pages/Timeline';
 import MenuPage from './pages/MenuPage';
+import Dashboard from './pages/Dashboard';
 import AdminGate from './components/AdminGate';
 import { fetchProfiles } from './lib/api';
 import initialData from './data.json';
@@ -55,8 +56,9 @@ function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
       <nav className="nav-links">
         <Link to="/" className={location.pathname === '/' || location.pathname === import.meta.env.BASE_URL ? 'active' : ''}>{t('nav.home')}</Link>
         <Link to="/home-person" className={location.pathname.includes('/home-person') ? 'active' : ''}>{t('nav.home_person')}</Link>
-        <a href="/tree" onClick={handleTreeClick} className={location.pathname === '/tree' && !location.pathname.includes('/admin') && !location.pathname.includes('/birthdays') && !location.pathname.includes('/reports') && !location.pathname.includes('/home-person') ? 'active' : ''}>{t('nav.tree')}</a>
+        <a href="/tree" onClick={handleTreeClick} className={location.pathname === '/tree' && !location.pathname.includes('/admin') && !location.pathname.includes('/birthdays') && !location.pathname.includes('/reports') && !location.pathname.includes('/dashboard') && !location.pathname.includes('/home-person') ? 'active' : ''}>{t('nav.tree')}</a>
         <Link to="/birthdays" className={location.pathname.includes('/birthdays') ? 'active' : ''}>{t('nav.birthdays')}</Link>
+        <Link to="/dashboard" className={location.pathname.includes('/dashboard') ? 'active' : ''}>{t('nav.dashboard')}</Link>
         <Link to="/reports" className={location.pathname.includes('/reports') ? 'active' : ''}>{t('nav.reports')}</Link>
         <Link to="/memories" className={location.pathname.includes('/memories') ? 'active' : ''}>{t('nav.memories')}</Link>
         <Link to="/timeline" className={location.pathname.includes('/timeline') ? 'active' : ''}>{t('nav.timeline')}</Link>
@@ -70,13 +72,6 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-
-  const handleHomePortalClick = () => {
-    setSidebarPerson(null);
-    if (location.pathname !== '/') {
-      navigate('/');
-    }
-  };
 
   const handleMenuClick = () => {
     setSidebarPerson(null);
@@ -100,6 +95,13 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
     }
   };
 
+  const handleDashboardClick = () => {
+    setSidebarPerson(null);
+    if (location.pathname !== '/dashboard') {
+      navigate('/dashboard');
+    }
+  };
+
   const handleSettingsClick = () => {
     setSidebarPerson(null);
     if (location.pathname !== '/settings') {
@@ -109,10 +111,6 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
 
   return (
     <div className="mobile-bottom-nav">
-      <button className={`nav-item-btn ${location.pathname === '/' ? 'active' : ''}`} onClick={handleHomePortalClick}>
-        <HomeIcon size={23} />
-        <span>{t('nav.home')}</span>
-      </button>
       <button className={`nav-item-btn ${location.pathname.includes('/menu') ? 'active' : ''}`} onClick={handleMenuClick}>
         <MenuIcon size={23} />
         <span>{t('nav.menu')}</span>
@@ -120,6 +118,10 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
       <button className={`nav-item-btn ${location.pathname === '/tree' ? 'active' : ''}`} onClick={handleRootTreeClick}>
         <GitBranch size={23} />
         <span>{t('nav.tree')}</span>
+      </button>
+      <button className={`nav-item-btn ${location.pathname.includes('/dashboard') ? 'active' : ''}`} onClick={handleDashboardClick}>
+        <BarChart2 size={23} />
+        <span>{t('nav.dashboard')}</span>
       </button>
       <button className={`nav-item-btn ${location.pathname.includes('/settings') ? 'active' : ''}`} onClick={handleSettingsClick}>
         <Settings size={23} />
@@ -555,6 +557,7 @@ function App() {
           } />
           <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} />} />
           <Route path="/menu" element={<MenuPage />} />
+          <Route path="/dashboard" element={<Dashboard profiles={enrichedProfiles} />} />
           <Route path="/settings" element={
             <UserSettings 
               profiles={enrichedProfiles} 

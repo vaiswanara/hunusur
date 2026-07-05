@@ -244,6 +244,14 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
     return treeData.children.filter(c => !mappedChildrenPids.has(c.pid));
   }, [treeData, spouseGroups]);
 
+  const hasSectionAboveSpouse = useMemo(() => {
+    if (!treeData) return false;
+    const hasParents = treeData.parents.length > 0;
+    const hasSiblings = treeData.elderSiblings.length > 0 || treeData.youngerSiblings.length > 0;
+    const hasSpouses = treeData.spouses.length > 0;
+    return hasParents || (hasSiblings || !hasSpouses);
+  }, [treeData]);
+
   if (!treeData) return <div className="tree-container">{t('tree.no_data')}</div>;
 
   return (
@@ -345,35 +353,39 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         )}
 
         {/* Siblings & Focused Node Section */}
-        {treeData.parents.length > 0 && <VerticalConnector />}
+        {((treeData.elderSiblings.length > 0 || treeData.youngerSiblings.length > 0) || 
+          treeData.spouses.length === 0) && (
+          <>
+            {treeData.parents.length > 0 && <VerticalConnector />}
+            <div className="tree-card">
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
+                <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {getSectionLabel('siblings')}
+                </span>
+              </div>
+              <div className="card-content row-flex wrap">
+                {/* Elder Siblings */}
+                {treeData.elderSiblings.map(s => (
+                  <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                ))}
 
-        <div className="tree-card">
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
-            <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {getSectionLabel('siblings')}
-            </span>
-          </div>
-          <div className="card-content row-flex wrap">
-            {/* Elder Siblings */}
-            {treeData.elderSiblings.map(s => (
-              <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-            ))}
+                {/* Focused Person */}
+                <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
 
-            {/* Focused Person */}
-            <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-
-            {/* Younger Siblings */}
-            {treeData.youngerSiblings.map(s => (
-              <PersonIcon key={s.pid} person={s} type="sibling" isElder={false} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-            ))}
-          </div>
-        </div>
+                {/* Younger Siblings */}
+                {treeData.youngerSiblings.map(s => (
+                  <PersonIcon key={s.pid} person={s} type="sibling" isElder={false} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Spouse & Children Groups (Split by Spouse) */}
-        {spouseGroups.map(({ spouse, children: spouseChildren }) => (
+        {spouseGroups.map(({ spouse, children: spouseChildren }, index) => (
           <React.Fragment key={spouse.pid}>
             {/* Spouse Card */}
-            <VerticalConnector />
+            {(index > 0 || hasSectionAboveSpouse) && <VerticalConnector />}
             <div className="tree-card">
               <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
                 <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>

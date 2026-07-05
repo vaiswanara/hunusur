@@ -187,7 +187,15 @@
     "read_more": "Read More",
     "read_less": "Show Less",
     "about_person": "About {name}",
-    "written_by": "By {author} on {date}"
+    "written_by": "By {author} on {date}",
+    "edit_title": "Edit Memory",
+    "delete_title": "Delete Memory",
+    "delete_confirm": "Are you sure you want to delete this memory? This action cannot be undone.",
+    "btn_save": "Save Changes",
+    "btn_delete": "Delete",
+    "toast_edit_success": "Success! Memory updated successfully.",
+    "toast_delete_success": "Success! Memory deleted successfully.",
+    "form_passcode_delete": "Enter Passcode to Delete"
   },
   "timeline": {
     "title": "Family Timeline & History",

@@ -22,6 +22,22 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline }) => {
   const [formAuthor, setFormAuthor] = useState('');
   const [formPasscode, setFormPasscode] = useState('');
   const [showPasscode, setShowPasscode] = useState(false);
+
+  // Edit memory states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingMemory, setEditingMemory] = useState(null);
+  const [editPid, setEditPid] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editAuthor, setEditAuthor] = useState('');
+  const [editPasscode, setEditPasscode] = useState('');
+  const [showEditPasscode, setShowEditPasscode] = useState(false);
+
+  // Delete memory states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingMemory, setDeletingMemory] = useState(null);
+  const [deletePasscode, setDeletePasscode] = useState('');
+  const [showDeletePasscode, setShowDeletePasscode] = useState(false);
   
   // Submit states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -138,6 +154,108 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline }) => {
       setToast({ 
         message: t('memories.toast_error').replace('{error}', err.message), 
         type: 'error' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenEditModal = (memory) => {
+    setEditingMemory(memory);
+    setEditPid(memory.targetPerson.pid);
+    setEditTitle(memory.title);
+    setEditContent(memory.content);
+    setEditAuthor(memory.author);
+    setEditPasscode('');
+    setShowEditPasscode(false);
+    setShowEditModal(true);
+  };
+
+  const handleOpenDeleteModal = (memory) => {
+    setDeletingMemory(memory);
+    setDeletePasscode('');
+    setShowDeletePasscode(false);
+    setShowDeleteModal(true);
+  };
+
+  const handleUpdateMemory = async (e) => {
+    e.preventDefault();
+    if (!editPid || !editTitle.trim() || !editContent.trim() || !editAuthor.trim() || !editPasscode.trim()) {
+      setToast({ message: 'Please fill in all fields.', type: 'error' });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const updatedProfiles = profiles.map(p => {
+      let memories = p.memories ? [...p.memories] : [];
+      
+      if (p.pid === editingMemory.targetPerson.pid) {
+        memories = memories.filter(m => m.id !== editingMemory.id);
+      }
+
+      if (p.pid === editPid) {
+        const updatedItem = {
+          id: editingMemory.id,
+          title: editTitle.trim(),
+          content: editContent.trim(),
+          author: editAuthor.trim(),
+          date: editingMemory.date
+        };
+        memories.push(updatedItem);
+      }
+
+      return { ...p, memories };
+    });
+
+    try {
+      await saveProfiles(updatedProfiles, editPasscode);
+      setProfiles(updatedProfiles);
+      if (setSavedProfilesBaseline) {
+        setSavedProfilesBaseline(updatedProfiles);
+      }
+      setToast({ message: t('memories.toast_edit_success') || 'Memory updated successfully!', type: 'success' });
+      setShowEditModal(false);
+    } catch (err) {
+      setToast({
+        message: t('memories.toast_error').replace('{error}', err.message),
+        type: 'error'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteMemory = async (e) => {
+    e.preventDefault();
+    if (!deletePasscode.trim()) {
+      setToast({ message: 'Please enter passcode.', type: 'error' });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const updatedProfiles = profiles.map(p => {
+      if (p.pid === deletingMemory.targetPerson.pid) {
+        const memories = (p.memories ? [...p.memories] : [])
+          .filter(m => m.id !== deletingMemory.id);
+        return { ...p, memories };
+      }
+      return p;
+    });
+
+    try {
+      await saveProfiles(updatedProfiles, deletePasscode);
+      setProfiles(updatedProfiles);
+      if (setSavedProfilesBaseline) {
+        setSavedProfilesBaseline(updatedProfiles);
+      }
+      setToast({ message: t('memories.toast_delete_success') || 'Memory deleted successfully!', type: 'success' });
+      setShowDeleteModal(false);
+    } catch (err) {
+      setToast({
+        message: t('memories.toast_error').replace('{error}', err.message),
+        type: 'error'
       });
     } finally {
       setIsSubmitting(false);
@@ -379,8 +497,50 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline }) => {
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}>
-                    <span>🖋️ {m.author}</span>
-                    <span>📅 {m.date}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span>🖋️ {m.author}</span>
+                      <span>📅 {m.date}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => handleOpenEditModal(m)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#8C7A70',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          transition: 'color 0.2s'
+                        }}
+                        title={t('memories.edit_title')}
+                      >
+                        ✏️ {t('nav.edit') || 'Edit'}
+                      </button>
+                      <button
+                        onClick={() => handleOpenDeleteModal(m)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#8C7A70',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          transition: 'color 0.2s'
+                        }}
+                        title={t('memories.delete_title')}
+                      >
+                        🗑️ {t('nav.delete') || 'Delete'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -536,6 +696,266 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline }) => {
                   type="button" 
                   className="btn btn-secondary" 
                   onClick={() => setShowShareModal(false)}
+                  disabled={isSubmitting}
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {t('memories.btn_cancel')}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* Edit Memory Modal */}
+      {showEditModal && editingMemory && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(3px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1500,
+          padding: '1rem'
+        }}>
+          <div className="card" style={{
+            maxWidth: '500px',
+            width: '100%',
+            borderRadius: '16px',
+            padding: '2rem',
+            boxShadow: '0 15px 40px rgba(0,0,0,0.25)',
+            border: '1.5px solid var(--color-sandalwood)',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            animation: 'modalFadeUp 0.25s ease-out'
+          }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '2px solid var(--color-sandalwood)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, color: 'var(--color-maroon)', fontSize: '1.3rem', fontWeight: 800 }}>
+                ✏️ {t('memories.edit_title')}
+              </h3>
+              <button 
+                onClick={() => setShowEditModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleUpdateMemory} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              
+              {/* Select Member */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontWeight: 700, marginBottom: '0.4rem', display: 'block', fontSize: '0.88rem' }}>
+                  {t('memories.form_member')} <span style={{ color: 'red' }}>*</span>
+                </label>
+                <SearchableSelect 
+                  options={personOptions}
+                  value={editPid}
+                  onChange={(e) => setEditPid(e.target.value)}
+                  placeholder="-- Select Member --"
+                />
+              </div>
+
+              {/* Title */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontWeight: 700, marginBottom: '0.4rem', display: 'block', fontSize: '0.88rem' }}>
+                  {t('memories.form_title')} <span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder={t('memories.form_title_placeholder')}
+                  required
+                />
+              </div>
+
+              {/* Content */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontWeight: 700, marginBottom: '0.4rem', display: 'block', fontSize: '0.88rem' }}>
+                  {t('memories.form_content')} <span style={{ color: 'red' }}>*</span>
+                </label>
+                <textarea 
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  placeholder={t('memories.form_content_placeholder')}
+                  rows={4}
+                  required
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Author */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontWeight: 700, marginBottom: '0.4rem', display: 'block', fontSize: '0.88rem' }}>
+                  {t('memories.form_author')} <span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type="text"
+                  value={editAuthor}
+                  onChange={(e) => setEditAuthor(e.target.value)}
+                  placeholder={t('memories.form_author_placeholder')}
+                  required
+                />
+              </div>
+
+              {/* Passcode */}
+              <div className="form-group" style={{ margin: 0, position: 'relative' }}>
+                <label style={{ fontWeight: 700, marginBottom: '0.4rem', display: 'block', fontSize: '0.88rem' }}>
+                  🔒 {t('memories.form_passcode')} <span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type={showEditPasscode ? "text" : "password"}
+                  value={editPasscode}
+                  onChange={(e) => setEditPasscode(e.target.value)}
+                  placeholder={t('memories.form_passcode_placeholder')}
+                  required
+                  style={{ paddingRight: '2.5rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEditPasscode(v => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    bottom: '0.65rem',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#888'
+                  }}
+                >
+                  {showEditPasscode ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  disabled={isSubmitting}
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {isSubmitting ? 'Saving...' : t('memories.btn_save')}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setShowEditModal(false)}
+                  disabled={isSubmitting}
+                  style={{ flex: 1, justifyContent: 'center' }}
+                >
+                  {t('memories.btn_cancel')}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* Delete Memory Modal */}
+      {showDeleteModal && deletingMemory && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(3px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1500,
+          padding: '1rem'
+        }}>
+          <div className="card" style={{
+            maxWidth: '420px',
+            width: '100%',
+            borderRadius: '16px',
+            padding: '2rem',
+            boxShadow: '0 15px 40px rgba(0,0,0,0.25)',
+            border: '1.5px solid var(--color-sandalwood)',
+            animation: 'modalFadeUp 0.25s ease-out'
+          }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', borderBottom: '2px solid var(--color-sandalwood)', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, color: '#c0392b', fontSize: '1.25rem', fontWeight: 800 }}>
+                🗑️ {t('memories.delete_title')}
+              </h3>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.9rem', color: '#444', marginBottom: '1.2rem', lineHeight: 1.5 }}>
+              {t('memories.delete_confirm')}
+            </p>
+
+            {/* Modal Form */}
+            <form onSubmit={handleDeleteMemory} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              
+              {/* Passcode */}
+              <div className="form-group" style={{ margin: 0, position: 'relative' }}>
+                <label style={{ fontWeight: 700, marginBottom: '0.4rem', display: 'block', fontSize: '0.88rem' }}>
+                  🔒 {t('memories.form_passcode_delete') || 'Enter Passcode to Delete'} <span style={{ color: 'red' }}>*</span>
+                </label>
+                <input 
+                  type={showDeletePasscode ? "text" : "password"}
+                  value={deletePasscode}
+                  onChange={(e) => setDeletePasscode(e.target.value)}
+                  placeholder={t('memories.form_passcode_placeholder')}
+                  required
+                  style={{ paddingRight: '2.5rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDeletePasscode(v => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    bottom: '0.65rem',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#888'
+                  }}
+                >
+                  {showDeletePasscode ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="submit" 
+                  className="btn" 
+                  disabled={isSubmitting}
+                  style={{ 
+                    flex: 1, 
+                    justifyContent: 'center',
+                    backgroundColor: '#c0392b',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting ? 0.7 : 1
+                  }}
+                >
+                  {isSubmitting ? 'Deleting...' : t('memories.btn_delete')}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setShowDeleteModal(false)}
                   disabled={isSubmitting}
                   style={{ flex: 1, justifyContent: 'center' }}
                 >

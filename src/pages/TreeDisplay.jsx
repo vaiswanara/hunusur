@@ -88,21 +88,25 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
   const { t } = useLanguage();
   const treeRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingMode, setIsExportingMode] = useState(false);
 
   const handleExportPNG = async () => {
     if (!treeRef.current) return;
     setIsExporting(true);
+    setIsExportingMode(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 150));
       const canvas = await html2canvas(treeRef.current, {
         useCORS: true,
         scale: 3, // High resolution scale factor
-        backgroundColor: '#FAF8F5',
+        backgroundColor: '#ffffff',
         logging: false
       });
       const imgData = canvas.toDataURL('image/png', 1.0);
       const link = document.createElement('a');
-      link.download = `vamsha_tree_${focusedPid || 'focused'}.png`;
+      const person = profiles.find(p => p.pid === focusedPid);
+      const personName = person ? person.firstName : 'focused';
+      link.download = `vamsha_tree_${personName}.png`;
       link.href = imgData;
       link.click();
     } catch (err) {
@@ -110,6 +114,7 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
       alert('Error exporting image: ' + err.message);
     } finally {
       setIsExporting(false);
+      setIsExportingMode(false);
     }
   };
 
@@ -195,10 +200,39 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
           .tree-layout-wrapper {
             box-shadow: none !important;
             border: none !important;
-            background: white !important;
+            background: #ffffff !important;
             padding: 0 !important;
             margin: 0 !important;
           }
+          .tree-card, .spouse-children-card {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+          }
+          .tree-print-title {
+            display: block !important;
+          }
+        }
+
+        /* Image Export Overrides */
+        .is-exporting-view {
+          background-color: #ffffff !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+        .is-exporting-view .tree-card,
+        .is-exporting-view .spouse-children-card {
+          background: transparent !important;
+          box-shadow: none !important;
+          border: none !important;
+          padding: 0 !important;
+        }
+        .is-exporting-view .info-badge {
+          display: none !important;
+        }
+        .is-exporting-view .tree-print-title {
+          display: block !important;
         }
       `}</style>
 
@@ -264,7 +298,26 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         </div>
       </div>
 
-      <div className="tree-layout-wrapper" ref={treeRef} style={{ padding: '2rem 1.5rem', backgroundColor: '#FAF8F5', borderRadius: '16px', border: '1px solid var(--color-sandalwood)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+      <div className={`tree-layout-wrapper ${isExportingMode ? 'is-exporting-view' : ''}`} ref={treeRef} style={{ padding: '2rem 1.5rem', backgroundColor: '#FAF8F5', borderRadius: '16px', border: '1px solid var(--color-sandalwood)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+
+        {/* Dynamic Title for Print/Export */}
+        <div 
+          className="tree-print-title" 
+          style={{
+            display: 'none',
+            textAlign: 'center',
+            marginBottom: '2rem',
+            borderBottom: '2.5px solid var(--color-maroon, #63131D)',
+            paddingBottom: '1rem'
+          }}
+        >
+          <h1 style={{ color: 'var(--color-maroon, #63131D)', margin: 0, fontSize: '2.4rem', fontFamily: 'serif', fontWeight: 'bold' }}>
+            {treeData.person ? `${treeData.person.firstName}'s Family Tree` : 'Family Tree'}
+          </h1>
+          <p style={{ color: '#666', margin: '6px 0 0', fontSize: '1.05rem', fontStyle: 'italic', fontWeight: 600 }}>
+            Vamsha Family Tree Directory
+          </p>
+        </div>
 
         {/* Parents Section */}
         {treeData.parents.length > 0 && (

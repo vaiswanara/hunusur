@@ -20,6 +20,7 @@ if (!file_exists($env_file)) {
 }
 
 $admin_password_hash = 'b8ffa75cdfcd1e2a919e55e190e4ae56968c0154e45e547a8a3ee744d3d68638'; // Default fallback
+$family_password_hash = '5e2b694b29bb88c42287b3a4a9c6870d057a667104b2c1fcf4e4277b069d12a6'; // Default fallback
 $cors_allowed_origins_env = '';
 $vamsha_db_path_env = '';
 
@@ -34,6 +35,8 @@ if (file_exists($env_file)) {
             $value = trim($value, " \t\n\r\0\x0B\"'");
             if ($name === 'VITE_ADMIN_PASSWORD_HASH') {
                 $admin_password_hash = $value;
+            } elseif ($name === 'VITE_FAMILY_PASSWORD_HASH') {
+                $family_password_hash = $value;
             } elseif ($name === 'CORS_ALLOWED_ORIGINS') {
                 $cors_allowed_origins_env = $value;
             } elseif ($name === 'VAMSHA_DB_PATH') {
@@ -44,6 +47,7 @@ if (file_exists($env_file)) {
 }
 
 define('ADMIN_PASSWORD_HASH', $admin_password_hash);
+define('FAMILY_PASSWORD_HASH', $family_password_hash);
 
 // Resolve data.json path
 $db_path = __DIR__ . '/data.json'; // Default fallback
@@ -95,7 +99,7 @@ if (in_array($origin, $allowed_origins)) {
 }
 
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Admin-Password');
+header('Access-Control-Allow-Headers: Content-Type, X-Admin-Password, X-Family-Password');
 header('Content-Type: application/json; charset=utf-8');
 
 // Handle preflight requests
@@ -173,12 +177,15 @@ function handlePost($origin) {
     }
 
     // Password verification
-    $provided_password = $_SERVER['HTTP_X_ADMIN_PASSWORD'] ?? '';
+    $provided_password = $_SERVER['HTTP_X_ADMIN_PASSWORD'] ?? $_SERVER['HTTP_X_FAMILY_PASSWORD'] ?? '';
     $provided_hash = hash('sha256', $provided_password);
 
-    if (!hash_equals(ADMIN_PASSWORD_HASH, $provided_hash)) {
+    $is_admin = hash_equals(ADMIN_PASSWORD_HASH, $provided_hash);
+    $is_family = !empty(FAMILY_PASSWORD_HASH) && hash_equals(FAMILY_PASSWORD_HASH, $provided_hash);
+
+    if (!$is_admin && !$is_family) {
         http_response_code(401);
-        echo json_encode(['error' => 'Invalid admin password']);
+        echo json_encode(['error' => 'Invalid passcode']);
         exit;
     }
 

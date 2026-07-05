@@ -297,26 +297,14 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         {treeData.parents.length > 0 && <VerticalConnector />}
 
         <div className="tree-card">
-          <div className="card-content row-flex wrap" style={{ gap: '1rem 0.5rem' }}>
+          <div className="card-content row-flex wrap">
             {/* Elder Siblings */}
             {treeData.elderSiblings.map(s => (
               <PersonIcon key={s.pid} person={s} type="sibling" isElder={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
             ))}
 
-            {/* Focused Person & Spouse Group (stays side-by-side) */}
-            <div className="focused-couple-group" style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: '0.25rem',
-              flexWrap: 'nowrap'
-            }}>
-              <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-              
-              {treeData.spouses.map(sp => (
-                <PersonIcon key={sp.pid} person={sp} type="spouse" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-              ))}
-            </div>
+            {/* Focused Person */}
+            <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
 
             {/* Younger Siblings */}
             {treeData.youngerSiblings.map(s => (
@@ -324,6 +312,24 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
             ))}
           </div>
         </div>
+
+        {/* Spouse Section (renders focused person and their spouses side-by-side) */}
+        {treeData.spouses.length > 0 && (
+          <>
+            <VerticalConnector />
+            <div className="tree-card">
+              <div className="card-content row-flex" style={{ flexWrap: 'nowrap', gap: '0.25rem', justifyContent: 'center' }}>
+                {/* Selected Person Profile again */}
+                <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                
+                {/* Spouse Profile(s) */}
+                {treeData.spouses.map(sp => (
+                  <PersonIcon key={sp.pid} person={sp} type="spouse" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Children Section */}
         {treeData.children.length > 0 && (

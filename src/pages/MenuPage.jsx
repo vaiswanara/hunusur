@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText } from 'lucide-react';
+import { RotateCw, UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const MenuPage = ({ profiles }) => {
@@ -25,6 +25,7 @@ const MenuPage = ({ profiles }) => {
 
   return (
     <div style={{ 
+      position: 'relative',
       backgroundColor: '#ffffff', 
       minHeight: '100vh',
       paddingBottom: '5rem',
@@ -33,6 +34,30 @@ const MenuPage = ({ profiles }) => {
       paddingLeft: '1rem',
       paddingRight: '1rem'
     }}>
+      {/* Refresh/Reload Button */}
+      <button 
+        onClick={() => window.location.reload()}
+        style={{
+          position: 'absolute',
+          top: '1.25rem',
+          right: '1.25rem',
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          backgroundColor: '#F9F6F0',
+          border: '1.5px solid var(--color-sandalwood, #D3BCA2)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          transition: 'all 0.2s',
+          color: 'var(--color-maroon, #63131D)'
+        }}
+        title="Refresh App"
+      >
+        <RotateCw size={18} strokeWidth={2.5} />
+      </button>
       <style>{`
         .menu-page-item-btn {
           -webkit-tap-highlight-color: transparent;

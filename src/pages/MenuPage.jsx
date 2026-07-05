@@ -13,26 +13,33 @@ const MenuPage = ({ profiles }) => {
   const primarySurname = homePerson ? (homePerson.surName || '').trim() : '';
 
   const menuItems = [
-    { path: '/home-person', label: t('nav.home_person'), icon: UserCheck, color: '#A04000' },
-    { path: '/tree', label: t('nav.tree'), icon: GitBranch, color: '#27AE60' },
-    { path: '/birthdays', label: t('nav.birthdays'), icon: Cake, color: '#E67E22' },
-    { path: '/dashboard', label: t('nav.dashboard'), icon: BarChart2, color: '#2980B9' },
-    { path: '/reports', label: t('nav.reports'), icon: FileText, color: '#008080' },
-    { path: '/memories', label: t('nav.memories'), icon: BookOpen, color: '#8E44AD' },
-    { path: '/timeline', label: t('nav.timeline'), icon: Calendar, color: '#C0392B' },
-    { path: '/settings', label: t('nav.settings'), icon: Settings, color: '#7F8C8D' }
+    { path: '/home-person', label: t('nav.home_person'), icon: UserCheck, color: '#A04000', bgColor: '#FDF2E9' },
+    { path: '/tree', label: t('nav.tree'), icon: GitBranch, color: '#27AE60', bgColor: '#E8F5E9' },
+    { path: '/birthdays', label: t('nav.birthdays'), icon: Cake, color: '#E67E22', bgColor: '#FFF3E0' },
+    { path: '/dashboard', label: t('nav.dashboard'), icon: BarChart2, color: '#2980B9', bgColor: '#E3F2FD' },
+    { path: '/reports', label: t('nav.reports'), icon: FileText, color: '#008080', bgColor: '#E0F2F1' },
+    { path: '/memories', label: t('nav.memories'), icon: BookOpen, color: '#8E44AD', bgColor: '#F3E5F5' },
+    { path: '/timeline', label: t('nav.timeline'), icon: Calendar, color: '#C0392B', bgColor: '#FFEBEE' },
+    { path: '/settings', label: t('nav.settings'), icon: Settings, color: '#607D8B', bgColor: '#ECEFF1' }
   ];
 
   return (
-    <div style={{ paddingBottom: '5rem' }}>
+    <div style={{ 
+      backgroundColor: '#ffffff', 
+      minHeight: '100vh',
+      paddingBottom: '5rem',
+      margin: '-1.5rem -1rem 0 -1rem',
+      paddingTop: '1.5rem',
+      paddingLeft: '1rem',
+      paddingRight: '1rem'
+    }}>
       <style>{`
         .menu-page-item-btn {
           -webkit-tap-highlight-color: transparent;
         }
         .menu-page-item-btn:hover .menu-icon-wrapper {
           transform: translateY(-4px);
-          box-shadow: 0 8px 16px rgba(99, 19, 29, 0.08);
-          border-color: var(--color-sandalwood, #EADDCA);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
         }
         .menu-page-item-btn:active .menu-icon-wrapper {
           transform: scale(0.95);
@@ -108,13 +115,10 @@ const MenuPage = ({ profiles }) => {
                 width: '64px',
                 height: '64px',
                 borderRadius: '18px',
-                backgroundColor: 'white',
-                border: '1.5px solid #F3EDE4',
-                boxShadow: '0 4px 10px rgba(99, 19, 29, 0.03)',
+                backgroundColor: item.bgColor,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                color: 'var(--color-maroon, #63131D)',
                 marginBottom: '0.6rem',
                 transition: 'all 0.2s'
               }} className="menu-icon-wrapper">

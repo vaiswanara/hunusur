@@ -537,18 +537,18 @@ const Reports = ({ profiles }) => {
         let sentence = "";
         if (language === 'te') {
           sentence = t('reports.step_connect_te')
-            .replace('{name1}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
-            .replace('{name2}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{name1}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{name2}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
             .replace('{relation}', relTerm);
         } else if (language === 'kn') {
           sentence = t('reports.step_connect_kn')
-            .replace('{name1}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
-            .replace('{name2}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{name1}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{name2}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
             .replace('{relation}', relTerm);
         } else {
           sentence = t('reports.step_connect_en')
-            .replace('{name1}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
-            .replace('{name2}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{name1}', `<strong>${pV.firstName} ${pV.surName}</strong>`)
+            .replace('{name2}', `<strong>${pU.firstName} ${pU.surName}</strong>`)
             .replace('{relation}', relTerm);
         }
         stepSentences.push(sentence);
@@ -587,11 +587,11 @@ const Reports = ({ profiles }) => {
           
           let cleanSentence = "";
           if (language === 'te') {
-            cleanSentence = `${pU.firstName} ${pU.surName} అనేది ${pV.firstName} ${pV.surName} కు "${relTerm}" అవుతారు`;
+            cleanSentence = `${pV.firstName} ${pV.surName} గారు ${pU.firstName} ${pU.surName} కు "${relTerm}" అవుతారు`;
           } else if (language === 'kn') {
-            cleanSentence = `${pU.firstName} ${pU.surName} ಅವರು ${pV.firstName} ${pV.surName} ಗೆ "${relTerm}" ಆಗುತ್ತಾರೆ`;
+            cleanSentence = `${pV.firstName} ${pV.surName} ಅವರು ${pU.firstName} ${pU.surName} ಗೆ "${relTerm}" ಆಗುತ್ತಾರೆ`;
           } else {
-            cleanSentence = `${pU.firstName} ${pU.surName} is the ${relTerm} of ${pV.firstName} ${pV.surName}`;
+            cleanSentence = `${pV.firstName} ${pV.surName} is the ${relTerm} of ${pU.firstName} ${pU.surName}`;
           }
           cleanSteps.push(cleanSentence);
         }
@@ -599,7 +599,7 @@ const Reports = ({ profiles }) => {
 
       let cleanConclusion = "";
       if (language === 'te') {
-        cleanConclusion = `కావున, ${p2.firstName} ${p2.surName} అనేది ${p1.firstName} ${p1.surName} కు "${finalRel}" అవుతారు.`;
+        cleanConclusion = `కావున, ${p2.firstName} ${p2.surName} గారు ${p1.firstName} ${p1.surName} కు "${finalRel}" అవుతారు.`;
       } else if (language === 'kn') {
         cleanConclusion = `ಆದ್ದರಿಂದ, ${p2.firstName} ${p2.surName} ಅವರು ${p1.firstName} ${p1.surName} ಗೆ "${finalRel}" ಆಗುತ್ತಾರೆ.`;
       } else {

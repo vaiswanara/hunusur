@@ -236,7 +236,7 @@ export function resolveRelationName(profiles, result, homePerson, targetPerson, 
   const { code, path } = result;
 
   const entry = relationshipDictionary[code];
-  if (!entry) return code;
+  if (!entry) return getDynamicRelationText(code, lang);
 
   // 1. Direct Name
   if (entry.name) return getTerm(entry.name, lang);
@@ -327,4 +327,57 @@ export function findRelationship(profiles, id1, id2, lang = 'en') {
   const result = getRelationshipCode(profiles, id1, id2);
   if (!result) return lang === 'te' ? 'సంబంధం లేదు' : (lang === 'kn' ? 'ಸಂಬಂಧವಿಲ್ಲ' : 'No relation');
   return resolveRelationName(profiles, result, p1, p2, lang);
+}
+
+export function getDynamicRelationText(code, lang = 'en') {
+  if (!code) return "";
+  const chars = code.split("");
+  
+  const translations = {
+    en: {
+      F: { mid: "Father's ", last: "Father" },
+      M: { mid: "Mother's ", last: "Mother" },
+      B: { mid: "Brother's ", last: "Brother" },
+      Z: { mid: "Sister's ", last: "Sister" },
+      S: { mid: "Son's ", last: "Son" },
+      D: { mid: "Daughter's ", last: "Daughter" },
+      H: { mid: "Husband's ", last: "Husband" },
+      W: { mid: "Wife's ", last: "Wife" }
+    },
+    te: {
+      F: { mid: "తండ్రి గారి ", last: "తండ్రి" },
+      M: { mid: "తల్లి గారి ", last: "తల్లి" },
+      B: { mid: "సోదరుడి ", last: "సోదరుడు" },
+      Z: { mid: "సోదరి ", last: "సోదరి" },
+      S: { mid: "కుమారుడి ", last: "కుమారుడు" },
+      D: { mid: "కుమార్తె ", last: "కుమార్తె" },
+      H: { mid: "భర్త గారి ", last: "భర్త" },
+      W: { mid: "భార్య ", last: "భార్య" }
+    },
+    kn: {
+      F: { mid: "ತಂದೆಯ ", last: "ತಂದೆ" },
+      M: { mid: "ತಾಯಿಯ ", last: "ತಾಯಿ" },
+      B: { mid: "ಸಹೋದರನ ", last: "ಸಹೋದರ" },
+      Z: { mid: "ಸಹೋದರಿಯ ", last: "ಸಹೋದರಿ" },
+      S: { mid: "ಮಗನ ", last: "ಮಗ" },
+      D: { mid: "ಮಗಳ ", last: "ಮಗಳು" },
+      H: { mid: "ಗಂಡನ ", last: "ಗಂಡ" },
+      W: { mid: "ಹೆಂಡತಿಯ ", last: "ಹೆಂಡತಿ" }
+    }
+  };
+
+  let resultParts = [];
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+    const isLast = i === chars.length - 1;
+    const dict = translations[lang] || translations['en'];
+    const item = dict[char];
+    if (item) {
+      resultParts.push(isLast ? item.last : item.mid);
+    } else {
+      resultParts.push(char);
+    }
+  }
+
+  return resultParts.join("").trim();
 }

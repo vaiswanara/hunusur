@@ -149,10 +149,10 @@
     "copy_path": "టెక్స్ట్ కాపీ చేయండి",
     "path_copied": "బంధుత్వ మార్గం కాపీ చేయబడింది!",
     "step_connect_en": "{name1} is the {relation} of {name2}",
-    "step_connect_te": "{name1} అనేది {name2} కు \"{relation}\" అవుతారు",
+    "step_connect_te": "{name1} గారు {name2} కు \"{relation}\" అవుతారు",
     "step_connect_kn": "{name1} ಅವರು {name2} ಗೆ \"{relation}\" ಆಗುತ್ತಾರೆ",
     "conclusion_en": "Therefore, {name2} is the {relation} of {name1}.",
-    "conclusion_te": "కావున, {name2} అనేది {name1} కు \"{relation}\" అవుతారు.",
+    "conclusion_te": "కావున, {name2} గారు {name1} కు \"{relation}\" అవుతారు.",
     "conclusion_kn": "ಆದ್ದರಿಂದ, {name2} ಅವರು {name1} ಗೆ \"{relation}\" ಆಗುತ್ತಾರೆ."
   },
   "memories": {

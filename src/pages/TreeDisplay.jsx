@@ -195,6 +195,55 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
     }
   };
 
+  const getSpouseSectionLabel = (sp) => {
+    if (!treeData || !treeData.person || !sp) return '';
+    const name = treeData.person.firstName;
+    const lang = localStorage.getItem('vamsha_lang') || 'en';
+    const labelText = t('tree.spouse');
+    return lang === 'te' ? `${name} గారి ${labelText} (${sp.firstName})` :
+           lang === 'kn' ? `${name} ಅವರ ${labelText} (${sp.firstName})` :
+                           `${name}'s ${labelText} (${sp.firstName})`;
+  };
+
+  const getChildrenSectionLabel = (sp) => {
+    if (!treeData || !treeData.person) return '';
+    const name = treeData.person.firstName;
+    const lang = localStorage.getItem('vamsha_lang') || 'en';
+    if (!sp) {
+      const labelText = t('tree.children');
+      return lang === 'te' ? `${name} గారి ${labelText}` :
+             lang === 'kn' ? `${name} ಅವರ ${labelText}` :
+                             `${name}'s ${labelText}`;
+    }
+    const spouseName = sp.firstName;
+    if (lang === 'te') {
+      return `${name} & ${spouseName} గారి సంతానం`;
+    } else if (lang === 'kn') {
+      return `${name} ಮತ್ತು ${spouseName} ಅವರ ಮಕ್ಕಳು`;
+    } else {
+      return `${name} & ${spouseName}'s Children`;
+    }
+  };
+
+  const spouseGroups = useMemo(() => {
+    if (!treeData) return [];
+    return treeData.spouses.map(sp => {
+      const spouseChildren = treeData.children.filter(c => 
+        c.fatherId === sp.pid || c.motherId === sp.pid
+      );
+      return {
+        spouse: sp,
+        children: spouseChildren
+      };
+    });
+  }, [treeData]);
+
+  const remainingChildren = useMemo(() => {
+    if (!treeData) return [];
+    const mappedChildrenPids = new Set(spouseGroups.flatMap(g => g.children.map(c => c.pid)));
+    return treeData.children.filter(c => !mappedChildrenPids.has(c.pid));
+  }, [treeData, spouseGroups]);
+
   if (!treeData) return <div className="tree-container">{t('tree.no_data')}</div>;
 
   return (
@@ -320,48 +369,64 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
           </div>
         </div>
 
-        {/* Spouse Section (renders focused person and their spouses side-by-side) */}
-        {treeData.spouses.length > 0 && (
-          <>
+        {/* Spouse & Children Groups (Split by Spouse) */}
+        {spouseGroups.map(({ spouse, children: spouseChildren }) => (
+          <React.Fragment key={spouse.pid}>
+            {/* Spouse Card */}
             <VerticalConnector />
             <div className="tree-card">
               <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
                 <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {getSectionLabel('spouse')}
+                  {getSpouseSectionLabel(spouse)}
                 </span>
               </div>
               <div className="card-content row-flex" style={{ flexWrap: 'nowrap', gap: '0.25rem', justifyContent: 'center' }}>
-                {/* Selected Person Profile again */}
+                {/* Selected Person Profile */}
                 <PersonIcon person={treeData.person} isFocused={true} focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
                 
-                {/* Spouse Profile(s) */}
-                {treeData.spouses.map(sp => (
-                  <PersonIcon key={sp.pid} person={sp} type="spouse" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
-                ))}
+                {/* Spouse Profile */}
+                <PersonIcon key={spouse.pid} person={spouse} type="spouse" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
               </div>
             </div>
-          </>
-        )}
 
-        {/* Children Section */}
-        {treeData.children.length > 0 && (
-          <>
+            {/* Children Card for this union */}
+            {spouseChildren.length > 0 && (
+              <React.Fragment key={`children-${spouse.pid}`}>
+                <VerticalConnector />
+                <div className="tree-card spouse-children-card">
+                  <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
+                    <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {getChildrenSectionLabel(spouse)}
+                    </span>
+                  </div>
+                  <div className="children-section row-flex wrap">
+                    {spouseChildren.map(c => (
+                      <PersonIcon key={c.pid} person={c} type="child" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
+                    ))}
+                  </div>
+                </div>
+              </React.Fragment>
+            )}
+          </React.Fragment>
+        ))}
+
+        {/* Remaining Children (without mapped spouses) */}
+        {remainingChildren.length > 0 && (
+          <React.Fragment key="remaining-children">
             <VerticalConnector />
-
             <div className="tree-card spouse-children-card">
               <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1.25rem 0' }}>
                 <span style={{ color: '#C08375', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {getSectionLabel('children')}
+                  {getChildrenSectionLabel(null)}
                 </span>
               </div>
-
               <div className="children-section row-flex wrap">
-                {treeData.children.map(c => (
+                {remainingChildren.map(c => (
                   <PersonIcon key={c.pid} person={c} type="child" focusedPerson={treeData.person} onFocus={setFocusedPid} onInfo={setSidebarPerson} />
                 ))}
               </div>
             </div>
-          </>
+          </React.Fragment>
         )}
 
       </div>

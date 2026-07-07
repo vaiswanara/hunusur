@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RotateCw, UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText } from 'lucide-react';
+import { RotateCw, UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText, Download } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const MenuPage = ({ profiles }) => {
+const MenuPage = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -14,6 +14,14 @@ const MenuPage = ({ profiles }) => {
     setTimeout(() => {
       window.location.reload();
     }, 600);
+  };
+
+  const handleItemClick = (item) => {
+    if (item.isInstall) {
+      navigate('/settings', { state: { scrollToInstall: true } });
+    } else {
+      navigate(item.path);
+    }
   };
 
   // Find the primary surname from the home person (if configured)
@@ -29,7 +37,8 @@ const MenuPage = ({ profiles }) => {
     { path: '/reports', label: t('nav.reports'), icon: FileText, color: '#008080', bgColor: '#E0F2F1' },
     { path: '/memories', label: t('nav.memories'), icon: BookOpen, color: '#8E44AD', bgColor: '#F3E5F5' },
     { path: '/timeline', label: t('nav.timeline'), icon: Calendar, color: '#C0392B', bgColor: '#FFEBEE' },
-    { path: '/settings', label: t('nav.settings'), icon: Settings, color: '#607D8B', bgColor: '#ECEFF1' }
+    { path: '/settings', label: t('nav.settings'), icon: Settings, color: '#607D8B', bgColor: '#ECEFF1' },
+    { path: '/install', label: t('nav.install'), icon: Download, color: '#E91E63', bgColor: '#FCE4EC', isInstall: true }
   ];
 
   return (
@@ -158,7 +167,7 @@ const MenuPage = ({ profiles }) => {
           return (
             <button 
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleItemClick(item)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',

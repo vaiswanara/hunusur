@@ -1,7 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Eye, EyeOff, Lock, TreePine } from 'lucide-react';
-import { getApiUrl } from '../lib/api';
+import { getApiUrl, isStaticHosting } from '../lib/api';
 
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
 
 /**
  * AdminGate — wraps the Admin panel with a password screen.
@@ -42,6 +49,22 @@ export default function AdminGate({ children }) {
     setError('');
 
     try {
+      const isStatic = isStaticHosting();
+      const expectedHash = window.VAMSHA_CONFIG?.adminPasswordHash || import.meta.env.VITE_ADMIN_PASSWORD_HASH;
+
+      if (isStatic && expectedHash) {
+        const hashedInput = await sha256(pwd.trim());
+        if (hashedInput === expectedHash) {
+          sessionStorage.setItem(STORAGE_KEY, pwd.trim());
+          setAuthed(true);
+        } else {
+          setError('Wrong password. Please try again.');
+          setPwd('');
+          inputRef.current?.focus();
+        }
+        return;
+      }
+
       // Quick verification ping — POST empty array with provided password
       // api.php will return 401 if wrong, 200 if correct
       const IS_DEV = import.meta.env.DEV;

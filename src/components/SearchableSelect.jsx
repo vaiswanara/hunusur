@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 const SearchableSelect = ({ options, value, onChange, placeholder = '-- Select --', disabled = false, style = {}, name = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [openUpwards, setOpenUpwards] = useState(false);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -26,6 +27,21 @@ const SearchableSelect = ({ options, value, onChange, placeholder = '-- Select -
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Determine if dropdown should open upwards or downwards based on available viewport space
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // If space below is less than 280px and we have more space above, open upwards
+      if (spaceBelow < 280 && spaceAbove > spaceBelow) {
+        setOpenUpwards(true);
+      } else {
+        setOpenUpwards(false);
+      }
+    }
+  }, [isOpen]);
 
   // Autofocus search input when dropdown opens
   useEffect(() => {
@@ -78,15 +94,17 @@ const SearchableSelect = ({ options, value, onChange, placeholder = '-- Select -
         <div
           style={{
             position: 'absolute',
-            top: '100%',
+            bottom: openUpwards ? '100%' : 'auto',
+            top: openUpwards ? 'auto' : '100%',
             left: 0,
             right: 0,
             zIndex: 9999,
             backgroundColor: 'white',
             border: '1px solid #ccc',
             borderRadius: '6px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            marginTop: '4px',
+            boxShadow: openUpwards ? '0 -4px 12px rgba(0, 0, 0, 0.15)' : '0 4px 12px rgba(0, 0, 0, 0.15)',
+            marginBottom: openUpwards ? '4px' : '0',
+            marginTop: openUpwards ? '0' : '4px',
             maxHeight: '260px',
             display: 'flex',
             flexDirection: 'column',

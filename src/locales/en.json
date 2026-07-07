@@ -10,7 +10,8 @@
     "timeline": "Timeline",
     "menu": "Menu",
     "directory": "Vamsha Directory",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "install": "Install App"
   },
   "home": {
     "title": "VAMSHA",
@@ -81,7 +82,14 @@
     "safety_footer": "Your phone security and privacy remain completely safe.",
     "birthday_gen_limit": "Birthday Generation Limit",
     "birthday_gen_desc": "Limit the birthday list to family members within a certain number of generations from the Home Person.",
-    "birthday_gen_option": "{num} Generations"
+    "birthday_gen_option": "{num} Generations",
+    "hash_gen_title": "SHA-256 Hash Generator",
+    "hash_gen_desc": "Generate a secure SHA-256 hash for your passwords to use in configuration (.env) files.",
+    "hash_gen_label": "Enter Password to Hash:",
+    "hash_gen_placeholder": "Type password here...",
+    "hash_gen_output": "Generated SHA-256 Hash:",
+    "hash_gen_copy": "Copy Hash",
+    "hash_gen_copied": "Copied to clipboard!"
   },
   "tree": {
     "no_data": "No Data Available",

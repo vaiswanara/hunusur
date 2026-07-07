@@ -185,7 +185,7 @@ function handlePost($origin) {
 
     if (!$is_admin && !$is_family) {
         http_response_code(401);
-        echo json_encode(['error' => 'Invalid passcode']);
+        echo json_encode(['error' => 'Incorrect password']);
         exit;
     }
 

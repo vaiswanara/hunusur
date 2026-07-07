@@ -184,6 +184,20 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
     if (!treeData || !treeData.person) return '';
     const name = treeData.person.firstName;
     const lang = localStorage.getItem('vamsha_lang') || 'en';
+
+    if (sectionKey === 'siblings') {
+      const hasSiblings = treeData.elderSiblings.length > 0 || treeData.youngerSiblings.length > 0;
+      if (!hasSiblings) {
+        if (lang === 'te') {
+          return `${name} గారు`;
+        } else if (lang === 'kn') {
+          return `${name} ಅವರು`;
+        } else {
+          return name;
+        }
+      }
+    }
+
     const labelText = t(`tree.${sectionKey}`);
     
     if (lang === 'te') {

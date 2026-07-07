@@ -22,13 +22,33 @@ const IS_DEV = import.meta.env.DEV;
  * @returns {string} resolved URL
  */
 export function getApiUrl() {
+  let url = '';
   if (window.VAMSHA_CONFIG && window.VAMSHA_CONFIG.apiUrl) {
-    return window.VAMSHA_CONFIG.apiUrl;
+    url = window.VAMSHA_CONFIG.apiUrl;
+  } else if (import.meta.env.VITE_API_URL) {
+    url = import.meta.env.VITE_API_URL;
+  } else {
+    url = '../vamsha_db/api.php';
   }
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+
+  // Prepend base URL to relative data.json paths to handle React Router subpaths correctly
+  if (url === './data.json' || url === 'data.json') {
+    const base = import.meta.env.BASE_URL || '/';
+    return `${base.endsWith('/') ? base : base + '/'}data.json`;
   }
-  return '../vamsha_db/api.php';
+
+  return url;
+}
+
+/**
+ * Checks if the application is running in static hosting mode (no PHP backend).
+ * Returns true if not in DEV mode and the API URL points to a JSON file.
+ * @returns {boolean}
+ */
+export function isStaticHosting() {
+  if (IS_DEV) return false;
+  const url = getApiUrl();
+  return url.endsWith('.json') || url.includes('data.json');
 }
 
 export const DATA_URL = IS_DEV

@@ -1,10 +1,12 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Sliders, Shield, CheckCircle, AlertCircle, AlertTriangle,
   Download, Upload, Camera, Moon, Calendar, Phone, Mail, 
-  GitFork, Heart, FileText, ChevronDown, ChevronUp, Play
+  GitFork, Heart, FileText, ChevronDown, ChevronUp, Play, Trash2,
+  X, Eye, EyeOff, Copy, Check
 } from 'lucide-react';
-import { saveProfiles } from '../lib/api';
+import { saveProfiles, isStaticHosting, getApiUrl } from '../lib/api';
+import { encryptData } from '../lib/crypto';
 
 // RFC 4180 compliant CSV parser
 function parseCSV(text) {
@@ -41,6 +43,14 @@ function parseCSV(text) {
   return lines;
 }
 
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
 export default function SettingsEditor({ profiles, setProfiles, handleEditFromList }) {
   const [activeTab, setActiveTab] = useState('general');
   const [expandedSection, setExpandedSection] = useState(null);
@@ -48,9 +58,42 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
   const fileInputRef = useRef();
   const csvFileInputRef = useRef();
 
+  const [hashInput, setHashInput] = useState('');
+  const [hashOutput, setHashOutput] = useState('');
+  const [showHashPwd, setShowHashPwd] = useState(false);
+  const [hashCopied, setHashCopied] = useState(false);
+
+  useEffect(() => {
+    if (!hashInput) {
+      setHashOutput('');
+      return;
+    }
+    let active = true;
+    sha256(hashInput).then(hash => {
+      if (active) setHashOutput(hash);
+    });
+    return () => {
+      active = false;
+    };
+  }, [hashInput]);
+
+  const handleCopyHash = () => {
+    if (!hashOutput) return;
+    navigator.clipboard.writeText(hashOutput);
+    setHashCopied(true);
+    setTimeout(() => setHashCopied(false), 2000);
+  };
+
   // CSV Validation States
   const [csvFile, setCsvFile] = useState(null);
   const [validationReport, setValidationReport] = useState(null); // { status: 'success'|'error', errors: [], parsedCount: 0, updates: [] }
+
+  // Custom Wipe Modal States
+  const [showWipeModal, setShowWipeModal] = useState(false);
+  const [wipeConfirmText, setWipeConfirmText] = useState('');
+  const [wipePassword, setWipePassword] = useState('');
+  const [showWipePassword, setShowWipePassword] = useState(false);
+  const [wipeVerifying, setWipeVerifying] = useState(false);
 
   const handleExportJSON = () => {
     try {
@@ -65,6 +108,37 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       setToast({ message: '📊 data.json exported successfully!', type: 'success' });
+    } catch (err) {
+      setToast({ message: `❌ Export failed: ${err.message}`, type: 'error' });
+    }
+  };
+
+  const handleExportEncryptedJSON = async () => {
+    try {
+      const plaintext = JSON.stringify(profiles, null, 2);
+      let familyPwd = localStorage.getItem('vamsha_family_encrypt_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || '';
+      if (!familyPwd) {
+        const familyPwdPrompt = prompt("Enter the Family Password to encrypt the database (users must enter this password to view the tree):", "vamsha@1982");
+        if (familyPwdPrompt === null) return; // Cancelled
+        familyPwd = familyPwdPrompt.trim() || 'vamsha@1982';
+        localStorage.setItem('vamsha_family_encrypt_pwd', familyPwd);
+      }
+      const encryptedBase64 = await encryptData(plaintext, familyPwd);
+      const encryptedPayload = {
+        encrypted: true,
+        data: encryptedBase64
+      };
+      const dataStr = JSON.stringify(encryptedPayload, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'data.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setToast({ message: '🔒 Encrypted data.json exported successfully!', type: 'success' });
     } catch (err) {
       setToast({ message: `❌ Export failed: ${err.message}`, type: 'error' });
     }
@@ -94,6 +168,107 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
     };
     reader.readAsText(file);
     e.target.value = '';
+  };
+
+  const handleWipeDataClick = () => {
+    // Open the custom modal and reset its inputs
+    setWipeConfirmText('');
+    setWipePassword('');
+    setShowWipePassword(false);
+    setShowWipeModal(true);
+  };
+
+  const handleConfirmWipe = async (e) => {
+    e.preventDefault();
+    if (wipeConfirmText !== 'WIPE') {
+      alert("Verification failed. Please type 'WIPE' exactly.");
+      return;
+    }
+    if (!wipePassword.trim()) {
+      alert("Password cannot be empty.");
+      return;
+    }
+
+    setWipeVerifying(true);
+    setToast({ message: '⏳ Authorizing wipe...', type: 'info' });
+
+    try {
+      const password = wipePassword.trim();
+      const isStatic = isStaticHosting();
+      
+      // Verify password
+      if (isStatic) {
+        const expectedHash = window.VAMSHA_CONFIG?.adminPasswordHash || import.meta.env.VITE_ADMIN_PASSWORD_HASH;
+        if (expectedHash) {
+          const msgBuffer = new TextEncoder().encode(password);
+          const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgBuffer);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          if (hashedInput !== expectedHash) {
+            setToast({ message: '❌ Invalid admin password.', type: 'error' });
+            setWipeVerifying(false);
+            return;
+          }
+        }
+      } else {
+        const IS_DEV = import.meta.env.DEV;
+        const url = IS_DEV ? '/api/save' : getApiUrl();
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Password': password,
+          },
+          body: JSON.stringify({ __ping: true }),
+        });
+        if (res.status === 401) {
+          setToast({ message: '❌ Invalid admin password.', type: 'error' });
+          setWipeVerifying(false);
+          return;
+        }
+      }
+
+      // Password verified! Perform the wipe
+      const emptyProfiles = [];
+      
+      if (isStatic) {
+        setProfiles(emptyProfiles);
+        localStorage.setItem('vamsha_local_profiles', JSON.stringify(emptyProfiles));
+
+        const plaintext = JSON.stringify(emptyProfiles, null, 2);
+        const encryptedBase64 = await encryptData(plaintext, 'vamsha@1982');
+        const encryptedPayload = {
+          encrypted: true,
+          data: encryptedBase64
+        };
+        const dataStr = JSON.stringify(encryptedPayload, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'data.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        setToast({ 
+          message: '🗑️ Data wiped locally! Downloaded encrypted empty data.json. Deploy it to GitHub.', 
+          type: 'success' 
+        });
+      } else {
+        await saveProfiles(emptyProfiles, password);
+        setProfiles(emptyProfiles);
+        localStorage.setItem('vamsha_local_profiles', JSON.stringify(emptyProfiles));
+        setToast({ message: '🗑️ Database successfully wiped on server!', type: 'success' });
+      }
+
+      setShowWipeModal(false);
+    } catch (err) {
+      setToast({ message: `❌ Wipe failed: ${err.message}`, type: 'error' });
+    } finally {
+      setWipeVerifying(false);
+    }
   };
 
   // ── CSV Batch Export ────────────────────────────────────────────────────────
@@ -441,12 +616,127 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
 
       {/* Settings Content Panels */}
       <div>
-        {/* TAB 1: General Settings (Empty as requested) */}
+        {/* TAB 1: General Settings (SHA-256 Hash Generator) */}
         {activeTab === 'general' && (
-          <div style={{ padding: '2rem 1.5rem', backgroundColor: '#FAF9F6', borderRadius: '10px', border: '1px dashed #DDD', textAlign: 'center', color: '#888' }}>
-            <Sliders size={48} style={{ opacity: 0.25, marginBottom: '0.75rem' }} />
-            <h4 style={{ margin: 0, fontWeight: 600 }}>General Configurations Placeholder</h4>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem' }}>No general configurations active at this moment.</p>
+          <div>
+            {/* SHA-256 Hash Generator Card */}
+            <div style={{
+              backgroundColor: '#FAF8F5',
+              border: '1px solid #EFE4DC',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              marginBottom: '2rem'
+            }}>
+              <h4 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🔑 SHA-256 Hash Generator
+              </h4>
+              <p style={{ margin: '0 0 1.25rem', color: '#666', fontSize: '0.88rem', lineHeight: 1.45 }}>
+                Generate a secure SHA-256 hash for your passwords to use in configuration (`.env`) files.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {/* Input password field */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4A3E39' }}>
+                    Enter Password to Hash:
+                  </label>
+                  <div style={{ position: 'relative', maxWidth: '500px' }}>
+                    <input 
+                      type={showHashPwd ? 'text' : 'password'}
+                      value={hashInput}
+                      onChange={(e) => setHashInput(e.target.value)}
+                      placeholder="Type password here..."
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 2.5rem 0.75rem 1rem',
+                        borderRadius: '10px',
+                        border: '1.5px solid #EFE4DC',
+                        backgroundColor: '#ffffff',
+                        fontSize: '0.95rem',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowHashPwd(v => !v)}
+                      style={{
+                        position: 'absolute',
+                        right: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#888',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '4px'
+                      }}
+                    >
+                      {showHashPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Output hash field */}
+                {hashOutput && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', animation: 'fadeIn 0.2s ease' }}>
+                    <label style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4A3E39' }}>
+                      Generated SHA-256 Hash:
+                    </label>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', maxWidth: '500px' }}>
+                      <input 
+                        type="text"
+                        readOnly
+                        value={hashOutput}
+                        style={{
+                          flex: '1 1 300px',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '10px',
+                          border: '1.5px solid #EFE4DC',
+                          backgroundColor: '#F9FAF6',
+                          color: '#444',
+                          fontFamily: 'monospace',
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                        onClick={(e) => e.target.select()}
+                      />
+                      <button
+                        onClick={handleCopyHash}
+                        className={`btn ${hashCopied ? 'btn-secondary' : 'btn-primary'}`}
+                        style={{
+                          padding: '0.75rem 1.25rem',
+                          fontSize: '0.9rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          borderRadius: '10px',
+                          height: '42px',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {hashCopied ? (
+                          <>
+                            <Check size={16} />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={16} />
+                            Copy Hash
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -589,6 +879,20 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
                 <input type="file" ref={fileInputRef} accept=".json" onChange={handleImportJSONFile} style={{ display: 'none' }} />
               </div>
 
+              {/* Card 4: Export Encrypted JSON */}
+              <div className="backup-card" style={{ border: '1.5px solid var(--color-gold, #D3BCA2)', backgroundColor: '#FDFAF7' }}>
+                <div style={{ backgroundColor: 'var(--color-sandalwood, #EADDCA)', padding: '0.75rem', borderRadius: '50%', color: 'var(--color-maroon, #63131D)' }}>
+                  <Shield size={24} />
+                </div>
+                <h4 style={{ margin: '0.2rem 0 0.1rem', color: 'var(--color-maroon, #63131D)', fontSize: '0.95rem', fontWeight: 'bold' }}>Export Encrypted JSON</h4>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: '#666', lineHeight: 1.3 }}>
+                  లాక్ చేయబడిన `data.json` ఫైల్‌ను డౌన్‌లోడ్ చేసి నేరుగా గిట్‌హబ్ పేజీల కోసం ఉపయోగించండి.
+                </p>
+                <button className="btn btn-primary btn-sm" onClick={handleExportEncryptedJSON} style={{ width: '100%', marginTop: '0.5rem' }}>
+                  Export Encrypted
+                </button>
+              </div>
+
               {/* Card 3: Export CSV Sheet */}
               <div className="backup-card">
                 <div style={{ backgroundColor: '#FAF3E3', padding: '0.75rem', borderRadius: '50%', color: '#D4AC0D' }}>
@@ -616,6 +920,20 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
                   Import & Validate
                 </button>
                 <input type="file" ref={csvFileInputRef} accept=".csv" onChange={handleCSVFileChange} style={{ display: 'none' }} />
+              </div>
+
+              {/* Card 6: Wipe Data */}
+              <div className="backup-card" style={{ border: '1.5px solid #FADBD8', backgroundColor: '#FDEDEC' }}>
+                <div style={{ backgroundColor: '#FADBD8', padding: '0.75rem', borderRadius: '50%', color: '#C0392B' }}>
+                  <Trash2 size={24} />
+                </div>
+                <h4 style={{ margin: '0.2rem 0 0.1rem', color: '#C0392B', fontSize: '0.95rem', fontWeight: 'bold' }}>Wipe Database / Reset</h4>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: '#666', lineHeight: 1.3 }}>
+                  Permanently delete all records from the database and reset.
+                </p>
+                <button className="btn btn-sm" onClick={handleWipeDataClick} style={{ width: '100%', marginTop: '0.5rem', backgroundColor: '#C0392B', color: 'white', border: 'none' }}>
+                  Wipe Data
+                </button>
               </div>
             </div>
 
@@ -699,6 +1017,116 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
               <p style={{ margin: 0, fontSize: '0.8rem', lineHeight: 1.4 }}>
                 Importing data overwrites current session state. However, changes are NOT saved permanently on the server until you click <strong>"Save to Server"</strong> in the topbar. Verify changes before saving.
               </p>
+            </div>
+          </div>
+        )}
+
+        {showWipeModal && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 11000,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{
+              background: 'white', borderRadius: '16px', padding: '2rem 2.2rem',
+              width: '380px', boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+              animation: 'fadeUp 0.2s ease',
+              border: '1.5px solid #FADBD8'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h3 style={{ margin: 0, color: '#C0392B', fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <AlertTriangle size={20} /> Wipe Database
+                </h3>
+                <button onClick={() => setShowWipeModal(false)} disabled={wipeVerifying}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: '4px' }}>
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <p style={{ margin: '0 0 1.25rem', color: '#666', fontSize: '0.85rem', lineHeight: 1.4 }}>
+                <strong>Warning:</strong> This action will permanently delete all family tree records. This is irreversible.
+              </p>
+
+              <form onSubmit={handleConfirmWipe}>
+                {/* Confirm input 1: Type 'WIPE' */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 'bold', color: '#444', marginBottom: '0.4rem' }}>
+                    To confirm, type WIPE in all capital letters:
+                  </label>
+                  <input
+                    type="text"
+                    value={wipeConfirmText}
+                    onChange={(e) => setWipeConfirmText(e.target.value)}
+                    placeholder="Type WIPE here"
+                    disabled={wipeVerifying}
+                    style={{
+                      width: '100%', padding: '0.7rem 1rem',
+                      borderRadius: '8px', border: '1.5px solid #E0D5CC',
+                      fontSize: '0.92rem', boxSizing: 'border-box', outline: 'none',
+                      background: '#FDFAF7',
+                    }}
+                  />
+                </div>
+
+                {/* Confirm input 2: Admin password */}
+                <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 'bold', color: '#444', marginBottom: '0.4rem' }}>
+                    Enter Admin Password:
+                  </label>
+                  <input
+                    type={showWipePassword ? 'text' : 'password'}
+                    value={wipePassword}
+                    onChange={(e) => setWipePassword(e.target.value)}
+                    placeholder="Admin password"
+                    disabled={wipeVerifying}
+                    style={{
+                      width: '100%', padding: '0.7rem 2.8rem 0.7rem 1rem',
+                      borderRadius: '8px', border: '1.5px solid #E0D5CC',
+                      fontSize: '0.92rem', boxSizing: 'border-box', outline: 'none',
+                      background: '#FDFAF7',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowWipePassword(v => !v)}
+                    style={{
+                      position: 'absolute', right: '0.75rem', top: '28px',
+                      background: 'none', border: 'none', cursor: 'pointer', color: '#888',
+                      padding: '4px'
+                    }}
+                  >
+                    {showWipePassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    type="submit"
+                    disabled={wipeConfirmText !== 'WIPE' || !wipePassword.trim() || wipeVerifying}
+                    className="btn"
+                    style={{
+                      flex: 1, 
+                      justifyContent: 'center', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      backgroundColor: (wipeConfirmText === 'WIPE' && wipePassword.trim() && !wipeVerifying) ? '#C0392B' : '#E59866',
+                      color: 'white',
+                      border: 'none',
+                      cursor: (wipeConfirmText === 'WIPE' && wipePassword.trim() && !wipeVerifying) ? 'pointer' : 'not-allowed',
+                      fontWeight: 'bold',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    {wipeVerifying ? 'Wiping...' : 'Permanently Wipe'}
+                  </button>
+                  <button type="button" onClick={() => setShowWipeModal(false)} className="btn btn-secondary" disabled={wipeVerifying} style={{ borderRadius: '8px' }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

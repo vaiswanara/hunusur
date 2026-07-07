@@ -42,9 +42,15 @@ const saveDataPlugin = () => ({
   }
 });
 
+
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const base = command === 'serve' ? '/' : (env.VITE_BASE_URL || '/vamsha/');
+  
+  // Cloudflare Pages automatically sets CF_PAGES=1. 
+  // Cloudflare always serves from root, so we force base to '/' there.
+  // Otherwise, we use the local env variable VITE_BASE_URL or default to '/vamsha/'.
+  const isCloudflare = process.env.CF_PAGES === '1' || env.CF_PAGES === '1';
+  const base = command === 'serve' ? '/' : (isCloudflare ? '/' : (env.VITE_BASE_URL || '/vamsha/'));
 
   return {
     // Local development runs on '/' while production builds for subdirectory VITE_BASE_URL

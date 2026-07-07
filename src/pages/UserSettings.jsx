@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Sliders, Shield, Camera, Moon, Calendar, Phone, Mail, 
-  GitFork, GitBranch, Heart, FileText, ChevronDown, ChevronUp, Download 
+  GitFork, GitBranch, Heart, FileText, ChevronDown, ChevronUp, Download,
+  Eye, EyeOff, Copy, Check
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -11,10 +12,24 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
   const [activeTab, setActiveTab] = useState('general');
   const [expandedSection, setExpandedSection] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const installCardRef = useRef(null);
 
   const [bdayGenLimit, setBdayGenLimit] = useState(() => {
     return parseInt(localStorage.getItem('vamsha_birthday_gen_limit') || '6', 10);
   });
+
+  useEffect(() => {
+    if (location.state?.scrollToInstall) {
+      setActiveTab('general');
+      const timer = setTimeout(() => {
+        if (installCardRef.current) {
+          installCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [location]);
 
   const handleBdayGenLimitChange = (e) => {
     const limit = parseInt(e.target.value, 10);
@@ -211,7 +226,7 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
             </div>
 
             {/* Install PWA Component */}
-            <div className="install-card" style={{
+            <div ref={installCardRef} className="install-card" style={{
               backgroundColor: '#FAF8F5',
               border: '1px solid #EFE4DC',
               borderRadius: '16px',

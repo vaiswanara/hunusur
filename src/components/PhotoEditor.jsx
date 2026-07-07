@@ -59,7 +59,7 @@ const PhotoEditor = ({ profiles, setProfiles }) => {
 
   const addMapping = () => {
     const defaultBase = globalBaseUrl || getDefaultBaseUrl(photoMappings);
-    setPhotoMappings([...photoMappings, { pid: '', baseUrl: defaultBase, fileName: '' }]);
+    setPhotoMappings([{ pid: '', baseUrl: defaultBase, fileName: '' }, ...photoMappings]);
   };
 
   const updateMapping = (index, field, value) => {
@@ -332,17 +332,15 @@ const PhotoEditor = ({ profiles, setProfiles }) => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Scrollable Container with sticky header */}
+          {/* Container for photo list (naturally sized, no overflow clipping) */}
           <div style={{
-            maxHeight: '480px',
-            overflowY: 'auto',
             border: '1px solid var(--color-sandalwood, #EADDCA)',
             borderRadius: '8px',
             backgroundColor: '#FAF8F5',
             boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.03)'
           }}>
             {/* Table Header */}
-            <div className="editor-table-header">
+            <div className="editor-table-header" style={{ borderRadius: '8px 8px 0 0' }}>
               <div style={{ width: '45px', flexShrink: 0 }} /> {/* Spacer for preview */}
               <div style={{ flex: '1 1 200px', minWidth: '180px' }}>Select Member</div>
               <div style={{ flex: '2 1 300px', minWidth: '220px' }}>Base URL (Repository Path)</div>
@@ -351,7 +349,12 @@ const PhotoEditor = ({ profiles, setProfiles }) => {
             </div>
 
             {/* List items */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0.75rem' }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '0.75rem', 
+              padding: '0.75rem'
+            }}>
               {photoMappings.map((mapping, idx) => {
                 const selectedPerson = profiles.find(p => p.pid === mapping.pid);
                 const genderClipart = selectedPerson?.gender === 'Female' ? 'female_icon.png' : 'male_icon.png';

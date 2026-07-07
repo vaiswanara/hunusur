@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import TreeDisplay from './pages/TreeDisplay';
 import AdminPage from './pages/AdminPage';
@@ -16,6 +16,7 @@ import { fetchProfiles } from './lib/api';
 import initialData from './data.json';
 import { Home as HomeIcon, Settings, GitBranch, Cake, User, RefreshCw, BarChart2, BookOpen, Calendar, Menu as MenuIcon } from 'lucide-react';
 import { useLanguage } from './context/LanguageContext';
+import DecryptionGate from './components/DecryptionGate';
 
 function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
   const location = useLocation();
@@ -300,10 +301,12 @@ function enrichProfiles(rawProfiles) {
 }
 
 function App() {
-  const [profiles, setProfiles] = useState(initialData);
+  const [rawResponse, setRawResponse] = useState(initialData);
+  const [profiles, setProfiles] = useState([]);
   const [savedProfilesBaseline, setSavedProfilesBaseline] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [localDraftConflict, setLocalDraftConflict] = useState(null);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -324,7 +327,9 @@ function App() {
   const checkForUpdates = async () => {
     try {
       const latestData = await fetchProfiles();
-      if (JSON.stringify(latestData) !== JSON.stringify(profiles)) {
+      // Compare with the original server data baseline to ignore local drafts
+      const compareBaseline = savedProfilesBaseline || profiles;
+      if (JSON.stringify(latestData) !== JSON.stringify(compareBaseline)) {
         setUpdateAvailable(true);
       } else {
         setUpdateAvailable(false);
@@ -343,7 +348,7 @@ function App() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [profiles]);
+  }, [profiles, savedProfilesBaseline]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -352,6 +357,8 @@ function App() {
       setProfiles(data);
       setSavedProfilesBaseline(data);
       setUpdateAvailable(false);
+      setLocalDraftConflict(null);
+      localStorage.setItem('vamsha_local_profiles', JSON.stringify(data));
       setLoadError(null);
     } catch (err) {
       console.warn('Could not sync remote profiles:', err.message);
@@ -374,10 +381,11 @@ function App() {
 
   const [focusedPid, setFocusedPid] = useState(() => {
     const savedHomePid = localStorage.getItem('vamsha_home_pid');
-    if (savedHomePid && initialData.some(p => p.pid === savedHomePid)) {
+    const isArray = Array.isArray(initialData);
+    if (isArray && savedHomePid && initialData.some(p => p.pid === savedHomePid)) {
       return savedHomePid;
     }
-    return initialData.length > 0 ? initialData[0].pid : null;
+    return (isArray && initialData.length > 0) ? initialData[0].pid : null;
   });
   const [sidebarPerson, setSidebarPerson] = useState(null);
 
@@ -386,22 +394,66 @@ function App() {
     document.title = `${import.meta.env.VITE_APP_TITLE || 'Vamsha'} - Family Tree`;
   }, []);
 
-  // Load profiles from server (or fall back to bundled data.json)
+  // Load profiles from server (or fall back to local storage / bundled data)
+  // Load raw profiles from server (or fall back to bundled data.json)
   useEffect(() => {
     fetchProfiles()
       .then((data) => {
-        setProfiles(data);
-        setSavedProfilesBaseline(data);
+        setRawResponse(data);
         setLoadError(null);
       })
       .catch((err) => {
         console.warn('Could not fetch remote profiles, using bundled data:', err.message);
-        setSavedProfilesBaseline(initialData);
-        // Keep initialData as fallback — app still works
+        setRawResponse(initialData);
         setLoadError(err.message);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDecryptedData = useCallback((decryptedData) => {
+    // Check if we have local draft in localStorage
+    const localDraftStr = localStorage.getItem('vamsha_local_profiles');
+    let localDraft = null;
+    if (localDraftStr) {
+      try {
+        localDraft = JSON.parse(localDraftStr);
+      } catch (e) {
+        console.warn('Failed to parse local profiles draft:', e);
+      }
+    }
+
+    if (localDraft) {
+      if (JSON.stringify(decryptedData) !== JSON.stringify(localDraft)) {
+        // Mismatch between server data and local draft
+        setLocalDraftConflict({ server: decryptedData, local: localDraft });
+        setProfiles(localDraft);
+        setSavedProfilesBaseline(decryptedData);
+      } else {
+        setProfiles(decryptedData);
+        setSavedProfilesBaseline(decryptedData);
+      }
+    } else {
+      setProfiles(decryptedData);
+      setSavedProfilesBaseline(decryptedData);
+    }
+  }, []);
+
+  const handleResolveConflict = (useLocal) => {
+    if (!localDraftConflict) return;
+    if (useLocal) {
+      setProfiles(localDraftConflict.local);
+      setSavedProfilesBaseline(localDraftConflict.server);
+    } else {
+      setProfiles(localDraftConflict.server);
+      setSavedProfilesBaseline(localDraftConflict.server);
+      try {
+        localStorage.setItem('vamsha_local_profiles', JSON.stringify(localDraftConflict.server));
+      } catch (e) {
+        console.warn('Failed to save to localStorage:', e);
+      }
+    }
+    setLocalDraftConflict(null);
+  };
 
   // Sync focusedPid if profiles load
   useEffect(() => {
@@ -416,6 +468,13 @@ function App() {
       }
     }
   }, [profiles]);
+
+  // Clear local draft conflict banner when profiles match the saved baseline
+  useEffect(() => {
+    if (localDraftConflict && savedProfilesBaseline && profiles && JSON.stringify(profiles) === JSON.stringify(savedProfilesBaseline)) {
+      setLocalDraftConflict(null);
+    }
+  }, [profiles, savedProfilesBaseline, localDraftConflict]);
 
   const hasUnsavedChanges = useMemo(() => {
     if (!savedProfilesBaseline) return false;
@@ -436,6 +495,11 @@ function App() {
 
   const updateProfiles = (newProfiles) => {
     setProfiles(newProfiles);
+    try {
+      localStorage.setItem('vamsha_local_profiles', JSON.stringify(newProfiles));
+    } catch (e) {
+      console.warn('Failed to save to localStorage:', e);
+    }
   };
 
   if (showSplash || loading) {
@@ -443,7 +507,8 @@ function App() {
   }
 
   return (
-    <Router basename={import.meta.env.BASE_URL}>
+    <DecryptionGate rawData={rawResponse} onDecrypt={handleDecryptedData}>
+      <Router basename={import.meta.env.BASE_URL}>
       <style>{`
         @keyframes pulseSync {
           0% { transform: scale(1); box-shadow: 0 4px 12px rgba(99, 19, 29, 0.2); }
@@ -512,6 +577,44 @@ function App() {
         setFocusedPid={setFocusedPid}
         setSidebarPerson={setSidebarPerson}
       />
+      {localDraftConflict && (
+        <div style={{
+          background: 'var(--color-sandalwood)',
+          color: 'var(--color-maroon)',
+          padding: '0.75rem 1.5rem',
+          fontSize: '0.92rem',
+          textAlign: 'center',
+          borderBottom: '2px solid var(--color-gold)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '1rem',
+          flexWrap: 'wrap',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+          zIndex: 999,
+          position: 'relative'
+        }}>
+          <span style={{ fontWeight: 600 }}>
+            ⚠️ లోకల్ బ్రౌజర్ మార్పులు: మీ బ్రౌజర్ లో ఉన్న మార్పులు మరియు సర్వర్ లో ఉన్న డేటా వేర్వేరుగా ఉన్నాయి.
+          </span>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              onClick={() => handleResolveConflict(true)} 
+              className="btn btn-primary"
+              style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }}
+            >
+              లోకల్ డేటా ఉంచు (Keep Local)
+            </button>
+            <button 
+              onClick={() => handleResolveConflict(false)} 
+              className="btn btn-secondary"
+              style={{ padding: '0.3rem 0.8rem', fontSize: '0.85rem' }}
+            >
+              సర్వర్ డేటా లోడ్ చేయి (Overwrite)
+            </button>
+          </div>
+        </div>
+      )}
       {loadError && (
         <div style={{
           background: '#fff3cd', color: '#856404',
@@ -557,7 +660,13 @@ function App() {
             />
           } />
           <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} setFocusedPid={setFocusedPid} />} />
-          <Route path="/menu" element={<MenuPage profiles={enrichedProfiles} />} />
+          <Route path="/menu" element={
+            <MenuPage 
+              profiles={enrichedProfiles} 
+              deferredPrompt={deferredPrompt} 
+              setDeferredPrompt={setDeferredPrompt} 
+            />
+          } />
           <Route path="/dashboard" element={<Dashboard profiles={enrichedProfiles} />} />
           <Route path="/settings" element={
             <UserSettings 
@@ -585,7 +694,8 @@ function App() {
         sidebarPerson={sidebarPerson}
         setSidebarPerson={setSidebarPerson}
       />
-    </Router>
+      </Router>
+    </DecryptionGate>
   );
 }
 

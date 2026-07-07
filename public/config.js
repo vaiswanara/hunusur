@@ -6,7 +6,7 @@
 // 2. Set apiUrl to a full URL (e.g. "https://vaiswanara.com/vamsha_db/api.php") to use a remote server.
 // 3. For read-only static hosting (like GitHub Pages without a PHP server), set apiUrl to "./data.json".
 window.VAMSHA_CONFIG = {
-  apiUrl: "", // Set to "" for default relative path, or full URL for remote server, or "./data.json" for static hosting
+  apiUrl: "./data.json", // Set to "" for default relative path, or full URL for remote server, or "./data.json" for static hosting
 
   // Administrator Contact Details (Shown on password lock screen)
   adminContactEmail: "vaiswanara@gmail.com", // Add admin email here (e.g. "example@mail.com")

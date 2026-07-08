@@ -227,7 +227,12 @@ export async function onRequest(context) {
           if (!await isAuthorized(request, env, 'admin')) {
             return new Response(JSON.stringify({ error: 'Unauthorized.' }), { status: 401, headers: corsHeaders });
           }
-          const { url: imageUrl, pid, apiKey, apiSecret, cloudName } = body;
+          let { url: imageUrl, pid, apiKey, apiSecret, cloudName } = body;
+          
+          if (!cloudName) cloudName = env.CLOUDINARY_CLOUD_NAME || 'klr3yhep';
+          if (!apiKey) apiKey = env.CLOUDINARY_API_KEY || '896888396441996';
+          if (!apiSecret) apiSecret = env.CLOUDINARY_API_SECRET || '';
+
           if (!imageUrl || !pid || !apiKey || !apiSecret || !cloudName) {
             return new Response(JSON.stringify({ error: 'Missing parameters for Cloudinary upload.' }), { status: 400, headers: corsHeaders });
           }
@@ -260,8 +265,24 @@ export async function onRequest(context) {
           if (!await isAuthorized(request, env, 'admin')) {
             return new Response(JSON.stringify({ error: 'Unauthorized.' }), { status: 401, headers: corsHeaders });
           }
-          const { apiKey, apiSecret, cloudName, updateDb } = body;
-          if (!apiKey || !apiSecret || !cloudName) {
+          let { apiKey, apiSecret, cloudName, updateDb } = body;
+          if (!cloudName) {
+            cloudName = env.CLOUDINARY_CLOUD_NAME;
+            if (!cloudName) {
+              const settingsStr = await KV.get('settings');
+              if (settingsStr) {
+                try {
+                  const settings = JSON.parse(settingsStr);
+                  cloudName = settings.cloudinaryCloudName;
+                } catch (e) {}
+              }
+            }
+            if (!cloudName) {
+              cloudName = 'klr3yhep';
+            }
+          }
+
+          if (!apiKey || !apiSecret) {
             return new Response(JSON.stringify({ error: 'Cloudinary credentials missing.' }), { status: 400, headers: corsHeaders });
           }
 

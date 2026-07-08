@@ -1,0 +1,129 @@
+[
+  {
+    "pid": "PID0001",
+    "firstName": "Udaya Shankar",
+    "surName": "Katuru",
+    "gender": "Male",
+    "maidenName": "",
+    "dob": "",
+    "phone": "",
+    "email": "",
+    "notes": "",
+    "fatherId": "",
+    "motherId": "",
+    "spouseIds": [
+      "PID0002"
+    ],
+    "displayOrder": 1,
+    "isDeceased": false,
+    "deathDate": "",
+    "gotram": "",
+    "photoUrl": "icons/male_icon.png"
+  },
+  {
+    "pid": "PID0002",
+    "firstName": "Mrs Udaya Shankar",
+    "surName": "",
+    "gender": "Female",
+    "isDeceased": false,
+    "spouseIds": [
+      "PID0001"
+    ],
+    "displayOrder": 1,
+    "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783467225/vamsha/PID0002_1783467225338.jpg"
+  },
+  {
+    "firstName": "Seshu",
+    "surName": "Katuru",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0003",
+    "spouseIds": [
+      "PID0004"
+    ],
+    "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783467248/vamsha/PID0003_1783467247778.jpg"
+  },
+  {
+    "firstName": "Mrs Seshu",
+    "surName": "",
+    "gender": "Female",
+    "spouseIds": [
+      "PID0003"
+    ],
+    "isDeceased": false,
+    "pid": "PID0004",
+    "displayOrder": 1,
+    "deathDate": "",
+    "fatherId": "",
+    "motherId": "",
+    "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783467262/vamsha/PID0004_1783467261916.jpg"
+  },
+  {
+    "firstName": "Chetan Kumar",
+    "surName": "Katuru",
+    "gender": "Male",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "displayOrder": 2,
+    "isDeceased": false,
+    "pid": "PID0005",
+    "spouseIds": [],
+    "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783467307/vamsha/PID0005_1783467306906.jpg",
+    "memories": [
+      {
+        "id": "mem_1783469067692",
+        "title": "memory",
+        "content": "dasdfdasf",
+        "author": "srik",
+        "date": "2026-07-08",
+        "imageUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783468702/vamsha/gallery/gallery_1783468701918.jpg"
+      }
+    ]
+  },
+  {
+    "firstName": "Varija",
+    "surName": "Katuru",
+    "gender": "Female",
+    "fatherId": "PID0003",
+    "motherId": "PID0004",
+    "displayOrder": 1,
+    "isDeceased": false,
+    "pid": "PID0006",
+    "spouseIds": [],
+    "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783467322/vamsha/PID0006_1783467322130.jpg"
+  },
+  {
+    "firstName": "Girl",
+    "surName": "Katuru",
+    "gender": "Female",
+    "fatherId": "PID0003",
+    "motherId": "PID0004",
+    "displayOrder": 2,
+    "isDeceased": false,
+    "pid": "PID0007",
+    "spouseIds": [],
+    "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783467348/vamsha/PID0007_1783467348337.jpg"
+  },
+  {
+    "pid": "PID0008",
+    "firstName": "Sindhu",
+    "surName": "Koppula",
+    "gender": "Female",
+    "maidenName": "",
+    "dob": "1988-12-10",
+    "phone": "+91 9848022338",
+    "email": "srinivas@example.com",
+    "notes": "Birth Place: Vijayawada. Gotra: Kashyapa. Nakshatra: Pushya. Rashi: Karka. Declared Father: Venkata Koppula. Declared Mother: Lakshmi Koppula. Declared Spouse: Sujatha Koppula\n[Update Submission]: Birth Place: Hyderabad. Gotra: Kashyapa. Nakshatra: Aswini. Rashi: Mesha (Aries)\n[Update Submission]: Gotra: Kashyapa",
+    "fatherId": "PID0001",
+    "motherId": "PID0002",
+    "spouseIds": [],
+    "displayOrder": 3,
+    "isDeceased": false,
+    "deathDate": "",
+    "photoUrl": "icons/male_icon.png",
+    "gotram": "Kashyapa"
+  }
+]

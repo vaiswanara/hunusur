@@ -1,0 +1,21 @@
+[
+  {
+    "pendingId": "PENDING_mock_1783479791336",
+    "firstName": "Sindhu",
+    "surName": "Koppula",
+    "gender": "Female",
+    "birthDate": "1988-12-10",
+    "birthPlace": "",
+    "gotra": "ffg",
+    "nakshatra": "Jyeshta",
+    "rashi": "Dhanu (Sagittarius)",
+    "phone": "+91 9848022338",
+    "email": "srinivas@example.com",
+    "fatherNameText": "",
+    "motherNameText": "",
+    "spouseNameText": "",
+    "photoUrl": "icons/male_icon.png",
+    "isUpdateOfPid": "PID0008",
+    "submittedAt": "2026-07-08T03:03:11.336Z"
+  }
+]

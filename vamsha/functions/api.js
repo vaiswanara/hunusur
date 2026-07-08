@@ -28,8 +28,8 @@ async function generateCloudinarySignature(params, apiSecret) {
 
 // Check authorization headers or query parameters
 async function isAuthorized(request, env, role = 'family') {
-  const adminPasswordHash = env.ADMIN_PASSWORD || '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'; // default: admin
-  const familyPasswordHash = env.FAMILY_PASSWORD || 'fa3659cf7d7a1262d989f66453957242861c80b27b34e4020a597a760c410c51'; // default: vamsha
+  const adminPasswordHash = env.ADMIN_PASSWORD || 'b8ffa75cdfcd1e2a919e55e190e4ae56968c0154e45e547a8a3ee744d3d68638'; // default: Srik@94290
+  const familyPasswordHash = env.FAMILY_PASSWORD || 'cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7'; // default: vamsha@1982
 
   // Extract from headers
   const authHeaderAdmin = request.headers.get('X-Admin-Password') || '';

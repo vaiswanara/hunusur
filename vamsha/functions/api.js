@@ -324,7 +324,15 @@ export async function onRequest(context) {
 
           // Fetch profiles
           const profilesStr = await KV.get('profiles') || '[]';
-          const profiles = JSON.parse(profilesStr);
+          let profiles;
+          try {
+            profiles = JSON.parse(profilesStr);
+          } catch (e) {
+            profiles = [];
+          }
+          if (!Array.isArray(profiles)) {
+            profiles = [];
+          }
           let updatedCount = 0;
           const updatedMappings = [];
 
@@ -368,7 +376,15 @@ export async function onRequest(context) {
           }
 
           const existingProfilesStr = await KV.get('profiles') || '[]';
-          const oldProfiles = JSON.parse(existingProfilesStr);
+          let oldProfiles;
+          try {
+            oldProfiles = JSON.parse(existingProfilesStr);
+          } catch (e) {
+            oldProfiles = [];
+          }
+          if (!Array.isArray(oldProfiles)) {
+            oldProfiles = [];
+          }
           const newPids = new Set(body.map(p => p.pid));
           const deletedProfiles = oldProfiles.filter(p => !newPids.has(p.pid));
           const historyEntries = [];

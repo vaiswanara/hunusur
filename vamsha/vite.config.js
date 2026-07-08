@@ -107,7 +107,10 @@ const saveDataPlugin = () => ({
             let oldProfiles = [];
             if (fs.existsSync(dataPath)) {
               try {
-                oldProfiles = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+                const rawData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+                if (Array.isArray(rawData)) {
+                  oldProfiles = rawData;
+                }
               } catch (err) {
                 console.error("Failed to parse existing data.json:", err);
               }
@@ -372,7 +375,15 @@ const saveDataPlugin = () => ({
               return;
             }
 
-            const profiles = JSON.parse(fs.readFileSync(dataPath, 'utf8')) || [];
+            let profiles = [];
+            try {
+              const rawProfiles = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+              if (Array.isArray(rawProfiles)) {
+                profiles = rawProfiles;
+              }
+            } catch (err) {
+              console.error("Failed to parse data.json for mapping:", err);
+            }
             const files = fs.readdirSync(photosDir);
             const urlMap = {};
 
@@ -524,7 +535,15 @@ const saveDataPlugin = () => ({
                     return;
                   }
 
-                  const profiles = JSON.parse(fs.readFileSync(dataPath, 'utf8')) || [];
+                  let profiles = [];
+                  try {
+                    const rawProfiles = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+                    if (Array.isArray(rawProfiles)) {
+                      profiles = rawProfiles;
+                    }
+                  } catch (err) {
+                    console.error("Failed to parse data.json for bulk mapping:", err);
+                  }
                   let updatedCount = 0;
                   const updatedMappings = [];
                   const updatedProfiles = profiles.map(profile => {

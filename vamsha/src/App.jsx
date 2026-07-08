@@ -19,6 +19,7 @@ import { useLanguage } from './context/LanguageContext';
 import DecryptionGate from './components/DecryptionGate';
 import CloudinaryUpload from './components/CloudinaryUpload';
 import MemberSubmission from './pages/MemberSubmission';
+import { decryptData } from './lib/crypto';
 
 function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
   const location = useLocation();
@@ -328,7 +329,18 @@ function App() {
   // Check if remote data has updated
   const checkForUpdates = async () => {
     try {
-      const latestData = await fetchProfiles();
+      let latestData = await fetchProfiles();
+      if (latestData && latestData.encrypted === true) {
+        const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+        if (savedPwd) {
+          try {
+            const decryptedText = await decryptData(latestData.data, savedPwd);
+            latestData = JSON.parse(decryptedText);
+          } catch (decErr) {
+            console.warn('Failed to decrypt remote updates check data:', decErr);
+          }
+        }
+      }
       // Compare with the original server data baseline to ignore local drafts
       const compareBaseline = savedProfilesBaseline || profiles;
       if (JSON.stringify(latestData) !== JSON.stringify(compareBaseline)) {
@@ -355,7 +367,20 @@ function App() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const data = await fetchProfiles();
+      let data = await fetchProfiles();
+      if (data && data.encrypted === true) {
+        const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+        if (savedPwd) {
+          try {
+            const decryptedText = await decryptData(data.data, savedPwd);
+            data = JSON.parse(decryptedText);
+          } catch (decErr) {
+            throw new Error('Failed to decrypt synchronized profiles. Incorrect password stored.');
+          }
+        } else {
+          throw new Error('Database is encrypted but no decryption password is saved.');
+        }
+      }
       setProfiles(data);
       setSavedProfilesBaseline(data);
       setUpdateAvailable(false);

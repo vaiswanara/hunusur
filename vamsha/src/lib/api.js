@@ -27,6 +27,8 @@ export function getApiUrl() {
     url = window.VAMSHA_CONFIG.apiUrl;
   } else if (import.meta.env.VITE_API_URL) {
     url = import.meta.env.VITE_API_URL;
+  } else if (typeof window !== 'undefined' && window.location.hostname.endsWith('.pages.dev')) {
+    url = '/api';
   } else {
     url = '../vamsha_db/api.php';
   }

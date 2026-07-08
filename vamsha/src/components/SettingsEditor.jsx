@@ -5,7 +5,7 @@ import {
   GitFork, Heart, FileText, ChevronDown, ChevronUp, Play, Trash2,
   X, Eye, EyeOff, Copy, Check
 } from 'lucide-react';
-import { saveProfiles, isStaticHosting, getApiUrl } from '../lib/api';
+import { saveProfiles, isStaticHosting, getApiUrl, getSettingsUrl, getSaveSettingsUrl, getBulkMapLocalUrl, getBulkMapCloudinaryUrl } from '../lib/api';
 import { encryptData } from '../lib/crypto';
 import { getAdminPassword } from './AdminGate';
 
@@ -79,7 +79,7 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const settingsUrl = import.meta.env.DEV ? '/vamsha_db/settings.json' : '../vamsha_db/api.php?action=get_settings';
+        const settingsUrl = getSettingsUrl();
         const res = await fetch(settingsUrl + (settingsUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
         if (res.ok) {
           const settings = await res.json();
@@ -103,7 +103,7 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
       const password = getAdminPassword() || '';
       const payload = { adminUploadService, userUploadService };
 
-      const saveUrl = import.meta.env.DEV ? '/api/save_settings' : '../vamsha_db/api.php?action=save_settings';
+      const saveUrl = getSaveSettingsUrl();
       const res = await fetch(saveUrl, {
         method: 'POST',
         headers: {
@@ -149,7 +149,7 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
         updateDb: bulkUpdateDb
       };
 
-      const apiUrl = import.meta.env.DEV ? '/api/bulk_map_local' : '../vamsha_db/api.php?action=bulk_map_local';
+      const apiUrl = getBulkMapLocalUrl();
       
       const res = await fetch(apiUrl, {
         method: 'POST',
@@ -215,7 +215,7 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
         updateDb: bulkUpdateDb
       };
 
-      const apiUrl = import.meta.env.DEV ? '/api/bulk_map_cloudinary' : '../vamsha_db/api.php?action=bulk_map_cloudinary';
+      const apiUrl = getBulkMapCloudinaryUrl();
       
       const res = await fetch(apiUrl, {
         method: 'POST',

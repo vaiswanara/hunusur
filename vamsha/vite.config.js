@@ -748,6 +748,17 @@ const copyEnvPlugin = () => ({
     } catch (err) {
       console.error('❌ Failed to copy .env file to dist/:', err.message);
     }
+
+    try {
+      const srcData = path.resolve(__dirname, '../vamsha_db/data.json');
+      const destData = path.resolve(__dirname, 'dist/data.json');
+      if (fs.existsSync(srcData)) {
+        fs.copyFileSync(srcData, destData);
+        console.log('✅ data.json database successfully copied to dist/ folder!');
+      }
+    } catch (err) {
+      console.error('❌ Failed to copy data.json to dist/:', err.message);
+    }
   }
 });
 

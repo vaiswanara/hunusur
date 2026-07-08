@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, Plus, Trash2, X } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
-import { deletePendingSubmission } from '../lib/api';
+import { deletePendingSubmission, getHistoryUrl, getDownloadPhotoUrl, getSettingsUrl, getUploadUrl } from '../lib/api';
 import { getAdminPassword } from './AdminGate';
 const COMMON_GOTRAMS = [
   'Kashyapa', 'Bharadwaja', 'Haritasa', 'Koundinya', 'Srivatsa', 'Vadhula', 
@@ -71,8 +71,8 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
 
   const fetchHistory = async () => {
     try {
-      const historyUrl = import.meta.env.DEV ? '/api/history' : '../vamsha_db/api.php?action=get_history';
-      const res = await fetch(historyUrl + '?t=' + Date.now());
+      const historyUrl = getHistoryUrl();
+      const res = await fetch(historyUrl + (historyUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
       if (res.ok) {
         const data = await res.json();
         setAllHistory(data || []);
@@ -104,7 +104,7 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
       setDownloadError('');
       try {
         const password = getAdminPassword() || '';
-        const uploadUrl = import.meta.env.DEV ? '/api/download_photo' : '../vamsha_db/api.php?action=download_photo';
+        const uploadUrl = getDownloadPhotoUrl();
         
         const res = await fetch(uploadUrl, {
           method: 'POST',
@@ -140,7 +140,7 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settingsUrl = import.meta.env.DEV ? '/vamsha_db/settings.json' : '../vamsha_db/api.php?action=get_settings';
+        const settingsUrl = getSettingsUrl();
         const res = await fetch(settingsUrl + (settingsUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
         if (res.ok) {
           const settings = await res.json();
@@ -1304,7 +1304,7 @@ const PhotoCropModal = ({ isOpen, onClose, initialPhotoUrl, onUploadSuccess, upl
     try {
       const croppedBlob = await generateCroppedBlob();
       
-      let uploadUrl = import.meta.env.DEV ? '/api/upload' : '../vamsha_db/api.php';
+      let uploadUrl = getUploadUrl();
       
       const payload = new FormData();
       

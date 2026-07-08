@@ -116,25 +116,75 @@ export async function onRequest(context) {
         if (!await isAuthorized(request, env, 'admin')) {
           return new Response(JSON.stringify({ error: 'Unauthorized admin credentials.' }), { status: 401, headers: corsHeaders });
         }
-        const pending = await KV.get('pending') || '[]';
+        let pending = await KV.get('pending') || '[]';
+        try {
+          JSON.parse(pending);
+        } catch (e) {
+          await KV.delete('pending');
+          pending = '[]';
+        }
         return new Response(pending, { headers: corsHeaders });
       }
 
-      if (action === 'history') {
-        const history = await KV.get('history') || '[]';
+      if (action === 'history' || action === 'get_history') {
+        let history = await KV.get('history') || '[]';
+        try {
+          JSON.parse(history);
+        } catch (e) {
+          await KV.delete('history');
+          history = '[]';
+        }
         return new Response(history, { headers: corsHeaders });
+      }
+
+      if (action === 'get_settings' || action === 'settings') {
+        let settings = await KV.get('settings');
+        let isValid = false;
+        if (settings) {
+          try {
+            JSON.parse(settings);
+            isValid = true;
+          } catch (e) {
+            await KV.delete('settings');
+            settings = null;
+          }
+        }
+        if (!settings) {
+          settings = JSON.stringify({
+            adminUploadService: 'cloudinary',
+            userUploadService: 'cloudinary'
+          });
+        }
+        return new Response(settings, { headers: corsHeaders });
       }
 
       // Default: get profiles
       let profiles = await KV.get('profiles');
-      if (!profiles) {
+      let isProfilesValidJson = false;
+      if (profiles) {
+        try {
+          JSON.parse(profiles);
+          isProfilesValidJson = true;
+        } catch (e) {
+          await KV.delete('profiles');
+          profiles = null;
+        }
+      }
+
+      if (!profiles || !isProfilesValidJson) {
         // Fetch static data.json from site origin as fallback database initialization
         try {
           const fallbackRes = await fetch(`${url.origin}/data.json`);
           if (fallbackRes.ok) {
-            profiles = await fallbackRes.text();
-            // Pre-warm the KV store with this baseline
-            await KV.put('profiles', profiles);
+            const fetchedText = await fallbackRes.text();
+            try {
+              JSON.parse(fetchedText);
+              profiles = fetchedText;
+              // Pre-warm the KV store with this baseline
+              await KV.put('profiles', profiles);
+            } catch (jsonErr) {
+              profiles = '[]';
+            }
           } else {
             profiles = '[]';
           }

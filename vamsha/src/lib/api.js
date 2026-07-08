@@ -53,6 +53,56 @@ export function isStaticHosting() {
   return url.endsWith('.json') || url.includes('data.json');
 }
 
+export function getSettingsUrl() {
+  if (IS_DEV) return '/vamsha_db/settings.json';
+  const api = getApiUrl();
+  if (api.endsWith('.json')) {
+    return api;
+  }
+  return api.includes('?') ? `${api}&action=get_settings` : `${api}?action=get_settings`;
+}
+
+export function getSaveSettingsUrl() {
+  if (IS_DEV) return '/api/save_settings';
+  const api = getApiUrl();
+  if (api.endsWith('.json')) return api;
+  return api.includes('?') ? `${api}&action=save_settings` : `${api}?action=save_settings`;
+}
+
+export function getHistoryUrl() {
+  if (IS_DEV) return '/api/history';
+  const api = getApiUrl();
+  if (api.endsWith('.json')) return api;
+  return api.includes('?') ? `${api}&action=get_history` : `${api}?action=get_history`;
+}
+
+export function getBulkMapLocalUrl() {
+  if (IS_DEV) return '/api/bulk_map_local';
+  const api = getApiUrl();
+  if (api.endsWith('.json')) return api;
+  return api.includes('?') ? `${api}&action=bulk_map_local` : `${api}?action=bulk_map_local`;
+}
+
+export function getBulkMapCloudinaryUrl() {
+  if (IS_DEV) return '/api/bulk_map_cloudinary';
+  const api = getApiUrl();
+  if (api.endsWith('.json')) return api;
+  return api.includes('?') ? `${api}&action=bulk_map_cloudinary` : `${api}?action=bulk_map_cloudinary`;
+}
+
+export function getDownloadPhotoUrl() {
+  if (IS_DEV) return '/api/download_photo';
+  const api = getApiUrl();
+  if (api.endsWith('.json')) return api;
+  return api.includes('?') ? `${api}&action=download_photo` : `${api}?action=download_photo`;
+}
+
+export function getUploadUrl() {
+  if (IS_DEV) return '/api/upload';
+  const api = getApiUrl();
+  return api;
+}
+
 export const DATA_URL = IS_DEV
   ? '/vamsha_db/data.json'
   : getApiUrl();

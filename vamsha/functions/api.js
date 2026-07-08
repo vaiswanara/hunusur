@@ -45,12 +45,23 @@ async function isAuthorized(request, env, role = 'family') {
 
   if (inputAdmin) {
     const hashed = await sha256(inputAdmin);
-    if (hashed === adminPasswordHash) return true;
+    const isHash = /^[a-fA-F0-9]{64}$/.test(adminPasswordHash);
+    if (isHash) {
+      if (hashed === adminPasswordHash) return true;
+    } else {
+      if (inputAdmin === adminPasswordHash) return true;
+    }
   }
 
   if (role === 'family' && inputFamily) {
     const hashed = await sha256(inputFamily);
-    if (hashed === familyPasswordHash || hashed === adminPasswordHash) return true;
+    const isFamilyHash = /^[a-fA-F0-9]{64}$/.test(familyPasswordHash);
+    const isFamilyMatched = isFamilyHash ? (hashed === familyPasswordHash) : (inputFamily === familyPasswordHash);
+
+    const isAdminHash = /^[a-fA-F0-9]{64}$/.test(adminPasswordHash);
+    const isAdminMatched = isAdminHash ? (hashed === adminPasswordHash) : (inputFamily === adminPasswordHash);
+
+    if (isFamilyMatched || isAdminMatched) return true;
   }
 
   return false;
@@ -202,6 +213,14 @@ export async function onRequest(context) {
       // JSON parsing routes
       if (contentType.includes('application/json')) {
         const body = await request.json();
+
+        // 0. Handle AdminGate password verification ping
+        if (body && body.__ping) {
+          if (!await isAuthorized(request, env, 'admin')) {
+            return new Response(JSON.stringify({ error: 'Unauthorized admin credentials.' }), { status: 401, headers: corsHeaders });
+          }
+          return new Response(JSON.stringify({ success: true, ping: true }), { headers: corsHeaders });
+        }
 
         // 1. Download image and pipe to Cloudinary
         if (body.action === 'download_photo') {

@@ -28,8 +28,8 @@ async function generateCloudinarySignature(params, apiSecret) {
 
 // Check authorization headers or query parameters and return active branch/role metadata
 async function checkAuthorization(request, env, role = 'family') {
-  const adminPasswordHash = env.ADMIN_PASSWORD || 'b8ffa75cdfcd1e2a919e55e190e4ae56968c0154e45e547a8a3ee744d3d68638';
-  const familyPasswordHash = env.FAMILY_PASSWORD || 'cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7';
+  const adminPasswordHash = env.ADMIN_PASSWORD || env.VITE_ADMIN_PASSWORD_HASH || 'b00bf843729cf97e8025fdcecf3aa62a50b21969d35d18b4ed5952c171f85016';
+  const familyPasswordHash = env.FAMILY_PASSWORD || env.VITE_FAMILY_PASSWORD_HASH || 'cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7';
 
   const authHeaderAdmin = request.headers.get('X-Admin-Password') || '';
   const authHeaderFamily = request.headers.get('X-Family-Password') || '';

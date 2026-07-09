@@ -281,4 +281,13 @@ export async function fetchSettings() {
   return res.json();
 }
 
+/**
+ * Get profile ID prefix dynamically.
+ * Priority: runtime window config -> build-time env config -> fallback "PID"
+ * @returns {string} ID prefix
+ */
+export function getPidPrefix() {
+  return window.VAMSHA_CONFIG?.pidPrefix || import.meta.env.VITE_PID_PREFIX || 'PID';
+}
+
 

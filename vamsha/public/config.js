@@ -24,6 +24,9 @@ window.VAMSHA_CONFIG = {
   // Set to true if you want to require the family password on PHP server deployment too.
   requireFamilyLockOnPhp: false,
 
+  // Profile ID prefix (e.g., "PID" or "HID" or "KID") for new profiles.
+  pidPrefix: "PID",
+
   // For Multi-Family Branching:
   // Branch passwords and root members are now managed securely from the Admin Panel.
   // (Branches configured in the Admin Panel settings are verified on the server side).

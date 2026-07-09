@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, Plus, Trash2, X } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
-import { deletePendingSubmission, getHistoryUrl, getDownloadPhotoUrl, getSettingsUrl, getUploadUrl, fetchSettings } from '../lib/api';
+import { deletePendingSubmission, getHistoryUrl, getDownloadPhotoUrl, getSettingsUrl, getUploadUrl, fetchSettings, getPidPrefix } from '../lib/api';
 import { getAdminPassword } from './AdminGate';
 const COMMON_GOTRAMS = [
   'Kashyapa', 'Bharadwaja', 'Haritasa', 'Koundinya', 'Srivatsa', 'Vadhula', 
@@ -207,10 +207,15 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
         setPhotoHostService(getPhotoHosting(pendingImportData.photoUrl || existingProfile.photoUrl || ''));
       }
     } else {
-      const nextNum = profiles.length > 0 
-        ? Math.max(...profiles.map(p => parseInt(p.pid.replace('PID', '')) || 0)) + 1 
-        : 1;
-      const nextPid = `PID${String(nextNum).padStart(4, '0')}`;
+      const prefix = getPidPrefix();
+      const prefixRegex = new RegExp(`^${prefix}(\\d+)`, 'i');
+      const prefixNums = profiles
+        .map(p => {
+          const match = p.pid.match(prefixRegex);
+          return match ? parseInt(match[1]) : 0;
+        });
+      const nextNum = prefixNums.length > 0 ? Math.max(...prefixNums, 0) + 1 : 1;
+      const nextPid = `${prefix}${String(nextNum).padStart(4, '0')}`;
       
       const astroInfo = [
         pendingImportData.birthPlace ? `Birth Place: ${pendingImportData.birthPlace}` : null,
@@ -256,10 +261,15 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
       const targetPid = pendingImportData.isUpdateOfPid;
       const existingProfile = isUpdate ? profiles.find(p => p.pid === targetPid) : null;
 
-      const nextNum = profiles.length > 0 
-        ? Math.max(...profiles.map(p => parseInt(p.pid.replace('PID', '')) || 0)) + 1 
-        : 1;
-      const nextPid = isUpdate ? targetPid : `PID${String(nextNum).padStart(4, '0')}`;
+      const prefix = getPidPrefix();
+      const prefixRegex = new RegExp(`^${prefix}(\\d+)`, 'i');
+      const prefixNums = profiles
+        .map(p => {
+          const match = p.pid.match(prefixRegex);
+          return match ? parseInt(match[1]) : 0;
+        });
+      const nextNum = prefixNums.length > 0 ? Math.max(...prefixNums, 0) + 1 : 1;
+      const nextPid = isUpdate ? targetPid : `${prefix}${String(nextNum).padStart(4, '0')}`;
       
       const astroInfo = [
         pendingImportData.birthPlace ? `Birth Place: ${pendingImportData.birthPlace}` : null,
@@ -301,8 +311,18 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
   }, [pendingImportData, profiles]);
 
   function getEmptyForm() {
+    const prefix = getPidPrefix();
+    const prefixRegex = new RegExp(`^${prefix}(\\d+)`, 'i');
+    const prefixNums = profiles
+      .map(p => {
+        const match = p.pid.match(prefixRegex);
+        return match ? parseInt(match[1]) : 0;
+      });
+    const nextNum = prefixNums.length > 0 ? Math.max(...prefixNums, 0) + 1 : 1;
+    const nextPid = `${prefix}${String(nextNum).padStart(4, '0')}`;
+
     return {
-      pid: `PID${String(profiles.length > 0 ? Math.max(...profiles.map(p => parseInt(p.pid.replace('PID', '')) || 0)) + 1 : 1).padStart(4, '0')}`,
+      pid: nextPid,
       firstName: '', surName: '', gender: 'Male',
       maidenName: '', dob: '', phone: '', email: '', notes: '',
       fatherId: '', motherId: '', spouseIds: [],

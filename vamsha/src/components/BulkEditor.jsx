@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
+import { getPidPrefix } from '../lib/api';
 
 const BulkEditor = ({ profiles, setProfiles }) => {
   const [primaryMember, setPrimaryMember] = useState({ pid: '', firstName: '', surName: '', gender: 'Male', isDeceased: false, deathDate: '' });
@@ -122,8 +123,15 @@ const BulkEditor = ({ profiles, setProfiles }) => {
 
   const handleSave = () => {
     let newProfiles = [...profiles];
-    let nextPidNum = newProfiles.length + 1;
-    const generatePid = () => `PID${String(nextPidNum++).padStart(4, '0')}`;
+    const prefix = getPidPrefix();
+    const prefixRegex = new RegExp(`^${prefix}(\\d+)`, 'i');
+    const prefixNums = newProfiles
+      .map(p => {
+        const match = p.pid.match(prefixRegex);
+        return match ? parseInt(match[1]) : 0;
+      });
+    let nextPidNum = prefixNums.length > 0 ? Math.max(...prefixNums, 0) + 1 : 1;
+    const generatePid = () => `${prefix}${String(nextPidNum++).padStart(4, '0')}`;
 
     const upsertPerson = (personData, existingPid) => {
       if (!personData.firstName) return null;

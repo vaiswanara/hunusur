@@ -88,6 +88,17 @@ function getHeader($name) {
     return '';
 }
 
+function getPidPrefix($settings = null) {
+    if ($settings === null) {
+        $settings_file = __DIR__ . '/settings.json';
+        if (file_exists($settings_file)) {
+            $settings = json_decode(file_get_contents($settings_file), true) ?: [];
+        }
+    }
+    return isset($settings['pidPrefix']) ? $settings['pidPrefix'] : 'PID';
+}
+
+
 // ─── CORS HEADERS ────────────────────────────────────────────────────────────
 
 $allowed_origins = [
@@ -1104,11 +1115,14 @@ function handleBulkMapLocal($json) {
         if ($file === '.' || $file === '..') continue;
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-            if (preg_match('/PID\d+/i', $file, $matches)) {
+            $prefix = getPidPrefix();
+            $regex = '/(' . preg_quote($prefix, '/') . '|PID)\d+/i';
+            if (preg_match($regex, $file, $matches)) {
                 $pid = strtoupper($matches[0]);
-                $numPart = str_replace('PID', '', $pid);
+                $matchedPrefix = strpos($pid, 'PID') === 0 ? 'PID' : strtoupper($prefix);
+                $numPart = str_replace($matchedPrefix, '', $pid);
                 if (strlen($numPart) < 4) {
-                    $pid = 'PID' . str_pad($numPart, 4, '0', STR_PAD_LEFT);
+                    $pid = $matchedPrefix . str_pad($numPart, 4, '0', STR_PAD_LEFT);
                 }
                 $urlMap[$pid] = $baseCpanelUrl . $file;
             }
@@ -1218,11 +1232,14 @@ function handleBulkMapCloudinary($json) {
         $secureUrl = $res['secure_url'] ?? '';
         $createdAt = $res['created_at'] ?? '';
 
-        if (preg_match('/PID\d+/i', $publicId, $matches) || preg_match('/PID\d+/i', $secureUrl, $matches)) {
+        $prefix = getPidPrefix();
+        $regex = '/(' . preg_quote($prefix, '/') . '|PID)\d+/i';
+        if (preg_match($regex, $publicId, $matches) || preg_match($regex, $secureUrl, $matches)) {
             $pid = strtoupper($matches[0]);
-            $numPart = str_replace('PID', '', $pid);
+            $matchedPrefix = strpos($pid, 'PID') === 0 ? 'PID' : strtoupper($prefix);
+            $numPart = str_replace($matchedPrefix, '', $pid);
             if (strlen($numPart) < 4) {
-                $pid = 'PID' . str_pad($numPart, 4, '0', STR_PAD_LEFT);
+                $pid = $matchedPrefix . str_pad($numPart, 4, '0', STR_PAD_LEFT);
             }
 
             if (!isset($urlMap[$pid]) || (!empty($createdAt) && strtotime($createdAt) > strtotime($dateMap[$pid]))) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Camera, Download, Upload } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
+import { getPidPrefix } from '../lib/api';
 
 const PhotoEditor = ({ profiles, setProfiles }) => {
   const [photoMappings, setPhotoMappings] = useState([]);
@@ -180,7 +181,9 @@ const PhotoEditor = ({ profiles, setProfiles }) => {
         const [pid, , fullUrl] = cleanedCols; // Index 0: PID, Index 1: Name (ignored), Index 2: Photo_URL
 
         // Skip header or invalid PID
-        if (pid.toUpperCase() === 'PID' || !pid.toUpperCase().startsWith('PID')) {
+        const prefix = getPidPrefix().toUpperCase();
+        if (pid.toUpperCase() === 'PID' || pid.toUpperCase() === prefix || 
+            (!pid.toUpperCase().startsWith('PID') && !pid.toUpperCase().startsWith(prefix))) {
           return;
         }
 

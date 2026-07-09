@@ -26,6 +26,11 @@ async function generateCloudinarySignature(params, apiSecret) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Helper to get PID Prefix dynamically
+function getPidPrefix(env, settings) {
+  return settings?.pidPrefix || env?.PID_PREFIX || env?.VITE_PID_PREFIX || 'PID';
+}
+
 // Check authorization headers or query parameters and return active branch/role metadata
 async function checkAuthorization(request, env, role = 'family') {
   const adminPasswordHash = env.ADMIN_PASSWORD || env.VITE_ADMIN_PASSWORD_HASH || 'b00bf843729cf97e8025fdcecf3aa62a50b21969d35d18b4ed5952c171f85016';
@@ -436,17 +441,28 @@ export async function onRequest(context) {
           const urlMap = {};
           const dateMap = {};
 
+          let settings = {};
+          const settingsStr = await KV.get('settings');
+          if (settingsStr) {
+            try {
+              settings = JSON.parse(settingsStr);
+            } catch (e) {}
+          }
+          const prefix = getPidPrefix(env, settings);
+          const regex = new RegExp(`(${prefix}|PID)\\d+`, 'i');
+
           resources.forEach(resAsset => {
             const publicId = resAsset.public_id || '';
             const secureUrl = resAsset.secure_url || '';
             const createdAt = resAsset.created_at || '';
 
-            const match = publicId.match(/PID\d+/i) || secureUrl.match(/PID\d+/i);
+            const match = publicId.match(regex) || secureUrl.match(regex);
             if (match) {
               let pid = match[0].toUpperCase();
-              const numPart = pid.replace('PID', '');
+              const matchedPrefix = pid.startsWith('PID') ? 'PID' : prefix.toUpperCase();
+              const numPart = pid.replace(matchedPrefix, '');
               if (numPart.length < 4) {
-                pid = 'PID' + numPart.padStart(4, '0');
+                pid = matchedPrefix + numPart.padStart(4, '0');
               }
               if (!urlMap[pid] || (createdAt && new Date(createdAt) > new Date(dateMap[pid]))) {
                 urlMap[pid] = secureUrl;

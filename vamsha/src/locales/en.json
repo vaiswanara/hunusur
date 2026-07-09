@@ -1,7 +1,7 @@
 {
   "nav": {
     "home": "Home",
-    "home_person": "Home Person",
+    "home_person": "Select Profile",
     "tree": "Tree",
     "birthdays": "Birthdays",
     "reports": "Reports",
@@ -22,9 +22,9 @@
     "sync_btn": "Force Sync / Hard Refresh"
   },
   "home_person": {
-    "select_title": "Select Home Person",
+    "select_title": "Select Profile",
     "select_desc": "Select or change the primary focus person to initialize the lineage tree display.",
-    "placeholder": "Search and select Home Person...",
+    "placeholder": "Search and select Profile...",
     "welcome": "Welcome, {name}!",
     "configured": "You have configured {name} ({id}) as the home focus.",
     "explore_tree": "Click Tree to Explore",
@@ -52,8 +52,8 @@
     "spouse": "Spouse",
     "children": "Children",
     "none": "None",
-    "set_as_home": "Set as Home Person",
-    "home_badge": "Home Person"
+    "set_as_home": "Set as Main Profile",
+    "home_badge": "Main Profile"
   },
   "settings": {
     "title": "Settings",
@@ -81,7 +81,7 @@
     "safety_bullet4": "You can remove it anytime by deleting the icon.",
     "safety_footer": "Your phone security and privacy remain completely safe.",
     "birthday_gen_limit": "Birthday Generation Limit",
-    "birthday_gen_desc": "Limit the birthday list to family members within a certain number of generations from the Home Person.",
+    "birthday_gen_desc": "Limit the birthday list to family members within a certain number of generations from the Main Profile.",
     "birthday_gen_option": "{num} Generations",
     "hash_gen_title": "SHA-256 Hash Generator",
     "hash_gen_desc": "Generate a secure SHA-256 hash for your passwords to use in configuration (.env) files.",
@@ -129,8 +129,8 @@
     "today": "Today!",
     "tomorrow": "Tomorrow!",
     "days_left": "{days} days left",
-    "no_home_person": "Please select a Home Person to filter birthdays by generation.",
-    "set_home_btn": "Set Home Person",
+    "no_home_person": "Please select a Main Profile to filter birthdays by generation.",
+    "set_home_btn": "Select Profile",
     "whatsapp_wish_msg": "Happy Birthday, {name}! Wishing you a wonderful year ahead.",
     "email_wish_subj": "Happy Birthday!"
   },

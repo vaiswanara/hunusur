@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RotateCw, UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText, Download, UserPlus } from 'lucide-react';
+import { RotateCw, UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText, Download, UserPlus, Home } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const MenuPage = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
@@ -30,6 +30,7 @@ const MenuPage = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
   const primarySurname = homePerson ? (homePerson.surName || '').trim() : '';
 
   const menuItems = [
+    { path: '/', label: t('nav.home'), icon: Home, color: '#63131D', bgColor: '#F9F1F2' },
     { path: '/home-person', label: t('nav.home_person'), icon: UserCheck, color: '#A04000', bgColor: '#FDF2E9' },
     { path: '/tree', label: t('nav.tree'), icon: GitBranch, color: '#27AE60', bgColor: '#E8F5E9' },
     { path: '/birthdays', label: t('nav.birthdays'), icon: Cake, color: '#E67E22', bgColor: '#FFF3E0' },

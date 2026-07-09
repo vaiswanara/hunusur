@@ -248,3 +248,37 @@ export async function deletePendingSubmission(pendingId, adminPassword) {
   return data;
 }
 
+/**
+ * Fetch settings configuration from the backend dynamically.
+ * Automatically handles local settings mock vs live PHP endpoints,
+ * and includes authorization headers if available in storage.
+ * @returns {Promise<Object>} settings object
+ */
+export async function fetchSettings() {
+  if (IS_DEV) {
+    const res = await fetch('/vamsha_db/settings.json?t=' + Date.now());
+    if (!res.ok) throw new Error('Failed to load local settings');
+    return res.json();
+  }
+
+  const api = getApiUrl();
+  const settingsUrl = api.includes('?') ? `${api}&action=get_settings` : `${api}?action=get_settings`;
+  const password = sessionStorage.getItem('vamsha_admin_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || '';
+  
+  const headers = {};
+  if (password) {
+    headers['X-Admin-Password'] = password;
+    headers['X-Family-Password'] = password;
+  }
+
+  const res = await fetch(settingsUrl + '&t=' + Date.now(), {
+    headers
+  });
+  
+  if (!res.ok) {
+    throw new Error(`Failed to fetch settings: ${res.status}`);
+  }
+  return res.json();
+}
+
+

@@ -19,6 +19,7 @@ const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
 
   const personOptions = useMemo(() => {
     return [...profiles]
+      .filter(p => p.firstName && p.firstName.trim() !== '' && p.firstName.toLowerCase() !== 'unknown')
       .sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''))
       .map(p => ({
         value: p.pid,

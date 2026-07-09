@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, Plus, Trash2, X } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
-import { deletePendingSubmission, getHistoryUrl, getDownloadPhotoUrl, getSettingsUrl, getUploadUrl } from '../lib/api';
+import { deletePendingSubmission, getHistoryUrl, getDownloadPhotoUrl, getSettingsUrl, getUploadUrl, fetchSettings } from '../lib/api';
 import { getAdminPassword } from './AdminGate';
 const COMMON_GOTRAMS = [
   'Kashyapa', 'Bharadwaja', 'Haritasa', 'Koundinya', 'Srivatsa', 'Vadhula', 
@@ -140,17 +140,13 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settingsUrl = getSettingsUrl();
-        const res = await fetch(settingsUrl + (settingsUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
-        if (res.ok) {
-          const settings = await res.json();
-          if (settings.adminUploadService) {
-            setResolvedAdminUploadService(settings.adminUploadService);
-            return;
-          } else if (settings.uploadService) {
-            setResolvedAdminUploadService(settings.uploadService);
-            return;
-          }
+        const settings = await fetchSettings();
+        if (settings.adminUploadService) {
+          setResolvedAdminUploadService(settings.adminUploadService);
+          return;
+        } else if (settings.uploadService) {
+          setResolvedAdminUploadService(settings.uploadService);
+          return;
         }
       } catch (e) {
         console.warn('Could not load settings configuration, falling back to env configuration:', e);

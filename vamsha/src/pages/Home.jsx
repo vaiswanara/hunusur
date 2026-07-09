@@ -122,7 +122,7 @@ const Home = ({ profiles, deferredPrompt, setDeferredPrompt, activeBranchId, onL
 
         {/* Dynamic Interactive Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center', width: '100%' }}>
-          {(activeBranchId || (window.VAMSHA_CONFIG?.familyBranches && Object.keys(window.VAMSHA_CONFIG.familyBranches).length > 0)) && (
+          {(activeBranchId || sessionStorage.getItem('vamsha_admin_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || (window.VAMSHA_CONFIG?.familyBranches && Object.keys(window.VAMSHA_CONFIG.familyBranches).length > 0)) && (
             <div style={{
               padding: '0.85rem 1.25rem',
               borderRadius: '12px',

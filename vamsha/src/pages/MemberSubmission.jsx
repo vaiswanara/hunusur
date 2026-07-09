@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Phone, Mail, Lock, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { submitPendingProfile, getSettingsUrl } from '../lib/api';
+import { submitPendingProfile, fetchSettings } from '../lib/api';
 import SearchableSelect from '../components/SearchableSelect';
 
 const NAKSHATRAS = [
@@ -92,17 +92,13 @@ const MemberSubmission = ({ profiles = [] }) => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settingsUrl = getSettingsUrl();
-        const res = await fetch(settingsUrl + (settingsUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
-        if (res.ok) {
-          const settings = await res.json();
-          if (settings.userUploadService) {
-            setResolvedUploadService(settings.userUploadService);
-            return;
-          } else if (settings.uploadService) {
-            setResolvedUploadService(settings.uploadService);
-            return;
-          }
+        const settings = await fetchSettings();
+        if (settings.userUploadService) {
+          setResolvedUploadService(settings.userUploadService);
+          return;
+        } else if (settings.uploadService) {
+          setResolvedUploadService(settings.uploadService);
+          return;
         }
       } catch (e) {
         console.warn('Could not load settings configuration, falling back to env configuration:', e);

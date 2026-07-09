@@ -5,7 +5,7 @@ import {
   GitFork, Heart, FileText, ChevronDown, ChevronUp, Play, Trash2,
   X, Eye, EyeOff, Copy, Check, Lock
 } from 'lucide-react';
-import { saveProfiles, isStaticHosting, getApiUrl, getSettingsUrl, getSaveSettingsUrl, getBulkMapLocalUrl, getBulkMapCloudinaryUrl } from '../lib/api';
+import { saveProfiles, isStaticHosting, getApiUrl, getSettingsUrl, getSaveSettingsUrl, getBulkMapLocalUrl, getBulkMapCloudinaryUrl, fetchSettings } from '../lib/api';
 import { encryptData } from '../lib/crypto';
 import { getAdminPassword } from './AdminGate';
 import SearchableSelect from './SearchableSelect';
@@ -86,27 +86,23 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
   const [cloudinaryModalError, setCloudinaryModalError] = useState('');
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchSettingsData = async () => {
       try {
-        const settingsUrl = getSettingsUrl();
-        const res = await fetch(settingsUrl + (settingsUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
-        if (res.ok) {
-          const settings = await res.json();
-          if (settings.adminUploadService) {
-            setAdminUploadService(settings.adminUploadService);
-          }
-          if (settings.userUploadService) {
-            setUserUploadService(settings.userUploadService);
-          }
-          if (settings.familyBranches) {
-            setFamilyBranches(settings.familyBranches);
-          }
+        const settings = await fetchSettings();
+        if (settings.adminUploadService) {
+          setAdminUploadService(settings.adminUploadService);
+        }
+        if (settings.userUploadService) {
+          setUserUploadService(settings.userUploadService);
+        }
+        if (settings.familyBranches) {
+          setFamilyBranches(settings.familyBranches);
         }
       } catch (err) {
         console.error('Failed to load settings configuration, using .env fallback:', err);
       }
     };
-    fetchSettings();
+    fetchSettingsData();
   }, []);
 
   const handleSaveSettings = async (updatedBranches = familyBranches) => {

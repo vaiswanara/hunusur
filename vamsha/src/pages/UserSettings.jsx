@@ -143,7 +143,7 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt, activeBranc
         {activeTab === 'general' && (
           <div>
             {/* Active Family Branch Details Card */}
-            {(activeBranchId || (window.VAMSHA_CONFIG?.familyBranches && Object.keys(window.VAMSHA_CONFIG.familyBranches).length > 0)) && (
+            {(activeBranchId || sessionStorage.getItem('vamsha_admin_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || (window.VAMSHA_CONFIG?.familyBranches && Object.keys(window.VAMSHA_CONFIG.familyBranches).length > 0)) && (
               <div style={{
                 backgroundColor: '#FAF8F5',
                 border: '1px solid #EFE4DC',

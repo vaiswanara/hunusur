@@ -21,6 +21,11 @@ import CloudinaryUpload from './components/CloudinaryUpload';
 import MemberSubmission from './pages/MemberSubmission';
 import { decryptData } from './lib/crypto';
 import { getReachableProfiles } from './lib/relationshipEngine';
+function getFirstValidPid(profilesArray) {
+  if (!Array.isArray(profilesArray) || profilesArray.length === 0) return null;
+  const valid = profilesArray.find(p => p.firstName && p.firstName.toLowerCase() !== 'unknown');
+  return valid ? valid.pid : profilesArray[0].pid;
+}
 
 
 function Navigation({ profiles, setFocusedPid, setSidebarPerson, isAdmin }) {
@@ -34,7 +39,7 @@ function Navigation({ profiles, setFocusedPid, setSidebarPerson, isAdmin }) {
     const savedHomePid = localStorage.getItem('vamsha_home_pid');
     const targetPid = (savedHomePid && profiles.some(p => p.pid === savedHomePid))
       ? savedHomePid
-      : (profiles.length > 0 ? profiles[0].pid : null);
+      : getFirstValidPid(profiles);
     if (targetPid) {
       setFocusedPid(targetPid);
     }
@@ -93,7 +98,7 @@ function MobileBottomNav({ profiles, focusedPid, setFocusedPid, sidebarPerson, s
     const savedHomePid = localStorage.getItem('vamsha_home_pid');
     const targetPid = (savedHomePid && profiles.some(p => p.pid === savedHomePid)) 
       ? savedHomePid 
-      : (profiles.length > 0 ? profiles[0].pid : null);
+      : getFirstValidPid(profiles);
     
     if (targetPid) {
       setFocusedPid(targetPid);
@@ -342,7 +347,7 @@ function App() {
   // Check if remote data has updated
   const checkForUpdates = async () => {
     try {
-      const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+      const savedPwd = sessionStorage.getItem('vamsha_admin_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || '';
       let latestData = await fetchProfiles(savedPwd);
       if (latestData && latestData.encrypted === true) {
         if (savedPwd) {
@@ -380,7 +385,7 @@ function App() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+      const savedPwd = sessionStorage.getItem('vamsha_admin_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || '';
       let data = await fetchProfiles(savedPwd);
       if (data && data.encrypted === true) {
         if (savedPwd) {
@@ -433,7 +438,7 @@ function App() {
     if (isArray && savedHomePid && initialData.some(p => p.pid === savedHomePid)) {
       return savedHomePid;
     }
-    return (isArray && initialData.length > 0) ? initialData[0].pid : null;
+    return getFirstValidPid(initialData);
   });
   const [sidebarPerson, setSidebarPerson] = useState(null);
 
@@ -445,7 +450,7 @@ function App() {
   // Load profiles from server (or fall back to local storage / bundled data)
   // Load raw profiles from server (or fall back to bundled data.json)
   useEffect(() => {
-    const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+    const savedPwd = sessionStorage.getItem('vamsha_admin_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || '';
     fetchProfiles(savedPwd)
       .then((data) => {
         if (data.activeBranchId) {

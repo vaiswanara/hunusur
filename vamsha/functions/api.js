@@ -351,6 +351,7 @@ export async function onRequest(context) {
       // JSON parsing routes
       if (contentType.includes('application/json')) {
         const body = await request.json();
+        const reqAction = body.action || action;
 
         // 0. Handle AdminGate password verification ping
         if (body && body.__ping) {
@@ -361,7 +362,7 @@ export async function onRequest(context) {
         }
 
         // 1. Download image and pipe to Cloudinary
-        if (body.action === 'download_photo') {
+        if (reqAction === 'download_photo') {
           if (!await isAuthorized(request, env, 'admin')) {
             return new Response(JSON.stringify({ error: 'Unauthorized.' }), { status: 401, headers: corsHeaders });
           }
@@ -390,16 +391,19 @@ export async function onRequest(context) {
         }
 
         // 2. Save settings
-        if (body.action === 'save_settings') {
+        if (reqAction === 'save_settings') {
           if (!await isAuthorized(request, env, 'admin')) {
             return new Response(JSON.stringify({ error: 'Unauthorized.' }), { status: 401, headers: corsHeaders });
           }
-          await KV.put('settings', JSON.stringify(body));
+          // Clean up action parameter from payload if it was sent in body
+          const settingsToSave = { ...body };
+          delete settingsToSave.action;
+          await KV.put('settings', JSON.stringify(settingsToSave));
           return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
         }
 
         // 3. Cloudinary Bulk Sync scan
-        if (body.action === 'bulk_map_cloudinary') {
+        if (reqAction === 'bulk_map_cloudinary') {
           if (!await isAuthorized(request, env, 'admin')) {
             return new Response(JSON.stringify({ error: 'Unauthorized.' }), { status: 401, headers: corsHeaders });
           }
@@ -514,7 +518,7 @@ export async function onRequest(context) {
         }
 
         // 4. Local Bulk Sync scan (not supported on serverless disk, return message)
-        if (body.action === 'bulk_map_local') {
+        if (reqAction === 'bulk_map_local') {
           return new Response(JSON.stringify({ error: 'Local server folder scanning is not supported in Serverless KV mode.' }), { status: 400, headers: corsHeaders });
         }
 

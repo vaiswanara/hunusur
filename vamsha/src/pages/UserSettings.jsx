@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
+const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt, activeBranchId, onLogoutBranch }) => {
   const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState('general');
   const [expandedSection, setExpandedSection] = useState(null);
@@ -142,6 +142,50 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
       <div>
         {activeTab === 'general' && (
           <div>
+            {/* Active Family Branch Details Card */}
+            {(activeBranchId || (window.VAMSHA_CONFIG?.familyBranches && Object.keys(window.VAMSHA_CONFIG.familyBranches).length > 0)) && (
+              <div style={{
+                backgroundColor: '#FAF8F5',
+                border: '1px solid #EFE4DC',
+                borderRadius: '16px',
+                padding: '2rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                marginBottom: '2rem'
+              }}>
+                <h4 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🌳 {language === 'te' ? 'కుటుంబ శాఖ వివరాలు' : (language === 'kn' ? 'ಕುಟುಂಬ ಶಾಖೆಯ ವಿವರಗಳು' : 'Family Branch Details')}
+                </h4>
+                <p style={{ margin: '0 0 1.25rem', color: '#666', fontSize: '0.88rem', lineHeight: 1.45 }}>
+                  {activeBranchId && window.VAMSHA_CONFIG?.familyBranches?.[activeBranchId] ? (
+                    <>
+                      {language === 'te' ? 'ప్రస్తుతం మీరు చూస్తున్నది' : (language === 'kn' ? 'ನೀವು ಪ್ರಸ್ತುತ ವೀಕ್ಷಿಸುತ್ತಿರುವುದು' : 'You are currently viewing')}: <strong>{window.VAMSHA_CONFIG.familyBranches[activeBranchId].name || activeBranchId}</strong>.
+                    </>
+                  ) : (
+                    <>
+                      {language === 'te' ? 'ప్రస్తుతం మీరు చూస్తున్నది' : (language === 'kn' ? 'ನೀವು ಪ್ರಸ್ತುತ ವೀಕ್ಷಿಸುತ್ತಿರುವುದು' : 'You are currently viewing')}: <strong>{language === 'te' ? 'మాస్టర్ ఫ్యామిలీ వ్యూ (అన్ని శాఖలు)' : (language === 'kn' ? 'ಮಾಸ್ಟರ್ ಫ್ಯಾಮಿಲಿ ವ್ಯೂ (ಎಲ್ಲಾ ಶಾಖೆಗಳು)' : 'Master Family View (All Branches)')}</strong>.
+                    </>
+                  )}
+                </p>
+                <div>
+                  <button
+                    onClick={onLogoutBranch}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '0.65rem 1.25rem',
+                      fontSize: '0.92rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {language === 'te' ? '🔒 లాక్ చేయి / వేరే కుటుంబానికి మారు' : (language === 'kn' ? '🔒 ಲಾಕ್ ಮಾಡಿ / ಬೇರೆ ಕುಟುಂಬಕ್ಕೆ ಬದಲಾಯಿಸಿ' : '🔒 Lock Tree / Switch Family')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Language Selection Card */}
             <div style={{
               backgroundColor: '#FAF8F5',

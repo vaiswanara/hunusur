@@ -231,7 +231,10 @@ export function getTerm(entryValue, lang = 'en') {
 /**
  * Resolves a relationship code to its local language display term.
  */
-export function resolveRelationName(profiles, result, homePerson, targetPerson, lang = 'en') {
+/**
+ * Resolves a relationship code to its local language display term (Internal Raw).
+ */
+function resolveRelationNameRaw(profiles, result, homePerson, targetPerson, lang = 'en') {
   if (!result) return "Unknown";
   const { code, path } = result;
 
@@ -315,6 +318,93 @@ export function resolveRelationName(profiles, result, homePerson, targetPerson, 
 }
 
 /**
+ * Translates hybrid regional terms in the English dictionary values to clean English standard terms.
+ */
+export function translateToCleanEnglish(term) {
+  if (!term) return "";
+  
+  const engMap = {
+    "Nanna/Appa": "Father",
+    "Amma": "Mother",
+    "Anna/Tammudu/Tamma": "Brother",
+    "Anna": "Brother (Elder)",
+    "Tammudu/Tamma": "Brother (Younger)",
+    "Akka/Chelli/Tangi": "Sister",
+    "Akka": "Sister (Elder)",
+    "Chelli/Tangi": "Sister (Younger)",
+    "Koduku/Maga": "Son",
+    "Kuthuru/Magalu": "Daughter",
+    "Bharta/Ganda": "Husband",
+    "Bharya/Hendati": "Wife",
+    "Tatayya/Ajja": "Grandfather",
+    "Nanamma/Ajji": "Grandmother",
+    "Ammamma/Ajji": "Grandmother",
+    "Muttata/Muttajja": "Great-Grandfather",
+    "Muttavva/Muttajji": "Great-Grandmother",
+    "Pedananna/Doddappa": "Uncle (Elder Paternal)",
+    "Chinnanna/Chikkappa": "Uncle (Younger Paternal)",
+    "Atta/Atte": "Aunt",
+    "Pinni/Chikkamma": "Aunt",
+    "Mavayya/Mava": "Uncle",
+    "Mama/Mava": "Uncle",
+    "Bava": "Brother-in-law (Elder)",
+    "Bavamaridi/Maiduna": "Brother-in-law (Younger)",
+    "Bava/Bavamaridi/Maiduna": "Brother-in-law",
+    "Vadina/Attige": "Sister-in-law (Elder)",
+    "Maradalu/Nadini": "Sister-in-law (Younger)",
+    "Vadina/Maradalu/Attige/Nadini": "Sister-in-law",
+    "Vadina/Maradalu/Attige/Nadini Magalu": "Niece",
+    "Vadina/Maradalu/Attige/Nadini Maga": "Nephew",
+    "Menalludu/Sodaraliya": "Nephew",
+    "Menakodalu/Sodarasose": "Niece",
+    "Anna Koduku/Annana Maga": "Nephew",
+    "Tammudu Koduku/Tammana Maga": "Nephew",
+    "Anna Kuthuru/Annana Magalu": "Niece",
+    "Tammudu Kuthuru/Tammana Magalu": "Niece",
+    "Mamayya/Mava": "Father-in-law",
+    "Attayya/Atte": "Mother-in-law",
+    "Manumadu/Mommaga": "Grandson",
+    "Manumaralu/Mommagalu": "Granddaughter",
+    "Kodalu/Sose": "Daughter-in-law",
+    "Alludu/Aliya": "Son-in-law",
+    "Aadapaduchu Kumarudu/Nadiniya Maga": "Nephew",
+    "Aadapaduchu Kumarte/Nadiniya Magalu": "Niece",
+    "Tata/Ajja": "Grandfather",
+    "Avva/Ajji": "Grandmother",
+    "Pedamamagaru/Doddamava": "Uncle (Elder Paternal)",
+    "Chinamamagaru/Chikkamava": "Uncle (Younger Paternal)",
+    "Pedda Atta/Doddatte": "Aunt (Elder)",
+    "Chinna Atta/Chikkatte": "Aunt (Younger)",
+    "Peddamma/Chinnamma Kumarudu/Doddamma/Chikkammana Maga": "Cousin (Male)",
+    "Peddamma/Chinnamma Kumarte/Doddamma/Chikkammana Magalu": "Cousin (Female)"
+  };
+
+  // Direct match lookup
+  if (engMap[term]) return engMap[term];
+
+  // Key replacement mapping
+  let cleaned = term;
+  Object.keys(engMap).forEach(key => {
+    const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    cleaned = cleaned.replace(new RegExp(escapedKey, 'g'), engMap[key]);
+  });
+
+  return cleaned;
+}
+
+/**
+ * Resolves a relationship code to its local language display term.
+ */
+export function resolveRelationName(profiles, result, homePerson, targetPerson, lang = 'en') {
+  const rawTerm = resolveRelationNameRaw(profiles, result, homePerson, targetPerson, lang);
+  if (lang === 'en') {
+    return translateToCleanEnglish(rawTerm);
+  }
+  return rawTerm;
+}
+
+
+/**
  * Main external API to resolve relationship names directly.
  */
 export function findRelationship(profiles, id1, id2, lang = 'en') {
@@ -381,3 +471,60 @@ export function getDynamicRelationText(code, lang = 'en') {
 
   return resultParts.join("").trim();
 }
+
+/**
+ * Traverses the family tree graph starting from startPid (BFS traversal).
+ * Returns only the profiles reachable through parents, children, spouses, or siblings.
+ * If startPid is falsy, returns all profiles (fallback).
+ * @param {Array} profiles
+ * @param {string} startPid
+ * @returns {Array}
+ */
+export function getReachableProfiles(profiles, startPid) {
+  if (!startPid) return profiles;
+  
+  const startPerson = getPerson(profiles, startPid);
+  if (!startPerson) return [];
+
+  const visited = new Set([startPid]);
+  const queue = [startPid];
+
+  while (queue.length > 0) {
+    const currPid = queue.shift();
+    const p = getPerson(profiles, currPid);
+    if (!p) continue;
+
+    const add = (nextId) => {
+      if (nextId && !visited.has(nextId)) {
+        visited.add(nextId);
+        queue.push(nextId);
+      }
+    };
+
+    // 1. Parents
+    if (p.fatherId) add(p.fatherId);
+    if (p.motherId) add(p.motherId);
+
+    // 2. Children
+    const children = getChildrenIds(profiles, currPid);
+    children.forEach(childId => add(childId));
+
+    // 3. Spouses
+    if (p.spouseIds && Array.isArray(p.spouseIds)) {
+      p.spouseIds.forEach(spouseId => add(spouseId));
+    }
+    // Bidirectional spouse checking
+    profiles.forEach(other => {
+      if (other.spouseIds && Array.isArray(other.spouseIds) && other.spouseIds.includes(currPid)) {
+        add(other.pid);
+      }
+    });
+
+    // 4. Siblings
+    const sibs = getSiblings(profiles, currPid);
+    sibs.forEach(sibId => add(sibId));
+  }
+
+  return profiles.filter(p => visited.has(p.pid));
+}
+

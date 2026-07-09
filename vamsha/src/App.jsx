@@ -20,8 +20,10 @@ import DecryptionGate from './components/DecryptionGate';
 import CloudinaryUpload from './components/CloudinaryUpload';
 import MemberSubmission from './pages/MemberSubmission';
 import { decryptData } from './lib/crypto';
+import { getReachableProfiles } from './lib/relationshipEngine';
 
-function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
+
+function Navigation({ profiles, setFocusedPid, setSidebarPerson, isAdmin }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -67,6 +69,9 @@ function Navigation({ profiles, setFocusedPid, setSidebarPerson }) {
         <Link to="/memories" className={location.pathname.includes('/memories') ? 'active' : ''}>{t('nav.memories')}</Link>
         <Link to="/timeline" className={location.pathname.includes('/timeline') ? 'active' : ''}>{t('nav.timeline')}</Link>
         <Link to="/settings" className={location.pathname.includes('/settings') ? 'active' : ''}>{t('nav.settings')}</Link>
+        {isAdmin && (
+          <Link to="/admin" className={location.pathname.includes('/admin') ? 'active' : ''}>Admin</Link>
+        )}
       </nav>
     </header>
   );
@@ -304,7 +309,15 @@ function enrichProfiles(rawProfiles) {
 }
 
 function App() {
+  const [activeBranchId, setActiveBranchId] = useState(() => {
+    return localStorage.getItem('vamsha_active_branch_id') || null;
+  });
+  const [activeBranchRootPid, setActiveBranchRootPid] = useState(() => {
+    return localStorage.getItem('vamsha_active_branch_root_pid') || null;
+  });
   const [rawResponse, setRawResponse] = useState(initialData);
+  const [isAdmin, setIsAdmin] = useState(() => !!sessionStorage.getItem('vamsha_admin_pwd'));
+
   const [profiles, setProfiles] = useState([]);
   const [savedProfilesBaseline, setSavedProfilesBaseline] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -329,9 +342,9 @@ function App() {
   // Check if remote data has updated
   const checkForUpdates = async () => {
     try {
-      let latestData = await fetchProfiles();
+      const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+      let latestData = await fetchProfiles(savedPwd);
       if (latestData && latestData.encrypted === true) {
-        const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
         if (savedPwd) {
           try {
             const decryptedText = await decryptData(latestData.data, savedPwd);
@@ -367,9 +380,9 @@ function App() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      let data = await fetchProfiles();
+      const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+      let data = await fetchProfiles(savedPwd);
       if (data && data.encrypted === true) {
-        const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
         if (savedPwd) {
           try {
             const decryptedText = await decryptData(data.data, savedPwd);
@@ -399,6 +412,14 @@ function App() {
     return enrichProfiles(profiles);
   }, [profiles]);
 
+  const visibleProfiles = useMemo(() => {
+    if (activeBranchRootPid) {
+      return getReachableProfiles(enrichedProfiles, activeBranchRootPid);
+    }
+    return enrichedProfiles;
+  }, [enrichedProfiles, activeBranchRootPid]);
+
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
@@ -424,8 +445,17 @@ function App() {
   // Load profiles from server (or fall back to local storage / bundled data)
   // Load raw profiles from server (or fall back to bundled data.json)
   useEffect(() => {
-    fetchProfiles()
+    const savedPwd = localStorage.getItem('vamsha_decrypt_pwd') || '';
+    fetchProfiles(savedPwd)
       .then((data) => {
+        if (data.activeBranchId) {
+          setActiveBranchId(data.activeBranchId);
+          localStorage.setItem('vamsha_active_branch_id', data.activeBranchId);
+        }
+        if (data.activeBranchRootPid) {
+          setActiveBranchRootPid(data.activeBranchRootPid);
+          localStorage.setItem('vamsha_active_branch_root_pid', data.activeBranchRootPid);
+        }
         setRawResponse(data);
         setLoadError(null);
       })
@@ -437,7 +467,16 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDecryptedData = useCallback((decryptedData) => {
+  const handleDecryptedData = useCallback((decryptedData, branchId, rootPid) => {
+    if (branchId) {
+      setActiveBranchId(branchId);
+      setActiveBranchRootPid(rootPid);
+    } else {
+      setActiveBranchId(null);
+      setActiveBranchRootPid(null);
+    }
+    setIsAdmin(!!sessionStorage.getItem('vamsha_admin_pwd'));
+
     // Check if we have local draft in localStorage
     const localDraftStr = localStorage.getItem('vamsha_local_profiles');
     let localDraft = null;
@@ -465,6 +504,16 @@ function App() {
     }
   }, []);
 
+  const handleLogoutBranch = useCallback(() => {
+    localStorage.removeItem('vamsha_decrypt_pwd');
+    localStorage.removeItem('vamsha_active_branch_id');
+    localStorage.removeItem('vamsha_active_branch_root_pid');
+    sessionStorage.removeItem('vamsha_admin_pwd');
+    setIsAdmin(false);
+    window.location.reload();
+  }, []);
+
+
   const handleResolveConflict = (useLocal) => {
     if (!localDraftConflict) return;
     if (useLocal) {
@@ -484,17 +533,21 @@ function App() {
 
   // Sync focusedPid if profiles load
   useEffect(() => {
-    if (profiles.length > 0) {
-      if (!focusedPid || !profiles.some(p => p.pid === focusedPid)) {
+    if (visibleProfiles.length > 0) {
+      const isFocusedValid = focusedPid && visibleProfiles.some(p => p.pid === focusedPid);
+      if (!isFocusedValid) {
         const savedHomePid = localStorage.getItem('vamsha_home_pid');
-        if (savedHomePid && profiles.some(p => p.pid === savedHomePid)) {
+        if (savedHomePid && visibleProfiles.some(p => p.pid === savedHomePid)) {
           setFocusedPid(savedHomePid);
+        } else if (activeBranchRootPid && visibleProfiles.some(p => p.pid === activeBranchRootPid)) {
+          setFocusedPid(activeBranchRootPid);
         } else {
-          setFocusedPid(profiles[0].pid);
+          setFocusedPid(visibleProfiles[0].pid);
         }
       }
     }
-  }, [profiles]);
+  }, [visibleProfiles, activeBranchRootPid, focusedPid]);
+
 
   // Clear local draft conflict banner when profiles match the saved baseline
   useEffect(() => {
@@ -534,7 +587,7 @@ function App() {
   }
 
   return (
-    <DecryptionGate rawData={rawResponse} onDecrypt={handleDecryptedData}>
+    <DecryptionGate rawData={rawResponse} loadError={loadError} onDecrypt={handleDecryptedData}>
       <Router basename={import.meta.env.BASE_URL}>
       <style>{`
         @keyframes pulseSync {
@@ -600,9 +653,10 @@ function App() {
       )}
 
       <Navigation 
-        profiles={enrichedProfiles}
+        profiles={visibleProfiles}
         setFocusedPid={setFocusedPid}
         setSidebarPerson={setSidebarPerson}
+        isAdmin={isAdmin}
       />
       {localDraftConflict && (
         <div style={{
@@ -655,29 +709,32 @@ function App() {
         <Routes>
           <Route path="/" element={
             <HomePage 
-              profiles={enrichedProfiles} 
+              profiles={visibleProfiles} 
               deferredPrompt={deferredPrompt}
               setDeferredPrompt={setDeferredPrompt}
+              activeBranchId={activeBranchId}
+              onLogoutBranch={handleLogoutBranch}
+              isAdmin={isAdmin}
             />
           } />
           <Route path="/home-person" element={
             <HomePerson 
-              profiles={enrichedProfiles} 
+              profiles={visibleProfiles} 
               setFocusedPid={setFocusedPid} 
               setSidebarPerson={setSidebarPerson} 
             />
           } />
           <Route path="/tree" element={
             <TreeDisplay 
-              profiles={enrichedProfiles} 
+              profiles={visibleProfiles} 
               focusedPid={focusedPid}
               setFocusedPid={setFocusedPid}
               sidebarPerson={sidebarPerson}
               setSidebarPerson={setSidebarPerson}
             />
           } />
-          <Route path="/birthdays" element={<Birthdays profiles={enrichedProfiles} />} />
-          <Route path="/reports" element={<Reports profiles={enrichedProfiles} setFocusedPid={setFocusedPid} />} />
+          <Route path="/birthdays" element={<Birthdays profiles={visibleProfiles} />} />
+          <Route path="/reports" element={<Reports profiles={visibleProfiles} setFocusedPid={setFocusedPid} />} />
           <Route path="/memories" element={
             <Memories 
               profiles={profiles} 
@@ -686,20 +743,22 @@ function App() {
               setFocusedPid={setFocusedPid}
             />
           } />
-          <Route path="/timeline" element={<Timeline profiles={enrichedProfiles} setFocusedPid={setFocusedPid} />} />
+          <Route path="/timeline" element={<Timeline profiles={visibleProfiles} setFocusedPid={setFocusedPid} />} />
           <Route path="/menu" element={
             <MenuPage 
-              profiles={enrichedProfiles} 
+              profiles={visibleProfiles} 
               deferredPrompt={deferredPrompt} 
               setDeferredPrompt={setDeferredPrompt} 
             />
           } />
-          <Route path="/dashboard" element={<Dashboard profiles={enrichedProfiles} />} />
+          <Route path="/dashboard" element={<Dashboard profiles={visibleProfiles} />} />
           <Route path="/settings" element={
             <UserSettings 
-              profiles={enrichedProfiles} 
+              profiles={visibleProfiles} 
               deferredPrompt={deferredPrompt} 
               setDeferredPrompt={setDeferredPrompt} 
+              activeBranchId={activeBranchId}
+              onLogoutBranch={handleLogoutBranch}
             />
           } />
           <Route path="/admin" element={
@@ -717,12 +776,13 @@ function App() {
         </Routes>
       </main>
       <MobileBottomNav 
-        profiles={enrichedProfiles}
+        profiles={visibleProfiles}
         focusedPid={focusedPid}
         setFocusedPid={setFocusedPid}
         sidebarPerson={sidebarPerson}
         setSidebarPerson={setSidebarPerson}
       />
+
       </Router>
     </DecryptionGate>
   );

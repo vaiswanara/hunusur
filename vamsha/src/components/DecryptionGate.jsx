@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { decryptData } from '../lib/crypto';
-import { isStaticHosting } from '../lib/api';
+import { isStaticHosting, getApiUrl, getSettingsUrl } from '../lib/api';
 
 const STORAGE_KEY = 'vamsha_decrypt_pwd';
 
@@ -13,19 +13,64 @@ async function sha256(message) {
   return hashHex;
 }
 
-export default function DecryptionGate({ rawData, onDecrypt, children }) {
+export default function DecryptionGate({ rawData, loadError, onDecrypt, children }) {
   // Check if encryption is active on the raw data
   const isEncrypted = rawData && rawData.encrypted === true;
   
   const isStatic = isStaticHosting();
+  const [localSettings, setLocalSettings] = useState(null);
+  const [loadingSettings, setLoadingSettings] = useState(!isStatic);
+
+  useEffect(() => {
+    if (isStatic) return;
+    const settingsUrl = getSettingsUrl();
+    const savedPwd = localStorage.getItem(STORAGE_KEY) || '';
+    
+    const headers = {};
+    if (savedPwd) {
+      headers['X-Family-Password'] = savedPwd;
+      headers['X-Admin-Password'] = savedPwd;
+    }
+
+    fetch(settingsUrl, { headers })
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Not authorized');
+      })
+      .then(data => {
+        setLocalSettings(data);
+        setLoadingSettings(false);
+      })
+      .catch(err => {
+        if (err.message.includes('401') || err.message.toLowerCase().includes('authorized')) {
+          setLocalSettings({ requireFamilyLockOnPhp: true });
+        }
+        setLoadingSettings(false);
+      });
+  }, [isStatic]);
+
   const requireLockOnPhp = window.VAMSHA_CONFIG?.requireFamilyLockOnPhp === true || 
                            window.VAMSHA_CONFIG?.requireFamilyLockOnPhp === 'true' ||
                            import.meta.env.VITE_REQUIRE_FAMILY_LOCK_ON_PHP === true ||
-                           import.meta.env.VITE_REQUIRE_FAMILY_LOCK_ON_PHP === 'true';
+                           import.meta.env.VITE_REQUIRE_FAMILY_LOCK_ON_PHP === 'true' ||
+                           localSettings?.requireFamilyLockOnPhp === true;
 
   const familyPasswordHash = (isStatic || requireLockOnPhp) ? (window.VAMSHA_CONFIG?.familyPasswordHash || '') : '';
+  const familyBranches = { 
+    ...(window.VAMSHA_CONFIG?.familyBranches || {}), 
+    ...(localSettings?.familyBranches || {}) 
+  };
+  const hasBranches = Object.keys(familyBranches).length > 0;
   const hasHashLock = !!familyPasswordHash;
-  const isLocked = isEncrypted || hasHashLock;
+  
+  // Detect server-side authentication error
+  const isAuthError = loadError && (
+    loadError.includes('401') || 
+    loadError.toLowerCase().includes('password') || 
+    loadError.toLowerCase().includes('unauthorized')
+  );
+
+  const isLocked = isEncrypted || hasHashLock || hasBranches || isAuthError;
 
   const adminEmail = window.VAMSHA_CONFIG?.adminContactEmail || '';
   const adminPhone = window.VAMSHA_CONFIG?.adminContactPhone || '';
@@ -37,13 +82,18 @@ export default function DecryptionGate({ rawData, onDecrypt, children }) {
   const [verifying, setVerifying] = useState(false);
   const inputRef = useRef();
 
+  const onDecryptRef = useRef(onDecrypt);
+  useEffect(() => {
+    onDecryptRef.current = onDecrypt;
+  }, [onDecrypt]);
+
   // If the data is not locked, decrypt/pass through immediately
   useEffect(() => {
-    if (!isLocked) {
-      onDecrypt(rawData);
+    if (!loadingSettings && !isLocked) {
+      onDecryptRef.current(rawData, null, null);
       setDecryptedData(rawData);
     }
-  }, [rawData, isLocked, onDecrypt]);
+  }, [rawData, isLocked, loadingSettings]);
 
   // Attempt decryption/verification using stored local password if available on mount
   useEffect(() => {
@@ -53,29 +103,93 @@ export default function DecryptionGate({ rawData, onDecrypt, children }) {
         setVerifying(true);
         (async () => {
           try {
-            if (hasHashLock) {
+            if (isStatic || import.meta.env.DEV) {
               const hash = await sha256(savedPwd);
-              if (hash !== familyPasswordHash) {
-                throw new Error('Invalid hash');
+              let matchedBranchId = null;
+              let matchedRootPid = null;
+              let isValid = false;
+              let isAdmin = false;
+
+              if (familyPasswordHash && hash === familyPasswordHash) {
+                isValid = true;
+              } else if (hasBranches) {
+                for (const [branchId, branchConfig] of Object.entries(familyBranches)) {
+                  if (branchConfig.passwordHash && hash === branchConfig.passwordHash) {
+                    matchedBranchId = branchId;
+                    matchedRootPid = branchConfig.rootPid;
+                    isValid = true;
+                    break;
+                  }
+                }
               }
+
+              const expectedAdminHash = window.VAMSHA_CONFIG?.adminPasswordHash || 
+                                        import.meta.env.VITE_ADMIN_PASSWORD_HASH ||
+                                        'b00bf843729cf97e8025fdcecf3aa62a50b21969d35d18b4ed5952c171f85016';
+              if (hash === expectedAdminHash) {
+                isValid = true;
+                isAdmin = true;
+              }
+
+              if (!isValid) {
+                throw new Error('Invalid saved password');
+              }
+
+              let parsed = rawData;
+              if (isEncrypted) {
+                const decryptedText = await decryptData(rawData.data, savedPwd);
+                parsed = JSON.parse(decryptedText);
+              }
+
+              if (matchedBranchId) {
+                localStorage.setItem('vamsha_active_branch_id', matchedBranchId);
+                localStorage.setItem('vamsha_active_branch_root_pid', matchedRootPid);
+              } else {
+                localStorage.removeItem('vamsha_active_branch_id');
+                localStorage.removeItem('vamsha_active_branch_root_pid');
+              }
+
+              if (isAdmin) {
+                sessionStorage.setItem('vamsha_admin_pwd', savedPwd);
+              }
+
+              onDecryptRef.current(parsed, matchedBranchId, matchedRootPid);
+              setDecryptedData(parsed);
+            } else {
+              // Dynamic hosting online check
+              const { fetchProfiles } = await import('../lib/api');
+              const data = await fetchProfiles(savedPwd);
+              
+              let branchId = data.activeBranchId;
+              let rootPid = data.activeBranchRootPid;
+              
+              if (branchId === 'ADMIN') {
+                sessionStorage.setItem('vamsha_admin_pwd', savedPwd);
+                branchId = null;
+                rootPid = null;
+              } else if (branchId) {
+                localStorage.setItem('vamsha_active_branch_id', branchId);
+                localStorage.setItem('vamsha_active_branch_root_pid', rootPid);
+              } else {
+                localStorage.removeItem('vamsha_active_branch_id');
+                localStorage.removeItem('vamsha_active_branch_root_pid');
+              }
+
+              onDecryptRef.current(data, branchId, rootPid);
+              setDecryptedData(data);
             }
-            let parsed = rawData;
-            if (isEncrypted) {
-              const decryptedText = await decryptData(rawData.data, savedPwd);
-              parsed = JSON.parse(decryptedText);
-            }
-            onDecrypt(parsed);
-            setDecryptedData(parsed);
           } catch (e) {
-            // Saved password was wrong or stale
             localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem('vamsha_active_branch_id');
+            localStorage.removeItem('vamsha_active_branch_root_pid');
+            sessionStorage.removeItem('vamsha_admin_pwd');
           } finally {
             setVerifying(false);
           }
         })();
       }
     }
-  }, [rawData, isLocked, hasHashLock, familyPasswordHash, isEncrypted, onDecrypt]);
+  }, [rawData, isLocked, hasHashLock, familyPasswordHash, hasBranches, isEncrypted, isStatic]);
 
   // Auto focus input on mount
   useEffect(() => {
@@ -93,24 +207,87 @@ export default function DecryptionGate({ rawData, onDecrypt, children }) {
 
     try {
       const enteredPwd = pwd.trim();
-      if (hasHashLock) {
+
+      if (isStatic || import.meta.env.DEV) {
         const hash = await sha256(enteredPwd);
-        if (hash !== familyPasswordHash) {
+        let matchedBranchId = null;
+        let matchedRootPid = null;
+        let isValid = false;
+        let isAdmin = false;
+
+        if (familyPasswordHash && hash === familyPasswordHash) {
+          isValid = true;
+        } else if (hasBranches) {
+          for (const [branchId, branchConfig] of Object.entries(familyBranches)) {
+            if (branchConfig.passwordHash && hash === branchConfig.passwordHash) {
+              matchedBranchId = branchId;
+              matchedRootPid = branchConfig.rootPid;
+              isValid = true;
+              break;
+            }
+          }
+        }
+
+        const expectedAdminHash = window.VAMSHA_CONFIG?.adminPasswordHash || 
+                                  import.meta.env.VITE_ADMIN_PASSWORD_HASH ||
+                                  'b00bf843729cf97e8025fdcecf3aa62a50b21969d35d18b4ed5952c171f85016';
+        if (hash === expectedAdminHash) {
+          isValid = true;
+          isAdmin = true;
+        }
+
+        if (!isValid) {
           throw new Error('Wrong password. Please try again.');
         }
-      }
 
-      let parsed = rawData;
-      if (isEncrypted) {
-        const decryptedText = await decryptData(rawData.data, enteredPwd);
-        parsed = JSON.parse(decryptedText);
+        let parsed = rawData;
+        if (isEncrypted) {
+          const decryptedText = await decryptData(rawData.data, enteredPwd);
+          parsed = JSON.parse(decryptedText);
+        }
+
+        localStorage.setItem(STORAGE_KEY, enteredPwd);
+        if (matchedBranchId) {
+          localStorage.setItem('vamsha_active_branch_id', matchedBranchId);
+          localStorage.setItem('vamsha_active_branch_root_pid', matchedRootPid);
+        } else {
+          localStorage.removeItem('vamsha_active_branch_id');
+          localStorage.removeItem('vamsha_active_branch_root_pid');
+        }
+
+        if (isAdmin) {
+          sessionStorage.setItem('vamsha_admin_pwd', enteredPwd);
+        }
+
+        onDecryptRef.current(parsed, matchedBranchId, matchedRootPid);
+        setDecryptedData(parsed);
+      } else {
+        // Dynamic hosting online check
+        const { fetchProfiles } = await import('../lib/api');
+        const data = await fetchProfiles(enteredPwd);
+
+        localStorage.setItem(STORAGE_KEY, enteredPwd);
+
+        let branchId = data.activeBranchId;
+        let rootPid = data.activeBranchRootPid;
+
+        if (branchId === 'ADMIN') {
+          sessionStorage.setItem('vamsha_admin_pwd', enteredPwd);
+          branchId = null;
+          rootPid = null;
+        } else if (branchId) {
+          localStorage.setItem('vamsha_active_branch_id', branchId);
+          localStorage.setItem('vamsha_active_branch_root_pid', rootPid);
+        } else {
+          localStorage.removeItem('vamsha_active_branch_id');
+          localStorage.removeItem('vamsha_active_branch_root_pid');
+        }
+
+        onDecryptRef.current(data, branchId, rootPid);
+        setDecryptedData(data);
       }
-      
-      localStorage.setItem(STORAGE_KEY, enteredPwd);
-      onDecrypt(parsed);
-      setDecryptedData(parsed);
     } catch (err) {
-      setError(err.message || 'Wrong password. Please try again.');
+      setError('Wrong password. Please try again.');
       setPwd('');
       inputRef.current?.focus();
     } finally {
@@ -118,10 +295,15 @@ export default function DecryptionGate({ rawData, onDecrypt, children }) {
     }
   };
 
+  if (loadingSettings) {
+    return null;
+  }
+
   // If not locked or already successfully decrypted/verified, render children
   if (!isLocked || decryptedData) {
     return children;
   }
+
 
   return (
     <div style={{

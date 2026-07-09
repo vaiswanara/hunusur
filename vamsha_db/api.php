@@ -22,7 +22,7 @@ if (!file_exists($env_file)) {
     $env_file = __DIR__ . '/.env';
 }
 
-$admin_password_hash = 'b8ffa75cdfcd1e2a919e55e190e4ae56968c0154e45e547a8a3ee744d3d68638'; // Default fallback
+$admin_password_hash = 'b00bf843729cf97e8025fdcecf3aa62a50b21969d35d18b4ed5952c171f85016'; // Default fallback (@srik1982)
 $family_password_hash = 'cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7'; // Default fallback
 $cors_allowed_origins_env = '';
 $vamsha_db_path_env = '';
@@ -177,9 +177,85 @@ if ($method === 'GET') {
 
 // ─── GET HANDLER (READ DATA) ─────────────────────────────────────────────────
 
+function getReachableProfiles($profiles, $startPid) {
+    if (empty($startPid)) return $profiles;
+    
+    // index profiles by pid
+    $profilesMap = [];
+    foreach ($profiles as $p) {
+        if (!empty($p['pid'])) {
+            $profilesMap[$p['pid']] = $p;
+        }
+    }
+    
+    if (!isset($profilesMap[$startPid])) return [];
+    
+    $visited = [$startPid => true];
+    $queue = [$startPid];
+    
+    while (count($queue) > 0) {
+        $currPid = array_shift($queue);
+        $p = $profilesMap[$currPid] ?? null;
+        if (!$p) continue;
+        
+        $add = function($nextId) use (&$visited, &$queue, $profilesMap) {
+            if (!empty($nextId) && !isset($visited[$nextId]) && isset($profilesMap[$nextId])) {
+                $visited[$nextId] = true;
+                $queue[] = $nextId;
+            }
+        };
+        
+        // 1. Parents
+        if (!empty($p['fatherId'])) $add($p['fatherId']);
+        if (!empty($p['motherId'])) $add($p['motherId']);
+        
+        // 2. Children
+        foreach ($profiles as $other) {
+            if ((!empty($other['fatherId']) && $other['fatherId'] === $currPid) ||
+                (!empty($other['motherId']) && $other['motherId'] === $currPid)) {
+                $add($other['pid']);
+            }
+        }
+        
+        // 3. Spouses
+        if (!empty($p['spouseIds']) && is_array($p['spouseIds'])) {
+            foreach ($p['spouseIds'] as $spouseId) {
+                $add($spouseId);
+            }
+        }
+        // Bidirectional spouses
+        foreach ($profiles as $other) {
+            if (!empty($other['spouseIds']) && is_array($other['spouseIds']) && in_array($currPid, $other['spouseIds'])) {
+                $add($other['pid']);
+            }
+        }
+        
+        // 4. Siblings
+        $fatherId = $p['fatherId'] ?? '';
+        $motherId = $p['motherId'] ?? '';
+        if (!empty($fatherId) || !empty($motherId)) {
+            foreach ($profiles as $other) {
+                if ($other['pid'] === $currPid) continue;
+                $sameFather = !empty($fatherId) && !empty($other['fatherId']) && $other['fatherId'] === $fatherId;
+                $sameMother = !empty($motherId) && !empty($other['motherId']) && $other['motherId'] === $motherId;
+                if ($sameFather || $sameMother) {
+                    $add($other['pid']);
+                }
+            }
+        }
+    }
+    
+    $result = [];
+    foreach ($profiles as $p) {
+        if (isset($visited[$p['pid']])) {
+            $result[] = $p;
+        }
+    }
+    return $result;
+}
+
 function handleGet() {
     if (!file_exists(DATA_FILE)) {
-        // If file doesn't exist, return empty profiles array
         echo json_encode([]);
         exit;
     }
@@ -191,15 +267,66 @@ function handleGet() {
         exit;
     }
 
-    // Verify it is valid JSON before outputting
-    $json = json_decode($content);
+    $profiles = json_decode($content, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         http_response_code(500);
         echo json_encode(['error' => 'Database file is corrupted (invalid JSON)']);
         exit;
     }
 
-    echo $content;
+    // Password verification
+    $provided_password = getHeader('X-Admin-Password') ?: getHeader('X-Family-Password') ?: ($_GET['adminPassword'] ?? '') ?: ($_GET['familyPassword'] ?? '') ?: '';
+    $provided_hash = hash('sha256', $provided_password);
+
+    $is_admin = hash_equals(ADMIN_PASSWORD_HASH, $provided_hash);
+    $is_family = (!empty(FAMILY_PASSWORD_HASH) && hash_equals(FAMILY_PASSWORD_HASH, $provided_hash))
+                 || hash_equals('cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7', $provided_hash)
+                 || hash_equals('e19701cb9c6b6647783e940e66282827218ba85e4e0ec28e29ba4dffa2bc2c01', $provided_hash);
+
+    $matched_branch_id = null;
+    $matched_root_pid = null;
+
+    // Load branch passwords from settings
+    $settings_file = __DIR__ . '/settings.json';
+    $settings = [];
+    if (file_exists($settings_file)) {
+        $settings = json_decode(file_get_contents($settings_file), true) ?: [];
+    }
+
+    if (!$is_admin && !$is_family && isset($settings['familyBranches']) && is_array($settings['familyBranches'])) {
+        foreach ($settings['familyBranches'] as $branchId => $branchConfig) {
+            if (!empty($branchConfig['passwordHash']) && hash_equals($branchConfig['passwordHash'], $provided_hash)) {
+                $is_family = true;
+                $matched_branch_id = $branchId;
+                $matched_root_pid = $branchConfig['rootPid'] ?? null;
+                break;
+            }
+        }
+    }
+
+    // Enforce lock if configured
+    $requireLock = isset($settings['requireFamilyLockOnPhp']) ? ($settings['requireFamilyLockOnPhp'] === true || $settings['requireFamilyLockOnPhp'] === 'true') : false;
+    $hasBranches = isset($settings['familyBranches']) && count($settings['familyBranches']) > 0;
+
+    if (($requireLock || $hasBranches) && !$is_admin && !$is_family) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Incorrect password']);
+        exit;
+    }
+
+    // Filter profiles array if it is a branch login
+    if ($is_family && !empty($matched_root_pid)) {
+        $profiles = getReachableProfiles($profiles, $matched_root_pid);
+        header("X-Active-Branch-Id: $matched_branch_id");
+        header("X-Active-Branch-Root-Pid: $matched_root_pid");
+    } elseif ($is_admin) {
+        header("X-Active-Branch-Id: ADMIN");
+    }
+
+    // Expose headers for CORS so clients can read them
+    header('Access-Control-Expose-Headers: X-Active-Branch-Id, X-Active-Branch-Root-Pid');
+
+    echo json_encode($profiles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -884,16 +1011,54 @@ function handleGetHistory() {
 }
 
 function handleGetSettings() {
-    header('Content-Type: application/json');
+    // Password verification
+    $provided_password = getHeader('X-Admin-Password') ?: getHeader('X-Family-Password') ?: ($_GET['adminPassword'] ?? '') ?: ($_GET['familyPassword'] ?? '') ?: '';
+    $provided_hash = hash('sha256', $provided_password);
+    
+    $is_admin = hash_equals(ADMIN_PASSWORD_HASH, $provided_hash);
+    
+    // Check family password hash
+    $is_family = (!empty(FAMILY_PASSWORD_HASH) && hash_equals(FAMILY_PASSWORD_HASH, $provided_hash))
+                 || hash_equals('cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7', $provided_hash)
+                 || hash_equals('e19701cb9c6b6647783e940e66282827218ba85e4e0ec28e29ba4dffa2bc2c01', $provided_hash);
+
+    // Read settings content
     $settings_file = __DIR__ . '/settings.json';
-    if (!file_exists($settings_file)) {
+    $settings = [];
+    if (file_exists($settings_file)) {
+        $settings = json_decode(file_get_contents($settings_file), true) ?: [];
+    }
+
+    if (!$is_admin && !$is_family && isset($settings['familyBranches']) && is_array($settings['familyBranches'])) {
+        foreach ($settings['familyBranches'] as $branchConfig) {
+            if (!empty($branchConfig['passwordHash']) && hash_equals($branchConfig['passwordHash'], $provided_hash)) {
+                $is_family = true;
+                break;
+            }
+        }
+    }
+
+    if (!$is_admin && !$is_family) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Unauthorized settings access']);
+        exit;
+    }
+
+    header('Content-Type: application/json');
+    if (empty($settings)) {
         echo json_encode([
             'adminUploadService' => 'cloudinary',
             'userUploadService' => 'cloudinary'
         ]);
         exit;
     }
-    echo file_get_contents($settings_file);
+
+    // Secure settings: strip familyBranches if not admin!
+    if (!$is_admin) {
+        unset($settings['familyBranches']);
+    }
+
+    echo json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 

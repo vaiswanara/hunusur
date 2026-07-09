@@ -1,0 +1,30 @@
+# Dependency folders
+node_modules/
+dist/
+dev-dist/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS/Editor configs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Backup files & Migration data
+*before streamline.json
+*before_migration.json
+*migrated_data_bak.json
+data_before_migration.json
+vamsha_db/migrated_data_bak.json
+data_migration/

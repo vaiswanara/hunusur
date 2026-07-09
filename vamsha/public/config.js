@@ -15,13 +15,20 @@ window.VAMSHA_CONFIG = {
   // For Static Hosting (e.g. GitHub Pages): You can set/change the admin password hash here
   // so you don't need to rebuild the project when changing passwords.
   // Leave empty to use the default hash from build-time (.env) configuration.
-  adminPasswordHash: "",
+  adminPasswordHash: "b00bf843729cf97e8025fdcecf3aa62a50b21969d35d18b4ed5952c171f85016",
 
   // For Static Hosting (e.g. GitHub Pages): You can set/change the family password hash here
   // to protect the tree. Leave empty to use default/unlocked mode if database is unencrypted.
   familyPasswordHash: "",
 
   // Set to true if you want to require the family password on PHP server deployment too.
-  requireFamilyLockOnPhp: false
+  requireFamilyLockOnPhp: false,
+
+  // For Multi-Family Branching:
+  // Branch passwords and root members are now managed securely from the Admin Panel.
+  // (Branches configured in the Admin Panel settings are verified on the server side).
+  familyBranches: {}
 };
+
+
 

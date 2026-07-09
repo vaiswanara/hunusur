@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GitBranch, ArrowRight, RefreshCw, Download } from 'lucide-react';
+import { GitBranch, ArrowRight, RefreshCw, Download, Lock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-const Home = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
+const Home = ({ profiles, deferredPrompt, setDeferredPrompt, activeBranchId, onLogoutBranch, isAdmin }) => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Find the primary surname from the home person (if configured)
   const homePid = localStorage.getItem('vamsha_home_pid');
@@ -122,6 +122,43 @@ const Home = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
 
         {/* Dynamic Interactive Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center', width: '100%' }}>
+          {(activeBranchId || (window.VAMSHA_CONFIG?.familyBranches && Object.keys(window.VAMSHA_CONFIG.familyBranches).length > 0)) && (
+            <div style={{
+              padding: '0.85rem 1.25rem',
+              borderRadius: '12px',
+              backgroundColor: '#FAF8F5',
+              border: '1.5px solid #EFE4DC',
+              width: '100%',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ fontSize: '0.88rem', color: '#666', marginBottom: '0.4rem', fontWeight: 600 }}>
+                🌳 {language === 'te' ? 'కుటుంబ శాఖ:' : (language === 'kn' ? 'ಕುಟುಂಬ ಶಾಖೆ:' : 'Family Branch:')}{' '}
+                <span style={{ color: 'var(--color-maroon)', fontWeight: 800 }}>
+                  {activeBranchId && window.VAMSHA_CONFIG?.familyBranches?.[activeBranchId]
+                    ? (window.VAMSHA_CONFIG.familyBranches[activeBranchId].name || activeBranchId)
+                    : 'Master View'}
+                </span>
+              </div>
+              <button
+                onClick={onLogoutBranch}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-maroon)',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: 0
+                }}
+              >
+                {language === 'te' ? '🔒 లాక్ చేయి / వేరే కుటుంబానికి మారు' : (language === 'kn' ? '🔒 ಲಾಕ್ ಮಾಡಿ / ಬೇರೆ ಕುಟುಂಬಕ್ಕೆ ಬದಲಾಯಿಸಿ' : '🔒 Lock / Switch Family')}
+              </button>
+            </div>
+          )}
+
           <button
             className="btn btn-primary"
             onClick={handleExploreClick}
@@ -141,6 +178,38 @@ const Home = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
             {t('home.explore_btn')}
             <ArrowRight size={18} />
           </button>
+
+          {isAdmin && (
+            <button
+              className="btn"
+              onClick={() => navigate('/admin')}
+              style={{
+                width: '100%',
+                padding: '0.9rem 2rem',
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                borderRadius: '10px',
+                border: '1.5px solid var(--color-maroon, #63131D)',
+                color: 'var(--color-maroon, #63131D)',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                fontWeight: 700
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'rgba(99, 19, 29, 0.05)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <Lock size={20} />
+              Admin Panel
+            </button>
+          )}
 
           {deferredPrompt && (
             <button

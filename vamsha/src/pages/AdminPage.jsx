@@ -557,30 +557,44 @@ const AdminPage = ({ profiles, setProfiles, savedProfilesBaseline, setSavedProfi
           const males = sorted.filter(p => p.gender === 'Male');
           const females = sorted.filter(p => p.gender === 'Female');
 
-          const renderCard = (profile) => (
-            <div key={profile.pid} className="profile-item-card" style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '0.75rem 1rem',
-              border: profile.isDeceased ? '1px solid #ddd' : '1px solid #EEE',
-              borderRadius: '8px',
-              backgroundColor: profile.isDeceased ? '#F5F5F5' : '#FAFAFA',
-              opacity: profile.isDeceased ? 0.85 : 1,
-              marginBottom: '0.5rem'
-            }}>
-              <div>
-                <strong style={{ fontSize: '0.95rem', color: profile.isDeceased ? '#777' : '#333' }}>
-                  {profile.isDeceased ? 'Late ' : ''}{profile.firstName} {profile.surName}
-                </strong>
-                <span style={{ fontSize: '0.8rem', color: '#999', marginLeft: '0.4rem' }}>({profile.pid})</span>
-                {profile.isDeceased && (
-                  <span style={{ marginLeft: '0.5rem', fontSize: '1rem' }} title="Deceased">🪔</span>
-                )}
+          const renderCard = (profile) => {
+            const father = profiles.find(p => p.pid === profile.fatherId);
+            const mother = profiles.find(p => p.pid === profile.motherId);
+            const fatherText = father ? `${father.firstName} ${father.surName} (${profile.fatherId})` : profile.fatherId ? `Unknown (${profile.fatherId})` : '';
+            const motherText = mother ? `${mother.firstName} ${mother.surName} (${profile.motherId})` : profile.motherId ? `Unknown (${profile.motherId})` : '';
+
+            return (
+              <div key={profile.pid} className="profile-item-card" style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.75rem 1rem',
+                border: profile.isDeceased ? '1px solid #ddd' : '1px solid #EEE',
+                borderRadius: '8px',
+                backgroundColor: profile.isDeceased ? '#F5F5F5' : '#FAFAFA',
+                opacity: profile.isDeceased ? 0.85 : 1,
+                marginBottom: '0.5rem'
+              }}>
+                <div>
+                  <strong style={{ fontSize: '0.95rem', color: profile.isDeceased ? '#777' : '#333' }}>
+                    {profile.isDeceased ? 'Late ' : ''}{profile.firstName} {profile.surName}
+                  </strong>
+                  <span style={{ fontSize: '0.8rem', color: '#999', marginLeft: '0.4rem' }}>({profile.pid})</span>
+                  {profile.isDeceased && (
+                    <span style={{ marginLeft: '0.5rem', fontSize: '1rem' }} title="Deceased">🪔</span>
+                  )}
+                  {(fatherText || motherText) && (
+                    <div style={{ fontSize: '0.78rem', color: '#666', marginTop: '3px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {fatherText && <span><strong>Father:</strong> {fatherText}</span>}
+                      {fatherText && motherText && <span style={{ color: '#ccc' }}>|</span>}
+                      {motherText && <span><strong>Mother:</strong> {motherText}</span>}
+                    </div>
+                  )}
+                </div>
+                <button className="btn btn-secondary btn-sm" onClick={() => handleEditFromList(profile)}>Edit</button>
               </div>
-              <button className="btn btn-secondary btn-sm" onClick={() => handleEditFromList(profile)}>Edit</button>
-            </div>
-          );
+            );
+          };
 
           return (
             <div className="card full-width-card">

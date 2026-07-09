@@ -116,22 +116,35 @@ export const SAVE_URL = IS_DEV
 /**
  * Load all profiles from server.
  * Falls back to empty array on error.
+ * @param {string} [password] - authentication password
  * @returns {Promise<Array>}
  */
-export async function fetchProfiles() {
+export async function fetchProfiles(password) {
   const url = IS_DEV
     ? '/vamsha_db/data.json'
     : getApiUrl();
 
+  const headers = {};
+  if (password) {
+    headers['X-Family-Password'] = password;
+    headers['X-Admin-Password'] = password;
+  }
+
   const res = await fetch(url, {
     cache: 'no-cache',    // always get latest data
+    headers
   });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch profiles: ${res.status} ${res.statusText}`);
   }
 
-  return res.json();
+  const data = await res.json();
+  if (Array.isArray(data)) {
+    data.activeBranchId = res.headers.get('X-Active-Branch-Id') || null;
+    data.activeBranchRootPid = res.headers.get('X-Active-Branch-Root-Pid') || null;
+  }
+  return data;
 }
 
 // ─── SAVE PROFILES ───────────────────────────────────────────────────────────

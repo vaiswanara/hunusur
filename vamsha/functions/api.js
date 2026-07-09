@@ -26,16 +26,14 @@ async function generateCloudinarySignature(params, apiSecret) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Check authorization headers or query parameters
-async function isAuthorized(request, env, role = 'family') {
-  const adminPasswordHash = env.ADMIN_PASSWORD || 'b8ffa75cdfcd1e2a919e55e190e4ae56968c0154e45e547a8a3ee744d3d68638'; // default: Srik@94290
-  const familyPasswordHash = env.FAMILY_PASSWORD || 'cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7'; // default: vamsha@1982
+// Check authorization headers or query parameters and return active branch/role metadata
+async function checkAuthorization(request, env, role = 'family') {
+  const adminPasswordHash = env.ADMIN_PASSWORD || 'b8ffa75cdfcd1e2a919e55e190e4ae56968c0154e45e547a8a3ee744d3d68638';
+  const familyPasswordHash = env.FAMILY_PASSWORD || 'cba7360712e9a3683709717fc6b5d5c84369cc515da04167f9acaec54478c8a7';
 
-  // Extract from headers
   const authHeaderAdmin = request.headers.get('X-Admin-Password') || '';
   const authHeaderFamily = request.headers.get('X-Family-Password') || '';
 
-  // Extract from URL query params
   const url = new URL(request.url);
   const queryAdmin = url.searchParams.get('adminPassword') || '';
   const queryFamily = url.searchParams.get('familyPassword') || '';
@@ -46,25 +44,123 @@ async function isAuthorized(request, env, role = 'family') {
   if (inputAdmin) {
     const hashed = await sha256(inputAdmin);
     const isHash = /^[a-fA-F0-9]{64}$/.test(adminPasswordHash);
-    if (isHash) {
-      if (hashed === adminPasswordHash) return true;
-    } else {
-      if (inputAdmin === adminPasswordHash) return true;
+    const isMatched = isHash ? (hashed === adminPasswordHash) : (inputAdmin === adminPasswordHash);
+    if (isMatched) {
+      return { authorized: true, role: 'admin' };
     }
   }
 
-  if (role === 'family' && inputFamily) {
+  if (inputFamily) {
     const hashed = await sha256(inputFamily);
-    const isFamilyHash = /^[a-fA-F0-9]{64}$/.test(familyPasswordHash);
-    const isFamilyMatched = isFamilyHash ? (hashed === familyPasswordHash) : (inputFamily === familyPasswordHash);
 
+    // Check admin credentials
     const isAdminHash = /^[a-fA-F0-9]{64}$/.test(adminPasswordHash);
     const isAdminMatched = isAdminHash ? (hashed === adminPasswordHash) : (inputFamily === adminPasswordHash);
+    if (isAdminMatched) {
+      return { authorized: true, role: 'admin' };
+    }
 
-    if (isFamilyMatched || isAdminMatched) return true;
+    // Check global family password
+    const isFamilyHash = /^[a-fA-F0-9]{64}$/.test(familyPasswordHash);
+    const isFamilyMatched = isFamilyHash ? (hashed === familyPasswordHash) : (inputFamily === familyPasswordHash);
+    if (isFamilyMatched) {
+      return { authorized: true, role: 'family' };
+    }
+
+    // Check individual branches
+    if (role === 'family') {
+      const KV = env.VAMSHA_KV;
+      if (KV) {
+        const settingsStr = await KV.get('settings');
+        if (settingsStr) {
+          try {
+            const settings = JSON.parse(settingsStr);
+            if (settings.familyBranches) {
+              for (const [branchId, branchConfig] of Object.entries(settings.familyBranches)) {
+                if (branchConfig.passwordHash && hashed === branchConfig.passwordHash) {
+                  return { authorized: true, role: 'branch', branchId, rootPid: branchConfig.rootPid };
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    }
   }
 
-  return false;
+  return { authorized: false };
+}
+
+async function isAuthorized(request, env, role = 'family') {
+  const auth = await checkAuthorization(request, env, role);
+  return auth.authorized;
+}
+
+function getReachableProfiles(profiles, startPid) {
+  if (!startPid) return profiles;
+  
+  const profilesMap = {};
+  profiles.forEach(p => {
+    if (p.pid) {
+      profilesMap[p.pid] = p;
+    }
+  });
+
+  if (!profilesMap[startPid]) return [];
+
+  const visited = new Set([startPid]);
+  const queue = [startPid];
+
+  while (queue.length > 0) {
+    const currPid = queue.shift();
+    const p = profilesMap[currPid];
+    if (!p) continue;
+
+    const add = (nextId) => {
+      if (nextId && !visited.has(nextId) && profilesMap[nextId]) {
+        visited.add(nextId);
+        queue.push(nextId);
+      }
+    };
+
+    // 1. Parents
+    if (p.fatherId) add(p.fatherId);
+    if (p.motherId) add(p.motherId);
+
+    // 2. Children
+    profiles.forEach(other => {
+      if (other.fatherId === currPid || other.motherId === currPid) {
+        add(other.pid);
+      }
+    });
+
+    // 3. Spouses
+    if (p.spouseIds && Array.isArray(p.spouseIds)) {
+      p.spouseIds.forEach(spouseId => add(spouseId));
+    }
+    // Bidirectional spouses
+    profiles.forEach(other => {
+      if (other.spouseIds && Array.isArray(other.spouseIds) && other.spouseIds.includes(currPid)) {
+        add(other.pid);
+      }
+    });
+
+    // 4. Siblings
+    const fatherId = p.fatherId;
+    const motherId = p.motherId;
+    if (fatherId || motherId) {
+      profiles.forEach(other => {
+        if (other.pid === currPid) return;
+        const sameFather = fatherId && other.fatherId === fatherId;
+        const sameMother = motherId && other.motherId === motherId;
+        if (sameFather || sameMother) {
+          add(other.pid);
+        }
+      });
+    }
+  }
+
+  return profiles.filter(p => visited.has(p.pid));
 }
 
 // Upload file helper to Cloudinary (signed upload)
@@ -149,32 +245,61 @@ export async function onRequest(context) {
       }
 
       if (action === 'get_settings' || action === 'settings') {
+        const auth = await checkAuthorization(request, env, 'family');
+        if (!auth.authorized) {
+          return new Response(JSON.stringify({ error: 'Unauthorized settings access.' }), { status: 401, headers: corsHeaders });
+        }
+
         let settings = await KV.get('settings');
-        let isValid = false;
+        let parsedSettings = {};
         if (settings) {
           try {
-            JSON.parse(settings);
-            isValid = true;
+            parsedSettings = JSON.parse(settings);
           } catch (e) {
             await KV.delete('settings');
             settings = null;
           }
         }
         if (!settings) {
-          settings = JSON.stringify({
+          parsedSettings = {
             adminUploadService: 'cloudinary',
             userUploadService: 'cloudinary'
-          });
+          };
         }
-        return new Response(settings, { headers: corsHeaders });
+
+        // Secure: strip familyBranches if not admin!
+        if (auth.role !== 'admin') {
+          delete parsedSettings.familyBranches;
+        }
+
+        return new Response(JSON.stringify(parsedSettings), { headers: corsHeaders });
       }
 
       // Default: get profiles
+      const auth = await checkAuthorization(request, env, 'family');
+
+      // Load settings to check lock requirements
+      let settingsStr = await KV.get('settings');
+      let settings = {};
+      if (settingsStr) {
+        try {
+          settings = JSON.parse(settingsStr);
+        } catch (e) {}
+      }
+
+      const requireLock = settings.requireFamilyLockOnPhp === true || settings.requireFamilyLockOnPhp === 'true';
+      const hasBranches = settings.familyBranches && Object.keys(settings.familyBranches).length > 0;
+
+      if ((requireLock || hasBranches) && !auth.authorized) {
+        return new Response(JSON.stringify({ error: 'Incorrect password' }), { status: 401, headers: corsHeaders });
+      }
+
       let profiles = await KV.get('profiles');
+      let parsedProfiles = [];
       let isProfilesValidJson = false;
       if (profiles) {
         try {
-          JSON.parse(profiles);
+          parsedProfiles = JSON.parse(profiles);
           isProfilesValidJson = true;
         } catch (e) {
           await KV.delete('profiles');
@@ -183,27 +308,35 @@ export async function onRequest(context) {
       }
 
       if (!profiles || !isProfilesValidJson) {
-        // Fetch static data.json from site origin as fallback database initialization
         try {
           const fallbackRes = await fetch(`${url.origin}/data.json`);
           if (fallbackRes.ok) {
             const fetchedText = await fallbackRes.text();
             try {
-              JSON.parse(fetchedText);
+              parsedProfiles = JSON.parse(fetchedText);
               profiles = fetchedText;
-              // Pre-warm the KV store with this baseline
               await KV.put('profiles', profiles);
             } catch (jsonErr) {
-              profiles = '[]';
+              parsedProfiles = [];
             }
-          } else {
-            profiles = '[]';
           }
-        } catch (err) {
-          profiles = '[]';
-        }
+        } catch (err) {}
       }
-      return new Response(profiles, { headers: corsHeaders });
+
+      // Filter profiles if it's a branch login
+      const responseHeaders = { ...corsHeaders };
+      if (auth.authorized && auth.role === 'branch' && auth.rootPid) {
+        parsedProfiles = getReachableProfiles(parsedProfiles, auth.rootPid);
+        responseHeaders['X-Active-Branch-Id'] = auth.branchId;
+        responseHeaders['X-Active-Branch-Root-Pid'] = auth.rootPid;
+      } else if (auth.authorized && auth.role === 'admin') {
+        responseHeaders['X-Active-Branch-Id'] = 'ADMIN';
+      }
+
+      // Expose headers for CORS
+      responseHeaders['Access-Control-Expose-Headers'] = 'X-Active-Branch-Id, X-Active-Branch-Root-Pid';
+
+      return new Response(JSON.stringify(parsedProfiles), { headers: responseHeaders });
     }
 
     // ─── POST ROUTER ──────────────────────────────────────────────────────────

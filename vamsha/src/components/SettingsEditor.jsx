@@ -3,11 +3,12 @@ import {
   Sliders, Shield, CheckCircle, AlertCircle, AlertTriangle,
   Download, Upload, Camera, Moon, Calendar, Phone, Mail, 
   GitFork, Heart, FileText, ChevronDown, ChevronUp, Play, Trash2,
-  X, Eye, EyeOff, Copy, Check
+  X, Eye, EyeOff, Copy, Check, Lock
 } from 'lucide-react';
 import { saveProfiles, isStaticHosting, getApiUrl, getSettingsUrl, getSaveSettingsUrl, getBulkMapLocalUrl, getBulkMapCloudinaryUrl } from '../lib/api';
 import { encryptData } from '../lib/crypto';
 import { getAdminPassword } from './AdminGate';
+import SearchableSelect from './SearchableSelect';
 
 // RFC 4180 compliant CSV parser
 function parseCSV(text) {
@@ -62,6 +63,14 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
   const fileInputRef = useRef();
   const csvFileInputRef = useRef();
 
+  // Family Branches States
+  const [familyBranches, setFamilyBranches] = useState({});
+  const [newBranchKey, setNewBranchKey] = useState('');
+  const [newBranchName, setNewBranchName] = useState('');
+  const [newBranchRoot, setNewBranchRoot] = useState('');
+  const [newBranchPwd, setNewBranchPwd] = useState('');
+  const [showNewPwd, setShowNewPwd] = useState(false);
+
   // Bulk Scan States
   const [bulkSource, setBulkSource] = useState('local'); // 'local' | 'cloudinary'
   const [bulkUpdateDb, setBulkUpdateDb] = useState(true); // true -> update data.json, false -> csv only
@@ -89,6 +98,9 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
           if (settings.userUploadService) {
             setUserUploadService(settings.userUploadService);
           }
+          if (settings.familyBranches) {
+            setFamilyBranches(settings.familyBranches);
+          }
         }
       } catch (err) {
         console.error('Failed to load settings configuration, using .env fallback:', err);
@@ -97,11 +109,15 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
     fetchSettings();
   }, []);
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = async (updatedBranches = familyBranches) => {
     setSavingSettings(true);
     try {
       const password = getAdminPassword() || '';
-      const payload = { adminUploadService, userUploadService };
+      const payload = { 
+        adminUploadService, 
+        userUploadService, 
+        familyBranches: updatedBranches 
+      };
 
       const saveUrl = getSaveSettingsUrl();
       const res = await fetch(saveUrl, {
@@ -118,12 +134,81 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
         throw new Error(errBody.error || 'Failed to save settings');
       }
 
+      setFamilyBranches(updatedBranches);
       setToast({ type: 'success', message: 'Settings saved successfully!' });
     } catch (err) {
       setToast({ type: 'error', message: err.message || 'Error saving settings' });
     } finally {
       setSavingSettings(false);
     }
+  };
+
+  const personOptions = useMemo(() => {
+    return [...profiles]
+      .sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''))
+      .map(p => ({
+        value: p.pid,
+        label: `${p.firstName} ${p.surName} (${p.pid})`
+      }));
+  }, [profiles]);
+
+  const handleAddBranch = async (e) => {
+    e.preventDefault();
+    const key = newBranchKey.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
+    if (!key) {
+      alert("Please enter a valid branch key (Letters and numbers only).");
+      return;
+    }
+    if (familyBranches[key]) {
+      alert(`Branch with key "${key}" already exists.`);
+      return;
+    }
+    if (!newBranchName.trim()) {
+      alert("Please enter a branch display name.");
+      return;
+    }
+    if (!newBranchRoot) {
+      alert("Please select a starting root profile.");
+      return;
+    }
+    if (!newBranchPwd.trim()) {
+      alert("Please enter an access password for this branch.");
+      return;
+    }
+
+    setSavingSettings(true);
+    try {
+      const hash = await sha256(newBranchPwd.trim());
+      const updated = {
+        ...familyBranches,
+        [key]: {
+          name: newBranchName.trim(),
+          passwordHash: hash,
+          rootPid: newBranchRoot
+        }
+      };
+
+      await handleSaveSettings(updated);
+
+      // Reset inputs
+      setNewBranchKey('');
+      setNewBranchName('');
+      setNewBranchRoot('');
+      setNewBranchPwd('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleDeleteBranch = async (key) => {
+    if (!window.confirm(`Are you sure you want to delete the branch "${key}"?`)) {
+      return;
+    }
+    const updated = { ...familyBranches };
+    delete updated[key];
+    await handleSaveSettings(updated);
   };
 
   const handleRunBulkScan = () => {
@@ -849,131 +934,19 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
         >
           <Upload size={18} /> Backup / Restore
         </button>
+        <button 
+          className={`settings-tab-btn ${activeTab === 'passwords' ? 'active' : ''}`}
+          onClick={() => setActiveTab('passwords')}
+        >
+          <Lock size={18} /> Passwords
+        </button>
       </div>
 
       {/* Settings Content Panels */}
       <div>
-        {/* TAB 1: General Settings (SHA-256 Hash Generator) */}
+        {/* TAB 1: General Settings */}
         {activeTab === 'general' && (
           <div>
-            {/* SHA-256 Hash Generator Card */}
-            <div style={{
-              backgroundColor: '#FAF8F5',
-              border: '1px solid #EFE4DC',
-              borderRadius: '16px',
-              padding: '2rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-              marginBottom: '2rem'
-            }}>
-              <h4 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🔑 SHA-256 Hash Generator
-              </h4>
-              <p style={{ margin: '0 0 1.25rem', color: '#666', fontSize: '0.88rem', lineHeight: 1.45 }}>
-                Generate a secure SHA-256 hash for your passwords to use in configuration (`.env`) files.
-              </p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {/* Input password field */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4A3E39' }}>
-                    Enter Password to Hash:
-                  </label>
-                  <div style={{ position: 'relative', maxWidth: '500px' }}>
-                    <input 
-                      type={showHashPwd ? 'text' : 'password'}
-                      value={hashInput}
-                      onChange={(e) => setHashInput(e.target.value)}
-                      placeholder="Type password here..."
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 2.5rem 0.75rem 1rem',
-                        borderRadius: '10px',
-                        border: '1.5px solid #EFE4DC',
-                        backgroundColor: '#ffffff',
-                        fontSize: '0.95rem',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowHashPwd(v => !v)}
-                      style={{
-                        position: 'absolute',
-                        right: '0.75rem',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#888',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '4px'
-                      }}
-                    >
-                      {showHashPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Output hash field */}
-                {hashOutput && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', animation: 'fadeIn 0.2s ease' }}>
-                    <label style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4A3E39' }}>
-                      Generated SHA-256 Hash:
-                    </label>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', maxWidth: '500px' }}>
-                      <input 
-                        type="text"
-                        readOnly
-                        value={hashOutput}
-                        style={{
-                          flex: '1 1 300px',
-                          padding: '0.75rem 1rem',
-                          borderRadius: '10px',
-                          border: '1.5px solid #EFE4DC',
-                          backgroundColor: '#F9FAF6',
-                          color: '#444',
-                          fontFamily: 'monospace',
-                          fontSize: '0.85rem',
-                          outline: 'none',
-                          boxSizing: 'border-box'
-                        }}
-                        onClick={(e) => e.target.select()}
-                      />
-                      <button
-                        onClick={handleCopyHash}
-                        className={`btn ${hashCopied ? 'btn-secondary' : 'btn-primary'}`}
-                        style={{
-                          padding: '0.75rem 1.25rem',
-                          fontSize: '0.9rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          borderRadius: '10px',
-                          height: '42px',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {hashCopied ? (
-                          <>
-                            <Check size={16} />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={16} />
-                            Copy Hash
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Media Upload Configuration Card */}
             <div style={{
@@ -1475,6 +1448,319 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
               <p style={{ margin: 0, fontSize: '0.8rem', lineHeight: 1.4 }}>
                 Importing data overwrites current session state. However, changes are NOT saved permanently on the server until you click <strong>"Save to Server"</strong> in the topbar. Verify changes before saving.
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: Password Management */}
+        {activeTab === 'passwords' && (
+          <div>
+            <p style={{ color: '#555', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+              Manage passwords for different branch-wise family trees. Setting up branch passwords limits users logging in with those passwords to only view the sub-tree reachable from the specified root profile.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {/* Add New Branch Card */}
+              <div style={{
+                backgroundColor: '#FAF8F5',
+                border: '1px solid #EFE4DC',
+                borderRadius: '16px',
+                padding: '2rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+              }}>
+                <h4 style={{ margin: '0 0 1.25rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔑 Add New Family Branch
+                </h4>
+
+                <form onSubmit={handleAddBranch} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '600px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A3E39' }}>Branch Key (uppercase, no spaces):</label>
+                      <input 
+                        type="text"
+                        value={newBranchKey}
+                        onChange={(e) => setNewBranchKey(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''))}
+                        placeholder="e.g. DHARMAVARAM"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          borderRadius: '10px',
+                          border: '1.5px solid #EFE4DC',
+                          fontSize: '0.95rem',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A3E39' }}>Display Name:</label>
+                      <input 
+                        type="text"
+                        value={newBranchName}
+                        onChange={(e) => setNewBranchName(e.target.value)}
+                        placeholder="e.g. Dharmavaram Family"
+                        style={{
+                          padding: '0.75rem 1rem',
+                          borderRadius: '10px',
+                          border: '1.5px solid #EFE4DC',
+                          fontSize: '0.95rem',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A3E39' }}>Root Member:</label>
+                      <SearchableSelect
+                        options={personOptions}
+                        value={newBranchRoot}
+                        onChange={(e) => setNewBranchRoot(e.target.value)}
+                        placeholder="Search & Select Root Profile..."
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '0.88rem', fontWeight: 700, color: '#4A3E39' }}>Branch Access Password:</label>
+                      <div style={{ position: 'relative' }}>
+                        <input 
+                          type={showNewPwd ? 'text' : 'password'}
+                          value={newBranchPwd}
+                          onChange={(e) => setNewBranchPwd(e.target.value)}
+                          placeholder="Enter password"
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem 2.8rem 0.75rem 1rem',
+                            borderRadius: '10px',
+                            border: '1.5px solid #EFE4DC',
+                            fontSize: '0.95rem',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPwd(!showNewPwd)}
+                          style={{
+                            position: 'absolute', right: '12px', top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none', border: 'none', cursor: 'pointer', color: '#888',
+                            padding: 4
+                          }}
+                        >
+                          {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={savingSettings}
+                      className="btn btn-primary"
+                      style={{
+                        padding: '0.75rem 1.5rem',
+                        fontSize: '0.95rem',
+                        borderRadius: '10px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontWeight: 'bold',
+                        cursor: savingSettings ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      ➕ Create Branch
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Existing Branches List */}
+              <div style={{
+                backgroundColor: 'white',
+                border: '1px solid #EFE4DC',
+                borderRadius: '16px',
+                padding: '2rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+              }}>
+                <h4 style={{ margin: '0 0 1rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700 }}>
+                  📋 Existing Branches ({Object.keys(familyBranches).length})
+                </h4>
+
+                {Object.keys(familyBranches).length === 0 ? (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#888', fontSize: '0.95rem' }}>
+                    No branch passwords configured. The global family password unlocks the whole tree.
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="check-table">
+                      <thead>
+                        <tr>
+                          <th>Branch Key</th>
+                          <th>Display Name</th>
+                          <th>Root Member</th>
+                          <th>Password Hash</th>
+                          <th style={{ width: '100px', textAlign: 'center' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(familyBranches).map(([key, config]) => {
+                          const rawRootPid = config.rootPid;
+                          const rootPidStr = (rawRootPid && typeof rawRootPid === 'object') ? (rawRootPid.value || rawRootPid.target?.value || '') : (rawRootPid || '');
+                          const rootMember = profiles.find(p => p.pid === rootPidStr);
+                          const rootName = rootMember ? `${rootMember.firstName} ${rootMember.surName} (${rootPidStr})` : rootPidStr;
+                          
+                          return (
+                            <tr key={key}>
+                              <td style={{ fontWeight: 700, color: 'var(--color-maroon, #63131D)' }}>{key}</td>
+                              <td style={{ fontWeight: 'bold' }}>{config.name}</td>
+                              <td>{rootName}</td>
+                              <td style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#777' }}>
+                                {config.passwordHash ? `${config.passwordHash.substring(0, 10)}...` : 'None'}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button 
+                                  className="btn btn-secondary btn-sm"
+                                  onClick={() => handleDeleteBranch(key)}
+                                  disabled={savingSettings}
+                                  style={{
+                                    backgroundColor: '#FDEDEC',
+                                    color: '#C0392B',
+                                    border: '1px solid #FADBD8'
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* SHA-256 Hash Generator Card */}
+              <div style={{
+                backgroundColor: '#FAF8F5',
+                border: '1px solid #EFE4DC',
+                borderRadius: '16px',
+                padding: '2rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+              }}>
+                <h4 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔑 SHA-256 Hash Generator
+                </h4>
+                <p style={{ margin: '0 0 1.25rem', color: '#666', fontSize: '0.88rem', lineHeight: 1.45 }}>
+                  Generate a secure SHA-256 hash for your passwords to use in configuration (`.env`) files.
+                </p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* Input password field */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4A3E39' }}>
+                      Enter Password to Hash:
+                    </label>
+                    <div style={{ position: 'relative', maxWidth: '500px' }}>
+                      <input 
+                        type={showHashPwd ? 'text' : 'password'}
+                        value={hashInput}
+                        onChange={(e) => setHashInput(e.target.value)}
+                        placeholder="Type password here..."
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem 2.5rem 0.75rem 1rem',
+                          borderRadius: '10px',
+                          border: '1.5px solid #EFE4DC',
+                          backgroundColor: '#ffffff',
+                          fontSize: '0.95rem',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowHashPwd(v => !v)}
+                        style={{
+                          position: 'absolute',
+                          right: '0.75rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#888',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '4px'
+                        }}
+                      >
+                        {showHashPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Output hash field */}
+                  {hashOutput && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', animation: 'fadeIn 0.2s ease' }}>
+                      <label style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4A3E39' }}>
+                        Generated SHA-256 Hash:
+                      </label>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', maxWidth: '500px' }}>
+                        <input 
+                          type="text"
+                          readOnly
+                          value={hashOutput}
+                          style={{
+                            flex: '1 1 300px',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '10px',
+                            border: '1.5px solid #EFE4DC',
+                            backgroundColor: '#F9FAF6',
+                            color: '#444',
+                            fontFamily: 'monospace',
+                            fontSize: '0.85rem',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                          onClick={(e) => e.target.select()}
+                        />
+                        <button
+                          onClick={handleCopyHash}
+                          className={`btn ${hashCopied ? 'btn-secondary' : 'btn-primary'}`}
+                          style={{
+                            padding: '0.75rem 1.25rem',
+                            fontSize: '0.9rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            borderRadius: '10px',
+                            height: '42px',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {hashCopied ? (
+                            <>
+                              <Check size={16} />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={16} />
+                              Copy Hash
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

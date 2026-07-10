@@ -245,40 +245,55 @@ const Home = ({ profiles, deferredPrompt, setDeferredPrompt, activeBranchId, onL
         </div>
       </div>
 
-      {/* Hard Refresh Button at the bottom of the page */}
-      <button
-        onClick={handleHardRefresh}
-        style={{
-          marginTop: '2.5rem',
-          background: 'none',
-          border: '1px solid var(--color-sandalwood, #EADDCA)',
-          color: '#8C6A53',
-          padding: '0.55rem 1.25rem',
-          borderRadius: '20px',
-          fontSize: '0.8rem',
-          fontWeight: 600,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          transition: 'all 0.25s ease',
-          backgroundColor: '#fff',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.backgroundColor = 'var(--color-light)';
-          e.currentTarget.style.color = 'var(--color-maroon)';
-          e.currentTarget.style.borderColor = 'var(--color-gold)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.backgroundColor = '#fff';
-          e.currentTarget.style.color = '#8C6A53';
-          e.currentTarget.style.borderColor = 'var(--color-sandalwood)';
-        }}
-      >
-        <RefreshCw size={12} />
-        {t('home.sync_btn')}
-      </button>
+      {/* Hard Refresh Button & App Version at the bottom of the page */}
+      <div style={{
+        marginTop: '2.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.5rem'
+      }}>
+        <button
+          onClick={handleHardRefresh}
+          style={{
+            background: 'none',
+            border: '1px solid var(--color-sandalwood, #EADDCA)',
+            color: '#8C6A53',
+            padding: '0.55rem 1.25rem',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.25s ease',
+            backgroundColor: '#fff',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.backgroundColor = 'var(--color-light)';
+            e.currentTarget.style.color = 'var(--color-maroon)';
+            e.currentTarget.style.borderColor = 'var(--color-gold)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.backgroundColor = '#fff';
+            e.currentTarget.style.color = '#8C6A53';
+            e.currentTarget.style.borderColor = 'var(--color-sandalwood)';
+          }}
+        >
+          <RefreshCw size={12} />
+          {t('home.sync_btn')}
+        </button>
+        <span style={{
+          fontSize: '0.72rem',
+          color: '#A89080',
+          fontWeight: 500,
+          letterSpacing: '0.5px'
+        }}>
+          v{import.meta.env.VITE_APP_VERSION || '1.3.0'}
+        </span>
+      </div>
     </div>
   );
 };

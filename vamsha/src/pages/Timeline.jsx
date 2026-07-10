@@ -8,6 +8,17 @@ const Timeline = ({ profiles, setFocusedPid }) => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
 
+  const homePid = localStorage.getItem('vamsha_home_pid') || '';
+  const [timelineGenLimit, setTimelineGenLimit] = useState(() => {
+    return parseInt(localStorage.getItem('vamsha_timeline_gen_limit') || '6', 10);
+  });
+
+  const handleTimelineGenLimitChange = (e) => {
+    const limit = parseInt(e.target.value, 10);
+    setTimelineGenLimit(limit);
+    localStorage.setItem('vamsha_timeline_gen_limit', limit);
+  };
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [eventType, setEventType] = useState('all'); // 'all', 'birth', 'death'
@@ -28,9 +39,67 @@ const Timeline = ({ profiles, setFocusedPid }) => {
 
   // Compile and sort all timeline events
   const allEvents = useMemo(() => {
+    // Helper to calculate close family circle within N generations using BFS
+    const getPeopleWithinGenerations = (startPid, maxGenerations) => {
+      if (!startPid) return null;
+      const result = new Set();
+      const queue = [{ pid: startPid, depth: 0 }];
+      const visited = {}; // pid -> min depth
+
+      while (queue.length > 0) {
+        const { pid, depth } = queue.shift();
+
+        if (visited[pid] !== undefined && visited[pid] <= depth) {
+          continue;
+        }
+        visited[pid] = depth;
+        result.add(pid);
+
+        const person = profiles.find(p => p.pid === pid);
+        if (!person) continue;
+
+        // 1. Spouses (same generation, depth does not change)
+        if (person.spouseIds) {
+          person.spouseIds.forEach(spId => {
+            if (visited[spId] === undefined || visited[spId] > depth) {
+              queue.push({ pid: spId, depth });
+            }
+          });
+        }
+
+        // 2. Parents (depth increases by 1)
+        if (depth + 1 <= maxGenerations) {
+          if (person.fatherId) {
+            if (visited[person.fatherId] === undefined || visited[person.fatherId] > depth + 1) {
+              queue.push({ pid: person.fatherId, depth: depth + 1 });
+            }
+          }
+          if (person.motherId) {
+            if (visited[person.motherId] === undefined || visited[person.motherId] > depth + 1) {
+              queue.push({ pid: person.motherId, depth: depth + 1 });
+            }
+          }
+        }
+
+        // 3. Children (depth increases by 1)
+        if (depth + 1 <= maxGenerations) {
+          const children = profiles.filter(c => c.fatherId === pid || c.motherId === pid);
+          children.forEach(c => {
+            if (visited[c.pid] === undefined || visited[c.pid] > depth + 1) {
+              queue.push({ pid: c.pid, depth: depth + 1 });
+            }
+          });
+        }
+      }
+
+      return result;
+    };
+
+    const allowedPids = getPeopleWithinGenerations(homePid, timelineGenLimit);
     const events = [];
 
     profiles.forEach(p => {
+      if (allowedPids && !allowedPids.has(p.pid)) return;
       // 1. Birth Event
       if (p.dob) {
         const dB = parseDate(p.dob);
@@ -80,7 +149,7 @@ const Timeline = ({ profiles, setFocusedPid }) => {
 
     // Sort chronologically (oldest first by default)
     return events.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-  }, [profiles, language]);
+  }, [profiles, language, homePid, timelineGenLimit]);
 
   // Extract decades dynamically
   const decades = useMemo(() => {
@@ -175,6 +244,35 @@ const Timeline = ({ profiles, setFocusedPid }) => {
                   backgroundColor: 'white'
                 }}
               />
+            </div>
+
+            {/* Generation Limit Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
+              <label htmlFor="timeline-gen-select" style={{ fontWeight: 700, color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                📖 {t('settings.generation_limit')}:
+              </label>
+              <select
+                id="timeline-gen-select"
+                value={timelineGenLimit}
+                onChange={handleTimelineGenLimitChange}
+                style={{
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '20px',
+                  border: '1px solid #EFE4DC',
+                  backgroundColor: '#FAF9F6',
+                  color: '#333',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(num => (
+                  <option key={num} value={num}>
+                    {t('settings.birthday_gen_option', { num })}
+                  </option>
+                ))}
+              </select>
             </div>
             
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -273,11 +371,28 @@ const Timeline = ({ profiles, setFocusedPid }) => {
                 left: 50%;
                 transform: translateX(-50%);
               }
+              .timeline-item-wrapper.timeline-left {
+                flex-direction: row !important;
+                justify-content: flex-start !important;
+                padding-left: 0 !important;
+              }
+              .timeline-item-wrapper.timeline-right {
+                flex-direction: row !important;
+                justify-content: flex-end !important;
+                padding-left: 0 !important;
+              }
+              .timeline-card-container {
+                width: 45%;
+              }
+              .timeline-bullet {
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+              }
             }
           `}</style>
 
           {filteredEvents.map((evt, idx) => {
-            const isEven = idx % 2 === 0;
+            const isLeft = evt.type === 'birth';
             const p = evt.person;
             const avatarUrl = p.photoUrl
               ? p.photoUrl
@@ -286,7 +401,7 @@ const Timeline = ({ profiles, setFocusedPid }) => {
             return (
               <div 
                 key={evt.id} 
-                className="timeline-item-wrapper" 
+                className={`timeline-item-wrapper ${isLeft ? 'timeline-left' : 'timeline-right'}`} 
                 style={{
                   position: 'relative',
                   marginBottom: '2.5rem',
@@ -295,18 +410,6 @@ const Timeline = ({ profiles, setFocusedPid }) => {
                   paddingLeft: '45px'
                 }}
               >
-                <style>{`
-                  @media (min-width: 768px) {
-                    .timeline-item-wrapper {
-                      flex-direction: row !important;
-                      justify-content: ${isEven ? 'flex-start' : 'flex-end'} !important;
-                      padding-left: 0 !important;
-                    }
-                    .timeline-card-container {
-                      width: 45%;
-                    }
-                  }
-                `}</style>
 
                 {/* Timeline center bullet */}
                 <div 
@@ -324,14 +427,6 @@ const Timeline = ({ profiles, setFocusedPid }) => {
                     zIndex: 3
                   }}
                 >
-                  <style>{`
-                    @media (min-width: 768px) {
-                      .timeline-bullet {
-                        left: 50% !important;
-                        transform: translateX(-50%) !important;
-                      }
-                    }
-                  `}</style>
                 </div>
 
                 {/* Card Container */}

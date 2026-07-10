@@ -86,3 +86,39 @@ git pull <రిమోట్_పేరు> main
 ### 2. `fatal: refusing to merge unrelated histories` ఎర్రర్ వస్తే:
 * **కారణం:** రెండు రిపోజిటరీల హిస్టరీ వేరువేరుగా ఉన్నప్పుడు వాటిని కలపడానికి గిట్ ఒప్పుకోదు.
 * **పరిష్కారం:** మీరు గిట్‌హబ్ లోలోని మార్పులను కూడా ఉంచి లోకల్ కోడ్‌తో కలపాలనుకుంటే: `git pull <రిమోట్_పేరు> main --allow-unrelated-histories`
+
+
+MITRAMAA, same code ni nenu vaiswanara/hunusur ki push cheyalante ye ye commands vaadaali. 
+
+కొత్త రిమోట్ జోడించడానికి: టర్మినల్ లో ఈ కింది కమాండ్ రన్ చేయండి (ఇక్కడ hunusur అనేది మనం పెట్టుకున్న రిమోట్ పేరు):
+
+bash
+git remote add hunusur https://github.com/vaiswanara/hunusur.git
+
+కోడ్ పుష్ చేయడానికి:
+
+bash
+git push -u hunusur main
+
+(భవిష్యత్తులో vamsha కి పుష్ చేయడానికి git push origin main అని, hunusur కి పుష్ చేయడానికి git push hunusur main అని వాడవచ్చు).
+
+మార్గం 2: ఉన్న రిమోట్ లింక్‌ను మార్చడం
+మీరు ఇకపై vamsha రిపోజిటరీని వాడకూడదని, కేవలం hunusur కి మాత్రమే కోడ్ పుష్ చేయాలని అనుకుంటే ఈ పద్ధతి వాడండి.
+
+ప్రస్తుత origin యొక్క లింక్‌ను మార్చడానికి:
+
+bash
+git remote set-url origin https://github.com/vaiswanara/hunusur.git
+
+కోడ్ పుష్ చేయడానికి:
+
+bash
+git push -u origin main
+⚠️ ముఖ్య గమనిక (Force Push):
+
+ఒకవేళ vaiswanara/hunusur రిపోజిటరీ ఖాళీగా లేకుండా, అందులో ఇప్పటికే పాత కోడ్ లేదా వేరే ఫైళ్లు ఉంటే.. పుష్ చేసేటప్పుడు గిట్ తిరస్కరించవచ్చు (reject చేయవచ్చు).
+
+అలాంటప్పుడు, అక్కడ ఉన్న కోడ్‌ను ఓవర్‌రైట్ చేస్తూ ఫోర్స్ పుష్ చేయడానికి కమాండ్ చివరన --force జోడించాలి:
+
+మార్గం 1 కోసం: git push -u hunusur main --force
+మార్గం 2 కోసం: git push -u origin main --force

@@ -82,6 +82,7 @@
     "safety_bullet4": "You can remove it anytime by deleting the icon.",
     "safety_footer": "Your phone security and privacy remain completely safe.",
     "birthday_gen_limit": "Birthday Generation Limit",
+    "generation_limit": "Generation Limit",
     "birthday_gen_desc": "Limit the birthday list to family members within a certain number of generations from the Main Profile.",
     "birthday_gen_option": "{num} Generations",
     "hash_gen_title": "SHA-256 Hash Generator",

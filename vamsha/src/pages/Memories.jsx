@@ -10,6 +10,17 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline, setFocusedP
   const location = useLocation();
   const navigate = useNavigate();
 
+  const homePid = localStorage.getItem('vamsha_home_pid') || '';
+  const [memoriesGenLimit, setMemoriesGenLimit] = useState(() => {
+    return parseInt(localStorage.getItem('vamsha_memories_gen_limit') || '6', 10);
+  });
+
+  const handleMemoriesGenLimitChange = (e) => {
+    const limit = parseInt(e.target.value, 10);
+    setMemoriesGenLimit(limit);
+    localStorage.setItem('vamsha_memories_gen_limit', limit);
+  };
+
   // Filter and view states
   const [filterPid, setFilterPid] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'gallery'
@@ -69,8 +80,67 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline, setFocusedP
 
   // Flatten and sort memories
   const allMemories = useMemo(() => {
+    // Helper to calculate close family circle within N generations using BFS
+    const getPeopleWithinGenerations = (startPid, maxGenerations) => {
+      if (!startPid) return null;
+      const result = new Set();
+      const queue = [{ pid: startPid, depth: 0 }];
+      const visited = {}; // pid -> min depth
+
+      while (queue.length > 0) {
+        const { pid, depth } = queue.shift();
+
+        if (visited[pid] !== undefined && visited[pid] <= depth) {
+          continue;
+        }
+        visited[pid] = depth;
+        result.add(pid);
+
+        const person = profiles.find(p => p.pid === pid);
+        if (!person) continue;
+
+        // 1. Spouses (same generation, depth does not change)
+        if (person.spouseIds) {
+          person.spouseIds.forEach(spId => {
+            if (visited[spId] === undefined || visited[spId] > depth) {
+              queue.push({ pid: spId, depth });
+            }
+          });
+        }
+
+        // 2. Parents (depth increases by 1)
+        if (depth + 1 <= maxGenerations) {
+          if (person.fatherId) {
+            if (visited[person.fatherId] === undefined || visited[person.fatherId] > depth + 1) {
+              queue.push({ pid: person.fatherId, depth: depth + 1 });
+            }
+          }
+          if (person.motherId) {
+            if (visited[person.motherId] === undefined || visited[person.motherId] > depth + 1) {
+              queue.push({ pid: person.motherId, depth: depth + 1 });
+            }
+          }
+        }
+
+        // 3. Children (depth increases by 1)
+        if (depth + 1 <= maxGenerations) {
+          const children = profiles.filter(c => c.fatherId === pid || c.motherId === pid);
+          children.forEach(c => {
+            if (visited[c.pid] === undefined || visited[c.pid] > depth + 1) {
+              queue.push({ pid: c.pid, depth: depth + 1 });
+            }
+          });
+        }
+      }
+
+      return result;
+    };
+
+    const allowedPids = getPeopleWithinGenerations(homePid, memoriesGenLimit);
+
     const list = [];
     profiles.forEach(p => {
+      if (allowedPids && !allowedPids.has(p.pid)) return;
       if (p.memories && Array.isArray(p.memories)) {
         p.memories.forEach(m => {
           list.push({
@@ -87,7 +157,7 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline, setFocusedP
       if (dateCompare !== 0) return dateCompare;
       return b.id.localeCompare(a.id);
     });
-  }, [profiles]);
+  }, [profiles, homePid, memoriesGenLimit]);
 
   // Filtered memories list
   const filteredMemories = useMemo(() => {
@@ -350,6 +420,35 @@ const Memories = ({ profiles, setProfiles, setSavedProfilesBaseline, setFocusedP
               placeholder={t('memories.filter_placeholder')}
             />
           </div>
+        </div>
+
+        {/* Generation Limit Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
+          <label htmlFor="memories-gen-select" style={{ fontWeight: 700, color: 'var(--color-maroon)', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+            📖 {t('settings.generation_limit')}:
+          </label>
+          <select
+            id="memories-gen-select"
+            value={memoriesGenLimit}
+            onChange={handleMemoriesGenLimitChange}
+            style={{
+              padding: '0.35rem 0.75rem',
+              borderRadius: '20px',
+              border: '1px solid #EFE4DC',
+              backgroundColor: '#FAF9F6',
+              color: '#333',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(num => (
+              <option key={num} value={num}>
+                {t('settings.birthday_gen_option', { num })}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* View Mode Toggle */}

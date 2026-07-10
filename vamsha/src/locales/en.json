@@ -94,6 +94,7 @@
     "hash_gen_copied": "Copied to clipboard!"
   },
   "tree": {
+    "search_placeholder": "Select Profile...",
     "no_data": "No Data Available",
     "parents": "Parents",
     "siblings": "Siblings",

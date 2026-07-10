@@ -156,7 +156,10 @@ const SearchableSelect = ({ options, value, onChange, placeholder = '-- Select -
                     backgroundColor: option.value === value ? '#F2E6E6' : 'transparent',
                     color: option.value === value ? 'var(--color-maroon, #63131D)' : '#333',
                     fontWeight: option.value === value ? '600' : 'normal',
-                    transition: 'background-color 0.15s'
+                    transition: 'background-color 0.15s',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'normal',
+                    overflowWrap: 'anywhere'
                   }}
                   onMouseEnter={e => {
                     if (option.value !== value) e.target.style.backgroundColor = '#f5f5f5';

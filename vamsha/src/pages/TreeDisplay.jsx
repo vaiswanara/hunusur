@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Info, Home, UserCheck } from 'lucide-react';
+import { Info, Home, UserCheck, Search, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import initialData from '../data.json';
 import Sidebar from '../components/Sidebar';
+import SearchableSelect from '../components/SearchableSelect';
 import { useLanguage } from '../context/LanguageContext';
 
 
@@ -89,6 +90,17 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
   const treeRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingMode, setIsExportingMode] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  const searchOptions = useMemo(() => {
+    return profiles.map(p => {
+      const displayName = `${p.isDeceased ? t('sidebar.late') + ' ' : ''}${p.surName ? p.surName + ' ' : ''}${p.firstName}`;
+      return {
+        value: p.pid,
+        label: `${displayName} (${p.pid})`
+      };
+    }).sort((a, b) => a.label.localeCompare(b.label));
+  }, [profiles, t]);
 
   const handleExportPNG = async () => {
     if (!treeRef.current) return;
@@ -275,7 +287,7 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
       <style>{`
         @media print {
           /* Hide non-tree elements completely */
-          header, .app-header, .mobile-bottom-nav, .tree-export-bar, .info-badge, .deceased-diya-badge {
+          header, .app-header, .mobile-bottom-nav, .tree-export-bar, .info-badge, .deceased-diya-badge, .tree-search-container {
             display: none !important;
           }
           body {
@@ -322,7 +334,105 @@ const TreeDisplay = ({ profiles: profilesProp, focusedPid, setFocusedPid, sideba
         }
       `}</style>
 
-      <div className={`tree-layout-wrapper ${isExportingMode ? 'is-exporting-view' : ''}`} ref={treeRef} style={{ padding: '2rem 1.5rem', backgroundColor: '#FAF8F5', borderRadius: '16px', border: '1px solid var(--color-sandalwood)', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+      {/* Floating/Responsive Search Container */}
+      <div 
+        className="tree-search-container" 
+        style={!showSearch ? {
+          position: 'absolute',
+          top: '0px',
+          right: '0px',
+          zIndex: 100,
+          display: 'flex',
+          alignItems: 'center',
+          boxSizing: 'border-box'
+        } : {
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          paddingTop: '5px', // sits below safe area
+          marginBottom: '5px', // half-line gap to the card section
+          boxSizing: 'border-box'
+        }}
+      >
+        {!showSearch ? (
+          <button
+            onClick={() => setShowSearch(true)}
+            style={{
+              background: '#79665B',
+              border: 'none',
+              color: '#ffffff',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(121, 102, 91, 0.3)',
+              transition: 'all 0.25s ease',
+              padding: '0px'
+            }}
+            onMouseEnter={(e) => { 
+              e.currentTarget.style.transform = 'scale(1.1)'; 
+              e.currentTarget.style.boxShadow = '0 4px 10px rgba(121, 102, 91, 0.45)';
+            }}
+            onMouseLeave={(e) => { 
+              e.currentTarget.style.transform = 'scale(1.0)'; 
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(121, 102, 91, 0.3)';
+            }}
+            title="Search Family Member"
+          >
+            <Search size={16} />
+          </button>
+        ) : (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px', 
+            background: 'white', 
+            padding: '6px 14px', 
+            borderRadius: '8px', 
+            border: '1.5px solid var(--color-sandalwood, #EADDCA)', 
+            boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+            width: '100%',
+            boxSizing: 'border-box'
+          }}>
+            <Search size={20} style={{ color: 'var(--color-maroon, #63131D)', flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <SearchableSelect
+                options={searchOptions}
+                value={focusedPid}
+                onChange={(e) => {
+                  setFocusedPid(e.target.value);
+                }}
+                placeholder={t('tree.search_placeholder')}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <button
+              onClick={() => setShowSearch(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#888',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '4px',
+                flexShrink: 0,
+                transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#333'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; }}
+            >
+              <X size={22} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className={`tree-layout-wrapper ${isExportingMode ? 'is-exporting-view' : ''}`} ref={treeRef}>
 
         {/* Dynamic Title for Print/Export */}
         <div 

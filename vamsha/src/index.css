@@ -673,11 +673,12 @@ body {
 
   /* Tree layout responsive adjustments */
   .tree-layout-wrapper {
-    padding: 1rem 0.5rem;
+    padding: 1rem 0;
+    width: 100%;
   }
 
   .tree-card {
-    padding: 1rem;
+    padding: 1rem 0.5rem;
     border-radius: 12px;
   }
 

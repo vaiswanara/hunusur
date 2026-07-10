@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
 import { 
   Users, BarChart2, Calendar, FileText, GitBranch, ArrowRight, Printer, Heart, AlertTriangle, ChevronDown, ChevronRight
 } from 'lucide-react';
@@ -13,12 +14,62 @@ import { useNavigate } from 'react-router-dom';
 const Reports = ({ profiles, setFocusedPid }) => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
+
+  // Helper to find max ancestor depth
+  const getMaxAncestorGenerations = (pid) => {
+    let maxDepth = 0;
+    const traverse = (currentPid, depth) => {
+      const p = getPerson(profiles, currentPid);
+      if (!p) return;
+      maxDepth = Math.max(maxDepth, depth);
+      if (p.fatherId) traverse(p.fatherId, depth + 1);
+      if (p.motherId) traverse(p.motherId, depth + 1);
+    };
+    traverse(pid, 0);
+    return maxDepth;
+  };
+
+  // Helper to find max descendant depth
+  const getMaxDescendantGenerations = (pid) => {
+    let maxDepth = 0;
+    const traverse = (currentPid, depth) => {
+      maxDepth = Math.max(maxDepth, depth);
+      const children = getChildrenIds(profiles, currentPid);
+      children.forEach(childId => {
+        traverse(childId, depth + 1);
+      });
+    };
+    traverse(pid, 0);
+    return maxDepth;
+  };
   
   // State for lineage reports
-  const [primaryPid, setPrimaryPid] = useState('');
+  const [primaryPid, setPrimaryPid] = useState(() => {
+    const savedHomePid = localStorage.getItem('vamsha_home_pid');
+    return (savedHomePid && profiles.some(p => p.pid === savedHomePid)) ? savedHomePid : '';
+  });
   const [secondaryPid, setSecondaryPid] = useState('');
   const [selectedReport, setSelectedReport] = useState(''); // 'close-family', 'relationship-diagram', 'ancestors', 'descendants', 'full-descendants', 'full-descendants-diagram'
   const [showRelDiagramSecondary, setShowRelDiagramSecondary] = useState(false);
+
+  const [genLimit, setGenLimit] = useState(15);
+
+  const maxGenerations = useMemo(() => {
+    if (!primaryPid) return 0;
+    if (selectedReport === 'ancestors') {
+      return getMaxAncestorGenerations(primaryPid);
+    }
+    if (['descendants', 'full-descendants', 'full-descendants-diagram'].includes(selectedReport)) {
+      return getMaxDescendantGenerations(primaryPid);
+    }
+    return 0;
+  }, [primaryPid, selectedReport, profiles]);
+
+  useEffect(() => {
+    if (maxGenerations > 0) {
+      setGenLimit(maxGenerations);
+    }
+  }, [maxGenerations]);
 
   // -------------------------------------------------------------
   // CONTROLS & RENDER OPTIONS: LINEAGE REPORTS TAB
@@ -37,6 +88,71 @@ const Reports = ({ profiles, setFocusedPid }) => {
     setPrimaryPid(e.target.value);
     // Reset selected report output when primary person changes
     setSelectedReport('');
+  };
+
+  const diagramRef = useRef(null);
+  const [posterScale, setPosterScale] = useState(3);
+  const [isExportingPoster, setIsExportingPoster] = useState(false);
+
+  const exportPoster = async () => {
+    if (!diagramRef.current) return;
+    setIsExportingPoster(true);
+
+    const el = diagramRef.current;
+    const originalStyle = el.style.cssText;
+
+    try {
+      // Find the scroll width & height of the tree element
+      const scrollWidth = el.scrollWidth;
+      const scrollHeight = el.scrollHeight;
+
+      // Calculate safe scale factor to prevent browser canvas limit crash (0KB file)
+      const maxSafeDimension = 12000;
+      const largestDim = Math.max(scrollWidth, scrollHeight);
+      let safeScale = posterScale;
+      if (largestDim * safeScale > maxSafeDimension) {
+        const proposedScale = safeScale;
+        safeScale = Math.max(1, maxSafeDimension / largestDim);
+        alert(`The family tree is very large! The resolution has been automatically optimized from ${proposedScale}x to ${safeScale.toFixed(1)}x to fit browser memory limits and prevent a blank image.`);
+      }
+
+      // Temporarily expand the element styles to its full contents
+      el.style.width = `${scrollWidth}px`;
+      el.style.maxWidth = 'none';
+      el.style.height = `${scrollHeight}px`;
+      el.style.overflow = 'visible';
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const canvas = await html2canvas(el, {
+        useCORS: true,
+        scale: safeScale,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: scrollWidth,
+        height: scrollHeight,
+        windowWidth: scrollWidth,
+        windowHeight: scrollHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const link = document.createElement('a');
+      const person = getPerson(profiles, primaryPid);
+      const personName = person ? person.firstName : 'descendants';
+      link.download = `vamsha_descendants_poster_${personName}_${safeScale.toFixed(1)}x.png`;
+      link.href = imgData;
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert('Error exporting poster: ' + err.message);
+    } finally {
+      if (el) {
+        el.style.cssText = originalStyle;
+      }
+      setIsExportingPoster(false);
+    }
   };
 
   const handleSelectSecondary = (e) => {
@@ -91,14 +207,36 @@ const Reports = ({ profiles, setFocusedPid }) => {
     const spouses = (p.spouseIds || []).map(spid => getPerson(profiles, spid)).filter(Boolean);
 
     const renderPersonRow = (person, type) => {
+      if (!person) return null;
       const rel = findRelationship(profiles, centerId, person.pid, language);
+      const avatarUrl = person.photoUrl
+        ? person.photoUrl
+        : `${import.meta.env.BASE_URL}icons/${person.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
+
       return (
-        <div key={person.pid} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.6rem 1rem', borderBottom: '1px solid #eee', background: '#fff' }}>
-          <div>
-            <strong style={{ color: 'var(--color-dark)' }}>{person.firstName} {person.surName}</strong>
-            <span style={{ fontSize: '0.8rem', color: '#888', marginLeft: '0.5rem' }}>({person.pid})</span>
+        <div key={person.pid} className="report-row-item">
+          <div className="report-row-left">
+            <img 
+              src={avatarUrl} 
+              alt={person.firstName}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '1px solid #ddd',
+                flexShrink: 0
+              }}
+              onError={(e) => {
+                e.target.src = `${import.meta.env.BASE_URL}icons/${person.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <strong style={{ color: 'var(--color-dark)' }}>{person.isDeceased ? t('sidebar.late') + ' ' : ''}{person.firstName} {person.surName}</strong>
+              <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.1rem' }}>({person.pid})</span>
+            </div>
           </div>
-          <div style={{ color: '#E91E63', fontWeight: 600, fontSize: '0.9rem' }}>
+          <div className="report-row-right" style={{ color: '#E91E63', fontWeight: 600 }}>
             {rel}
           </div>
         </div>
@@ -109,7 +247,7 @@ const Reports = ({ profiles, setFocusedPid }) => {
       <div className="report-print-container" style={{ fontFamily: 'sans-serif', color: '#333' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon)' }}>Close Family Report</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Centered on: <strong>{p.firstName} {p.surName} ({p.pid})</strong></p>
+          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Centered on: <strong>{p.isDeceased ? t('sidebar.late') + ' ' : ''}{p.firstName} {p.surName} ({p.pid})</strong></p>
         </div>
 
         {/* Self */}
@@ -510,7 +648,7 @@ const Reports = ({ profiles, setFocusedPid }) => {
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon)' }}>Relationship Diagram</h3>
           <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>
-            <strong>{p1.firstName} {p1.surName}</strong> &nbsp;➡&nbsp; <strong>{p2.firstName} {p2.surName}</strong>
+            <strong>{p1.isDeceased ? t('sidebar.late') + ' ' : ''}{p1.firstName} {p1.surName}</strong> &nbsp;➡&nbsp; <strong>{p2.isDeceased ? t('sidebar.late') + ' ' : ''}{p2.firstName} {p2.surName}</strong>
           </p>
         </div>
 
@@ -727,14 +865,14 @@ const Reports = ({ profiles, setFocusedPid }) => {
       ancestorsByGen.push({ title: genTitle, items: genItems });
       currentGenIds = nextGenIds;
       genIndex++;
-      if (genIndex > 15) break; // safety
+      if (genIndex > genLimit) break;
     }
 
     return (
       <div>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon)' }}>Ancestors Report</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Ancestors of: <strong>{p.firstName} {p.surName} ({p.pid})</strong></p>
+          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Ancestors of: <strong>{p.isDeceased ? t('sidebar.late') + ' ' : ''}{p.firstName} {p.surName} ({p.pid})</strong></p>
         </div>
 
         {ancestorsByGen.length === 0 ? (
@@ -745,13 +883,30 @@ const Reports = ({ profiles, setFocusedPid }) => {
               <h4 style={{ background: '#f5f5f5', padding: '0.4rem 0.8rem', borderLeft: '4px solid var(--color-maroon)', margin: '1rem 0 0.5rem' }}>{gen.title}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', paddingLeft: '1rem' }}>
                 {gen.items.map(({ anc, role, relName }) => (
-                  <div key={anc.pid} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f1f1' }}>
-                    <div>
-                      <strong>{anc.firstName} {anc.surName}</strong>
-                      <span style={{ fontSize: '0.75rem', color: '#888', marginLeft: '0.5rem' }}>({anc.pid})</span>
+                  <div key={anc.pid} className="report-row-item" style={{ paddingLeft: 0, paddingRight: 0, borderBottom: '1px solid #f1f1f1', background: 'transparent' }}>
+                    <div className="report-row-left">
+                      <img 
+                        src={anc.photoUrl ? anc.photoUrl : `${import.meta.env.BASE_URL}icons/${anc.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`} 
+                        alt={anc.firstName}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '1px solid #ddd',
+                          flexShrink: 0
+                        }}
+                        onError={(e) => {
+                          e.target.src = `${import.meta.env.BASE_URL}icons/${anc.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
+                        }}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <strong style={{ color: 'var(--color-dark)' }}>{anc.isDeceased ? t('sidebar.late') + ' ' : ''}{anc.firstName} {anc.surName}</strong>
+                        <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.1rem' }}>({anc.pid})</span>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.88rem', color: '#666' }}>
-                      <span style={{ fontStyle: 'italic', marginRight: '0.5rem' }}>{role}</span>
+                    <div className="report-row-right">
+                      <span style={{ fontStyle: 'italic' }}>{role}</span>
                       <span style={{ color: '#E91E63', fontWeight: 600 }}>— {relName}</span>
                     </div>
                   </div>
@@ -805,14 +960,14 @@ const Reports = ({ profiles, setFocusedPid }) => {
       descendantsByGen.push({ title: genTitle, items: genItems });
       currentGenIds = nextGenIds;
       genIndex++;
-      if (genIndex > 15) break; // safety
+      if (genIndex > genLimit) break;
     }
 
     return (
       <div>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon)' }}>Descendants Report</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Descendants of: <strong>{p.firstName} {p.surName} ({p.pid})</strong></p>
+          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Descendants of: <strong>{p.isDeceased ? t('sidebar.late') + ' ' : ''}{p.firstName} {p.surName} ({p.pid})</strong></p>
         </div>
 
         {descendantsByGen.length === 0 ? (
@@ -823,13 +978,30 @@ const Reports = ({ profiles, setFocusedPid }) => {
               <h4 style={{ background: '#f5f5f5', padding: '0.4rem 0.8rem', borderLeft: '4px solid var(--color-maroon)', margin: '1rem 0 0.5rem' }}>{gen.title}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', paddingLeft: '1rem' }}>
                 {gen.items.map(({ desc, role, relName }) => (
-                  <div key={desc.pid} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid #f1f1f1' }}>
-                    <div>
-                      <strong>{desc.firstName} {desc.surName}</strong>
-                      <span style={{ fontSize: '0.75rem', color: '#888', marginLeft: '0.5rem' }}>({desc.pid})</span>
+                  <div key={desc.pid} className="report-row-item" style={{ paddingLeft: 0, paddingRight: 0, borderBottom: '1px solid #f1f1f1', background: 'transparent' }}>
+                    <div className="report-row-left">
+                      <img 
+                        src={desc.photoUrl ? desc.photoUrl : `${import.meta.env.BASE_URL}icons/${desc.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`} 
+                        alt={desc.firstName}
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '1px solid #ddd',
+                          flexShrink: 0
+                        }}
+                        onError={(e) => {
+                          e.target.src = `${import.meta.env.BASE_URL}icons/${desc.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
+                        }}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <strong style={{ color: 'var(--color-dark)' }}>{desc.isDeceased ? t('sidebar.late') + ' ' : ''}{desc.firstName} {desc.surName}</strong>
+                        <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.1rem' }}>({desc.pid})</span>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.88rem', color: '#666' }}>
-                      <span style={{ fontStyle: 'italic', marginRight: '0.5rem' }}>{role}</span>
+                    <div className="report-row-right">
+                      <span style={{ fontStyle: 'italic' }}>{role}</span>
                       <span style={{ color: '#E91E63', fontWeight: 600 }}>— {relName}</span>
                     </div>
                   </div>
@@ -887,14 +1059,14 @@ const Reports = ({ profiles, setFocusedPid }) => {
       descendantsByGen.push({ title: genTitle, items: genItems });
       currentGenIds = nextGenIds;
       genIndex++;
-      if (genIndex > 15) break; // safety
+      if (genIndex > genLimit) break;
     }
 
     return (
       <div>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon)' }}>Full Descendants List (with Spouses)</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>All descendants (with spouses) of: <strong>{p.firstName} {p.surName} ({p.pid})</strong></p>
+          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>All descendants (with spouses) of: <strong>{p.isDeceased ? t('sidebar.late') + ' ' : ''}{p.firstName} {p.surName} ({p.pid})</strong></p>
         </div>
 
         {descendantsByGen.length === 0 ? (
@@ -905,22 +1077,63 @@ const Reports = ({ profiles, setFocusedPid }) => {
               <h4 style={{ background: '#f5f5f5', padding: '0.4rem 0.8rem', borderLeft: '4px solid var(--color-maroon)', margin: '1rem 0 0.8rem' }}>{gen.title}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingLeft: '1rem' }}>
                 {gen.items.map(({ desc, relName, spouses }) => (
-                  <div key={desc.pid} style={{ borderBottom: '1px dashed #eee', paddingBottom: '0.8rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', marginBottom: '0.2rem' }}>
-                      <strong>{desc.firstName} {desc.surName} ({desc.pid})</strong>
-                      <span style={{ color: '#E91E63', fontWeight: 600 }}>{relName}</span>
+                  <div key={desc.pid} style={{ borderBottom: '1px dashed #eee', paddingBottom: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className="report-row-item" style={{ padding: 0, border: 'none', background: 'transparent' }}>
+                      <div className="report-row-left">
+                        <img 
+                          src={desc.photoUrl ? desc.photoUrl : `${import.meta.env.BASE_URL}icons/${desc.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`} 
+                          alt={desc.firstName}
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '1px solid #ddd',
+                            flexShrink: 0
+                          }}
+                          onError={(e) => {
+                            e.target.src = `${import.meta.env.BASE_URL}icons/${desc.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
+                          }}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <strong style={{ color: 'var(--color-dark)' }}>{desc.isDeceased ? t('sidebar.late') + ' ' : ''}{desc.firstName} {desc.surName}</strong>
+                          <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.1rem' }}>({desc.pid})</span>
+                        </div>
+                      </div>
+                      <span className="report-row-right" style={{ color: '#E91E63', fontWeight: 600 }}>{relName}</span>
                     </div>
+
+                    {/* Spouses */}
                     {spouses.length > 0 ? (
-                      <div style={{ paddingLeft: '1.5rem', color: '#666', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', marginTop: '0.2rem' }}>
+                      <div style={{ paddingLeft: '2.75rem', color: '#666', fontSize: '0.88rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         {spouses.map(spouse => (
-                          <div key={spouse.person.pid}>
-                            ❤️ Spouse: <strong>{spouse.person.firstName} {spouse.person.surName} ({spouse.person.pid})</strong>
+                          <div key={spouse.person.pid} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ flexShrink: 0 }}>❤️ Spouse:</span>
+                            <img 
+                              src={spouse.person.photoUrl ? spouse.person.photoUrl : `${import.meta.env.BASE_URL}icons/${spouse.person.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`} 
+                              alt={spouse.person.firstName}
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                border: '1px solid #eee',
+                                flexShrink: 0
+                              }}
+                              onError={(e) => {
+                                e.target.src = `${import.meta.env.BASE_URL}icons/${spouse.person.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
+                              }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <strong style={{ color: '#555', fontSize: '0.85rem' }}>{spouse.person.isDeceased ? t('sidebar.late') + ' ' : ''}{spouse.person.firstName} {spouse.person.surName}</strong>
+                              <span style={{ fontSize: '0.7rem', color: '#999' }}>({spouse.person.pid})</span>
+                            </div>
                             <span style={{ color: '#888', fontSize: '0.8rem', marginLeft: '0.5rem' }}>({spouse.relName})</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div style={{ paddingLeft: '1.5rem', color: '#999', fontSize: '0.8rem', fontStyle: 'italic' }}>no spouse info</div>
+                      <div style={{ paddingLeft: '2.75rem', color: '#999', fontSize: '0.8rem', fontStyle: 'italic' }}>no spouse info</div>
                     )}
                   </div>
                 ))}
@@ -938,63 +1151,131 @@ const Reports = ({ profiles, setFocusedPid }) => {
     if (!p) return null;
 
     // Recursive horizontal tree structure in React
-    const renderNodeInTree = (pid, depth = 0) => {
+    const renderNodeInTree = (pid, depth = 0, parentPid = null) => {
       const person = getPerson(profiles, pid);
       if (!person) return null;
 
-      const children = profiles
+      // Patrilineal lineage rules:
+      // 1. Gents (and the root person) render descendants and spouses.
+      // 2. Daughters (non-root females) do not render husbands or descendants (just displayed as a card node).
+      const isRoot = pid === centerId;
+      const isFemaleNonRoot = person.gender === 'Female' && !isRoot;
+
+      const shouldRenderChildren = !isFemaleNonRoot;
+
+      let children = profiles
         .filter(c => c.fatherId === pid || c.motherId === pid)
         .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-      const hasChildren = children.length > 0;
 
-      const relLabel = pid === centerId ? "ME" : findRelationship(profiles, centerId, pid, language);
-      
+      const hasChildren = children.length > 0 && shouldRenderChildren;
+
       const avatarUrl = person.photoUrl
         ? person.photoUrl
         : `${import.meta.env.BASE_URL}icons/${person.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
 
-      const spouses = (person.spouseIds || []).map(spid => getPerson(profiles, spid)).filter(Boolean);
+      const spouses = isFemaleNonRoot
+        ? []
+        : (person.spouseIds || []).map(spid => getPerson(profiles, spid)).filter(Boolean);
+
+      // Name resolution including "Late" prefix if deceased
+      const personName = `${person.isDeceased ? t('sidebar.late') + ' ' : ''}${person.firstName} ${person.surName}`;
+      const getSpouseName = (spouse) => `${spouse.isDeceased ? t('sidebar.late') + ' ' : ''}${spouse.firstName} ${spouse.surName}`;
+
+      // Determine parent arrow/label (if parent has multiple spouses)
+      const parentPerson = parentPid ? getPerson(profiles, parentPid) : null;
+      const hasMultipleSpouses = parentPerson && (parentPerson.spouseIds || []).length > 1;
+      let motherOrFatherLabel = null;
+      if (hasMultipleSpouses) {
+        const otherParentId = parentPerson.gender === 'Male' ? person.motherId : person.fatherId;
+        const otherParent = otherParentId ? getPerson(profiles, otherParentId) : null;
+        if (otherParent) {
+          motherOrFatherLabel = `↳ ${otherParent.firstName}`;
+        }
+      }
 
       return (
         <li key={pid}>
           <div className="tf-node-content">
             <div className="tf-card-row">
-              {/* Member card */}
-              <div className={`tf-node ${pid === centerId ? 'root' : ''}`}>
-                <div className={`tf-avatar ${person.gender === 'Male' ? 'male' : 'female'}`}>
-                  <img src={avatarUrl} alt={person.firstName} />
-                </div>
-                <div className="tf-name">{person.firstName} {person.surName}</div>
-                {relLabel && <div className="tf-rel">{relLabel}</div>}
-                <div className="tf-id">{person.pid}</div>
-              </div>
-
-              {/* Spouses */}
-              {spouses.map(spouse => {
-                const spouseRel = findRelationship(profiles, centerId, spouse.pid, language);
-                const spouseAvatar = spouse.photoUrl
-                  ? spouse.photoUrl
-                  : `${import.meta.env.BASE_URL}icons/${spouse.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
-                
-                return (
-                  <React.Fragment key={spouse.pid}>
-                    <div className="tf-connector">❤️</div>
-                    <div className="tf-node tf-spouse-node">
-                      <div className={`tf-avatar ${spouse.gender === 'Male' ? 'male' : 'female'}`}>
-                        <img src={spouseAvatar} alt={spouse.firstName} />
-                      </div>
-                      <div className="tf-name">{spouse.firstName} {spouse.surName}</div>
-                      {spouseRel && <div className="tf-rel">{spouseRel}</div>}
-                      <div className="tf-id">{spouse.pid}</div>
+              {spouses.length === 2 ? (
+                <>
+                  {/* Spouse 1 */}
+                  <div className="tf-node tf-spouse-node">
+                    <div className={`tf-avatar ${spouses[0].gender === 'Male' ? 'male' : 'female'}`}>
+                      <img 
+                        src={spouses[0].photoUrl ? spouses[0].photoUrl : `${import.meta.env.BASE_URL}icons/${spouses[0].gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`} 
+                        alt={spouses[0].firstName} 
+                      />
                     </div>
-                  </React.Fragment>
-                );
-              })}
+                    <div className="tf-name">{getSpouseName(spouses[0])}</div>
+                  </div>
+                  <div className="tf-connector">❤️</div>
+
+                  {/* Main member in the middle */}
+                  <div className={`tf-node ${pid === centerId ? 'root' : ''}`}>
+                    <div className={`tf-avatar ${person.gender === 'Male' ? 'male' : 'female'}`}>
+                      <img src={avatarUrl} alt={person.firstName} />
+                    </div>
+                    <div className="tf-name">{personName}</div>
+                    {motherOrFatherLabel && (
+                      <div className="tf-mother-label" style={{ fontSize: '8.5px', color: '#E91E63', marginTop: '2px', fontWeight: 'bold' }}>
+                        {motherOrFatherLabel}
+                      </div>
+                    )}
+                  </div>
+                  <div className="tf-connector">❤️</div>
+
+                  {/* Spouse 2 */}
+                  <div className="tf-node tf-spouse-node">
+                    <div className={`tf-avatar ${spouses[1].gender === 'Male' ? 'male' : 'female'}`}>
+                      <img 
+                        src={spouses[1].photoUrl ? spouses[1].photoUrl : `${import.meta.env.BASE_URL}icons/${spouses[1].gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`} 
+                        alt={spouses[1].firstName} 
+                      />
+                    </div>
+                    <div className="tf-name">{getSpouseName(spouses[1])}</div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Member card */}
+                  <div className={`tf-node ${pid === centerId ? 'root' : ''}`}>
+                    <div className={`tf-avatar ${person.gender === 'Male' ? 'male' : 'female'}`}>
+                      <img src={avatarUrl} alt={person.firstName} />
+                    </div>
+                    <div className="tf-name">{personName}</div>
+                    {motherOrFatherLabel && (
+                      <div className="tf-mother-label" style={{ fontSize: '8.5px', color: '#E91E63', marginTop: '2px', fontWeight: 'bold' }}>
+                        {motherOrFatherLabel}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Spouses */}
+                  {spouses.map(spouse => {
+                    const spouseAvatar = spouse.photoUrl
+                      ? spouse.photoUrl
+                      : `${import.meta.env.BASE_URL}icons/${spouse.gender === 'Male' ? 'male_icon.png' : 'female_icon.png'}`;
+                    
+                    return (
+                      <React.Fragment key={spouse.pid}>
+                        <div className="tf-connector">❤️</div>
+                        <div className="tf-node tf-spouse-node">
+                          <div className={`tf-avatar ${spouse.gender === 'Male' ? 'male' : 'female'}`}>
+                            <img src={spouseAvatar} alt={spouse.firstName} />
+                          </div>
+                          <div className="tf-name">{getSpouseName(spouse)}</div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </>
+              )}
             </div>
           </div>
-          {hasChildren && (
+          {hasChildren && depth < genLimit && (
             <ul>
-              {children.map(child => renderNodeInTree(child.pid, depth + 1))}
+              {children.map(child => renderNodeInTree(child.pid, depth + 1, pid))}
             </ul>
           )}
         </li>
@@ -1002,7 +1283,7 @@ const Reports = ({ profiles, setFocusedPid }) => {
     };
 
     return (
-      <div style={{ padding: '1rem', overflowX: 'auto', textAlign: 'center' }}>
+      <div ref={diagramRef} id="print-diagram-area" style={{ padding: '2rem 1.5rem', overflowX: 'auto', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '12px' }}>
         <style>{`
           .tf-tree { display: inline-block; min-width: 100%; text-align: center; }
           .tf-tree ul {
@@ -1033,21 +1314,25 @@ const Reports = ({ profiles, setFocusedPid }) => {
           .tf-node { display: flex; flex-direction: column; align-items: center; text-align: center; width: 110px; position: relative; }
           .tf-node.root { background: #fffde7; border-radius: 8px; padding: 2px; border: 1px solid #fbc02d; }
           
-          .tf-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ccc; background: #fff; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
-          .tf-avatar img { width: 100%; height: 100%; object-fit: cover; }
-          .tf-avatar.male { border-color: #7BAFF8; }
-          .tf-avatar.female { border-color: #F5A3B1; }
+          .tf-avatar { width: 50px; height: 50px; background: transparent; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+          .tf-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #ccc; }
+          .tf-avatar.male img { border-color: #7BAFF8; }
+          .tf-avatar.female img { border-color: #F5A3B1; }
           
           .tf-name { font-weight: bold; font-size: 11px; color: #333; line-height: 1.2; margin-bottom: 1px; word-wrap: break-word; width: 100%; }
           .tf-rel { font-size: 9px; color: #E91E63; font-weight: 500; }
           .tf-id { font-size: 8px; color: #aaa; }
           .tf-connector { font-size: 14px; color: #E91E63; }
-          .tf-spouse-node .tf-avatar { border-style: dashed; }
+          .tf-spouse-node .tf-avatar img { border-style: dashed; }
         `}</style>
 
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h3 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon)' }}>Descendants Tree Diagram</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Descendants tree of: <strong>{p.firstName} {p.surName} ({p.pid})</strong></p>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <h3 style={{ margin: '0 0 0.5rem', color: '#666', fontSize: '1.25rem', fontWeight: '500' }}>
+            Descendants Tree Diagram of
+          </h3>
+          <h1 style={{ margin: 0, color: 'var(--color-maroon)', fontSize: '2.25rem', fontWeight: '800' }}>
+            {p.isDeceased ? t('sidebar.late') + ' ' : ''}{p.firstName} {p.surName}
+          </h1>
         </div>
 
         <div className="tf-tree">
@@ -1129,6 +1414,49 @@ const Reports = ({ profiles, setFocusedPid }) => {
           border-color: var(--color-gold);
         }
 
+        .report-row-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.6rem 1rem;
+          border-bottom: 1px solid #eee;
+          background: #fff;
+        }
+        .report-row-left {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          min-width: 0;
+        }
+        .report-row-right {
+          font-size: 0.88rem;
+          color: #666;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 0.25rem 0.5rem;
+          word-break: break-word;
+          overflow-wrap: anywhere;
+          text-align: right;
+          min-width: 0;
+        }
+        @media (max-width: 600px) {
+          .report-row-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.4rem !important;
+            padding: 0.8rem !important;
+          }
+          .report-row-right {
+            margin-left: 3rem !important; /* 48px to align under name next to 36px avatar + gap */
+            margin-top: 0.2rem !important;
+            align-self: flex-start !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+          }
+        }
+
         .report-viewer-card {
           background: #ffffff;
           border-radius: 12px;
@@ -1140,11 +1468,16 @@ const Reports = ({ profiles, setFocusedPid }) => {
 
         /* Printable / PDF layout override */
         @media print {
-          body {
-            background-color: #ffffff;
-            color: #000000;
+          body, html, #root, .app-container, .main-content, .reports-page-container {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
           }
-          .app-header, .mobile-bottom-nav, .lineage-setup-card, .print-action-bar {
+          .app-header, .mobile-bottom-nav, .lineage-setup-card, .print-action-bar, .reports-main-title {
             display: none !important;
           }
           .container {
@@ -1157,15 +1490,34 @@ const Reports = ({ profiles, setFocusedPid }) => {
             border: none !important;
             padding: 0 !important;
             margin: 0 !important;
+            overflow: visible !important;
+            width: auto !important;
           }
           .report-print-container {
             width: 100% !important;
+          }
+          #print-diagram-area {
+            overflow: visible !important;
+            width: auto !important;
+            max-width: none !important;
+            height: auto !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+          }
+          .tf-tree {
+            overflow: visible !important;
+            width: auto !important;
+            display: inline-block !important;
+          }
+          .tf-tree * {
+            overflow: visible !important;
           }
         }
       `}</style>
 
       {/* Main Title Section */}
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+      <div className="reports-main-title" style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h2 style={{ color: 'var(--color-maroon)', fontSize: '2rem', fontWeight: 800, margin: '0 0 0.5rem' }}>
           {t('reports.title')}
         </h2>
@@ -1268,26 +1620,107 @@ const Reports = ({ profiles, setFocusedPid }) => {
       {primaryPid && selectedReport && (
         <div className="report-viewer-card">
           {/* Action Bar (Print / PDF) */}
-          <div className="print-action-bar" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>
-            <button 
-              onClick={printReport}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: 'var(--color-maroon)',
-                color: 'var(--color-gold)',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.85rem'
-              }}
-            >
-              <Printer size={16} />
-              {t('reports.print_btn')}
-            </button>
+          <div className="print-action-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+              {/* Generations Selector (only for Reports 3, 4, 5, 6) */}
+              {['ancestors', 'descendants', 'full-descendants', 'full-descendants-diagram'].includes(selectedReport) && maxGenerations > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#555' }}>
+                  <span style={{ fontWeight: '600' }}>Number of Generations:</span>
+                  <select
+                    value={genLimit}
+                    onChange={(e) => setGenLimit(Number(e.target.value))}
+                    style={{
+                      padding: '0.4rem 0.8rem',
+                      borderRadius: '6px',
+                      border: '1.5px solid var(--color-sandalwood, #EADDCA)',
+                      background: '#fff',
+                      outline: 'none',
+                      fontWeight: '600',
+                      color: 'var(--color-maroon, #63131D)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {Array.from({ length: maxGenerations }, (_, i) => i + 1).map((val) => (
+                      <option key={val} value={val}>
+                        {val} {val === 1 ? 'Gen' : 'Gens'} {val === maxGenerations ? '(Max)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Poster Quality/Scale Selector (only for Report 6) */}
+              {selectedReport === 'full-descendants-diagram' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: '#555' }}>
+                  <span style={{ fontWeight: '600' }}>Poster Quality:</span>
+                  <select
+                    value={posterScale}
+                    onChange={(e) => setPosterScale(Number(e.target.value))}
+                    style={{
+                      padding: '0.4rem 0.8rem',
+                      borderRadius: '6px',
+                      border: '1.5px solid var(--color-sandalwood, #EADDCA)',
+                      background: '#fff',
+                      outline: 'none',
+                      fontWeight: '600',
+                      color: 'var(--color-maroon, #63131D)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value={3}>3x Resolution (Standard HD)</option>
+                    <option value={4}>4x Resolution (Ultra HD / Poster)</option>
+                    <option value={5}>5x Resolution (Extreme / Print Poster)</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* Poster Export Button (only for Report 6) */}
+              {selectedReport === 'full-descendants-diagram' && (
+                <button
+                  onClick={exportPoster}
+                  disabled={isExportingPoster}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: isExportingPoster ? '#ccc' : '#D4AF37',
+                    color: isExportingPoster ? '#666' : 'var(--color-maroon)',
+                    border: '1px solid var(--color-maroon)',
+                    borderRadius: '6px',
+                    cursor: isExportingPoster ? 'not-allowed' : 'pointer',
+                    fontWeight: '700',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {isExportingPoster ? 'Generating Poster...' : '🖼️ Save PNG Poster'}
+                </button>
+              )}
+
+              <button 
+                onClick={printReport}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'var(--color-maroon)',
+                  color: 'var(--color-gold)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <Printer size={16} />
+                {t('reports.print_btn')}
+              </button>
+            </div>
           </div>
 
           {/* Generated content */}

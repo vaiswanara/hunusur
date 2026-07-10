@@ -26,7 +26,28 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReload = () => {
-    window.location.reload();
+    // 1. Clear Cache Storage
+    if ('caches' in window) {
+      caches.keys().then((keys) => {
+        keys.forEach((key) => caches.delete(key));
+      }).catch(() => {});
+    }
+
+    // 2. Unregister Service Workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((r) => r.unregister());
+      }).catch(() => {});
+    }
+
+    // 3. Reload bypassing cache using timestamp
+    try {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('reload', Date.now().toString());
+      window.location.href = currentUrl.toString();
+    } catch (err) {
+      window.location.reload();
+    }
   };
 
   render() {

@@ -1,24 +1,45 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RotateCw, UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText, Download, UserPlus, Home } from 'lucide-react';
+import { UserCheck, GitBranch, Cake, BarChart2, BookOpen, Calendar, Settings, FileText, Download, UserPlus, Home, RotateCw } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 const MenuPage = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    setTimeout(() => {
-      window.location.reload();
-    }, 600);
+  const handleHardRefresh = () => {
+    const promises = [];
+
+    // Clear browser cache & service worker cache if possible
+    if ('caches' in window) {
+      promises.push(
+        caches.keys().then((names) => {
+          return Promise.all(names.map(name => caches.delete(name)));
+        })
+      );
+    }
+    
+    // Unregister service worker to force a clean update
+    if ('serviceWorker' in navigator) {
+      promises.push(
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          return Promise.all(registrations.map(registration => registration.unregister()));
+        })
+      );
+    }
+
+    // Instead of window.location.reload() on '/menu' which throws redirect errors,
+    // we redirect to the root origin ('/') which does not trigger any redirects.
+    Promise.all(promises).finally(() => {
+      window.location.href = window.location.origin + import.meta.env.BASE_URL;
+    });
   };
 
   const handleItemClick = (item) => {
     if (item.isInstall) {
       navigate('/settings', { state: { scrollToInstall: true } });
+    } else if (item.isHardRefresh) {
+      handleHardRefresh();
     } else {
       navigate(item.path);
     }
@@ -40,7 +61,8 @@ const MenuPage = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
     { path: '/timeline', label: t('nav.timeline'), icon: Calendar, color: '#C0392B', bgColor: '#FFEBEE' },
     { path: '/settings', label: t('nav.settings'), icon: Settings, color: '#607D8B', bgColor: '#ECEFF1' },
     { path: '/submit-details', label: 'Join Tree', icon: UserPlus, color: '#795548', bgColor: '#efebe9' },
-    { path: '/install', label: t('nav.install'), icon: Download, color: '#E91E63', bgColor: '#FCE4EC', isInstall: true }
+    { path: '/install', label: t('nav.install'), icon: Download, color: '#E91E63', bgColor: '#FCE4EC', isInstall: true },
+    { path: '/refresh', label: t('nav.refresh'), icon: RotateCw, color: '#8C6A53', bgColor: '#F9F6F0', isHardRefresh: true }
   ];
 
   return (
@@ -54,60 +76,7 @@ const MenuPage = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
       paddingLeft: '1rem',
       paddingRight: '1rem'
     }}>
-      {/* Refresh/Reload Button & Label Group */}
-      <div style={{
-        position: 'absolute',
-        top: '1.25rem',
-        right: '1.25rem',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-        zIndex: 10
-      }}>
-        <button 
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: '#F9F6F0',
-            border: '1.5px solid var(--color-sandalwood, #D3BCA2)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            cursor: isRefreshing ? 'not-allowed' : 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            transition: 'all 0.2s',
-            color: 'var(--color-maroon, #63131D)'
-          }}
-          title="Refresh App"
-        >
-          <RotateCw 
-            size={18} 
-            strokeWidth={2.5} 
-            className={isRefreshing ? 'refresh-spin-active' : ''} 
-          />
-        </button>
-        <span style={{
-          fontSize: '0.65rem',
-          fontWeight: 700,
-          color: '#8C6A53',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px'
-        }}>
-          Refresh
-        </span>
-      </div>
       <style>{`
-        @keyframes spin-refresh {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .refresh-spin-active {
-          animation: spin-refresh 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
         .menu-page-item-btn {
           -webkit-tap-highlight-color: transparent;
         }

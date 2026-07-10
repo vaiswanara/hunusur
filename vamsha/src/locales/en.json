@@ -11,7 +11,8 @@
     "menu": "Menu",
     "directory": "Vamsha Directory",
     "dashboard": "Dashboard",
-    "install": "Install App"
+    "install": "Install App",
+    "refresh": "Sync"
   },
   "home": {
     "title": "VAMSHA",

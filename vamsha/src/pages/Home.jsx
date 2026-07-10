@@ -286,12 +286,13 @@ const Home = ({ profiles, deferredPrompt, setDeferredPrompt, activeBranchId, onL
           {t('home.sync_btn')}
         </button>
         <span style={{
-          fontSize: '0.72rem',
-          color: '#A89080',
-          fontWeight: 500,
-          letterSpacing: '0.5px'
+          fontSize: '0.85rem',
+          color: '#8C6A53',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+          marginTop: '0.25rem'
         }}>
-          v{import.meta.env.VITE_APP_VERSION || '1.3.0'}
+          App Version : {import.meta.env.VITE_APP_VERSION || '1.3.0'}
         </span>
       </div>
     </div>

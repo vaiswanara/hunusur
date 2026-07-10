@@ -344,8 +344,8 @@ function App() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
-  // Check if remote data has updated
-  const checkForUpdates = async () => {
+  // Check if remote data has updated and sync silently if there are no local drafts
+  const checkForUpdates = useCallback(async () => {
     try {
       const savedPwd = sessionStorage.getItem('vamsha_admin_pwd') || localStorage.getItem('vamsha_decrypt_pwd') || '';
       let latestData = await fetchProfiles(savedPwd);
@@ -362,25 +362,41 @@ function App() {
       // Compare with the original server data baseline to ignore local drafts
       const compareBaseline = savedProfilesBaseline || profiles;
       if (JSON.stringify(latestData) !== JSON.stringify(compareBaseline)) {
-        setUpdateAvailable(true);
+        const hasUnsaved = JSON.stringify(profiles) !== JSON.stringify(compareBaseline);
+        if (!hasUnsaved) {
+          // No unsaved local changes, sync automatically in background!
+          setProfiles(latestData);
+          setSavedProfilesBaseline(latestData);
+          localStorage.setItem('vamsha_local_profiles', JSON.stringify(latestData));
+          setUpdateAvailable(false);
+          console.log('Background sync complete: Loaded fresh profiles from server.');
+        } else {
+          // Local changes exist, show sync action button to let user decide
+          setUpdateAvailable(true);
+        }
       } else {
         setUpdateAvailable(false);
       }
     } catch (e) {
       console.warn('Failed to check for updates:', e);
     }
-  };
+  }, [profiles, savedProfilesBaseline]);
 
-  // Visibility/tab focus change listener
+  // Visibility/tab focus change and network status change listener
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+    const handleSyncCheck = () => {
+      if (document.visibilityState === 'visible' || navigator.onLine) {
         checkForUpdates();
       }
     };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [profiles, savedProfilesBaseline]);
+    document.addEventListener('visibilitychange', handleSyncCheck);
+    window.addEventListener('online', handleSyncCheck);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleSyncCheck);
+      window.removeEventListener('online', handleSyncCheck);
+    };
+  }, [checkForUpdates]);
 
   const handleSync = async () => {
     setSyncing(true);

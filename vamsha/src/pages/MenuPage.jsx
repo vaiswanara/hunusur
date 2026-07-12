@@ -60,7 +60,7 @@ const MenuPage = ({ profiles, deferredPrompt, setDeferredPrompt }) => {
     { path: '/memories', label: t('nav.memories'), icon: BookOpen, color: '#8E44AD', bgColor: '#F3E5F5' },
     { path: '/timeline', label: t('nav.timeline'), icon: Calendar, color: '#C0392B', bgColor: '#FFEBEE' },
     { path: '/settings', label: t('nav.settings'), icon: Settings, color: '#607D8B', bgColor: '#ECEFF1' },
-    { path: '/submit-details', label: 'Join Tree', icon: UserPlus, color: '#795548', bgColor: '#efebe9' },
+    { path: '/submit-details', label: 'Join/Update', icon: UserPlus, color: '#795548', bgColor: '#efebe9' },
     { path: '/install', label: t('nav.install'), icon: Download, color: '#E91E63', bgColor: '#FCE4EC', isInstall: true },
     { path: '/refresh', label: t('nav.refresh'), icon: RotateCw, color: '#8C6A53', bgColor: '#F9F6F0', isHardRefresh: true }
   ];

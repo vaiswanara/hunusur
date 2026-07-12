@@ -1137,12 +1137,13 @@ const SingleEditor = ({ profiles, setProfiles, profileToEdit, setProfileToEdit, 
         initialPhotoUrl={formData.photoUrl}
         onUploadSuccess={(url) => setFormData(prev => ({ ...prev, photoUrl: url }))}
         uploadService={photoHostService}
+        pid={formData.pid}
       />
     </div>
   );
 };
 
-const PhotoCropModal = ({ isOpen, onClose, initialPhotoUrl, onUploadSuccess, uploadService }) => {
+const PhotoCropModal = ({ isOpen, onClose, initialPhotoUrl, onUploadSuccess, uploadService, pid }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [zoom, setZoom] = useState(1);
@@ -1328,10 +1329,20 @@ const PhotoCropModal = ({ isOpen, onClose, initialPhotoUrl, onUploadSuccess, upl
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
         const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
         uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-        payload.append('file', croppedBlob);
+        
+        const cloudRandom = Math.random().toString(36).substring(2, 8);
+        const cloudFileName = `${pid ? pid.trim() : 'photo'}_${cloudRandom}.jpg`;
+        const namedFile = new File([croppedBlob], cloudFileName, { type: 'image/jpeg' });
+        
+        payload.append('file', namedFile);
         payload.append('upload_preset', uploadPreset);
+        payload.append('folder', 'vamsha');
       } else {
         payload.append('file', croppedBlob, 'cropped_photo.jpg');
+        payload.append('purpose', 'profile');
+        if (pid) {
+          payload.append('pid', pid.trim());
+        }
       }
 
       const headers = {};

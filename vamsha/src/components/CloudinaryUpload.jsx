@@ -657,10 +657,12 @@ const CloudinaryUpload = ({ profiles = [], setProfiles }) => {
     if (uploadService === 'local') {
       const adminPassword = sessionStorage.getItem('vamsha_admin_pwd') || '';
       xhr.setRequestHeader('X-Admin-Password', adminPassword);
-      
+
       formData.append('purpose', uploadType);
       if (uploadType === 'profile') {
-        formData.append('file', croppedBlob, `${pid.trim()}.jpg`);
+        // Wrap Blob in File so server receives PID0001.jpg as the filename (not "blob")
+        const localFile = new File([croppedBlob], `${pid.trim()}.jpg`, { type: 'image/jpeg' });
+        formData.append('file', localFile);
         formData.append('pid', pid.trim());
       } else {
         if (selectedFile.isVirtual) {
@@ -674,17 +676,24 @@ const CloudinaryUpload = ({ profiles = [], setProfiles }) => {
       formData.append('resource_type', 'image');
 
       if (uploadType === 'profile') {
-        formData.append('file', croppedBlob, `${pid.trim()}.jpg`);
-        formData.append('public_id', `${pid.trim()}_${Date.now()}`);
+        // Cloudinary preset uses "filename as public ID" — wrap Blob in File with correct name
+        // so Cloudinary saves it as PID0001_abc123 (not blob)
+        const cloudRandom = Math.random().toString(36).substring(2, 8);
+        const cloudFileName = `${pid.trim()}_${cloudRandom}.jpg`;
+        const namedFile = new File([croppedBlob], cloudFileName, { type: 'image/jpeg' });
+        formData.append('file', namedFile);
         formData.append('folder', 'vamsha');
       } else {
         // Gallery mode: no cropping
+        const galleryRandom = Math.random().toString(36).substring(2, 8);
         if (selectedFile.isVirtual) {
           formData.append('file', previewUrl);
         } else {
-          formData.append('file', selectedFile);
+          // Wrap in File with gallery name so Cloudinary uses it as public_id
+          const galleryFileName = `gallery_${galleryRandom}.jpg`;
+          const galleryFile = new File([selectedFile], galleryFileName, { type: selectedFile.type || 'image/jpeg' });
+          formData.append('file', galleryFile);
         }
-        formData.append('public_id', `gallery_${Date.now()}`);
         formData.append('folder', 'vamsha/gallery');
       }
     }

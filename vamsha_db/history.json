@@ -5335,5 +5335,21 @@
     "oldData": {
       "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783573985/PID0071_dwjarm.jpg"
     }
+  },
+  {
+    "pid": "PID0001",
+    "action": "edit",
+    "timestamp": "2026-07-12T08:11:18.512Z",
+    "oldData": {
+      "photoUrl": null
+    }
+  },
+  {
+    "pid": "PID0104",
+    "action": "edit",
+    "timestamp": "2026-07-12T08:13:25.180Z",
+    "oldData": {
+      "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783581516/PID0104_o8mctz.png"
+    }
   }
 ]

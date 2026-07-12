@@ -169,15 +169,28 @@ function getReachableProfiles(profiles, startPid) {
 }
 
 // Upload file helper to Cloudinary (signed upload)
-async function uploadToCloudinary(fileBlob, cloudName, apiKey, apiSecret) {
+// pid: optional person ID (e.g. 'PID0001') — when provided, saves as PID0001.jpg (no timestamp)
+async function uploadToCloudinary(fileBlob, cloudName, apiKey, apiSecret, pid = '') {
   const timestamp = Math.floor(Date.now() / 1000);
-  const signatureParams = { timestamp };
+  // If PID is known → save as vamsha/PID0001 (clean overwrite of previous photo)
+  // If no PID     → add timestamp+random suffix to avoid collisions
+  let publicId;
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  if (pid) {
+    // Cloudinary: PID0001_ab3xf7 (random suffix prevents overwrite, no timestamp)
+    publicId = `vamsha/${pid.trim().toUpperCase()}_${randomSuffix}`;
+  } else {
+    publicId = `vamsha/upload_${randomSuffix}`;
+  }
+  const signatureParams = { folder: 'vamsha', public_id: publicId, timestamp };
   const signature = await generateCloudinarySignature(signatureParams, apiSecret);
 
   const uploadFormData = new FormData();
   uploadFormData.append('file', fileBlob);
   uploadFormData.append('api_key', apiKey);
   uploadFormData.append('timestamp', timestamp.toString());
+  uploadFormData.append('public_id', publicId);
+  uploadFormData.append('folder', 'vamsha');
   uploadFormData.append('signature', signature);
 
   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
@@ -616,7 +629,9 @@ export async function onRequest(context) {
             const apiSecret = env.CLOUDINARY_API_SECRET || '';
 
             if (apiSecret) {
-              const cloudData = await uploadToCloudinary(file, cloudName, apiKey, apiSecret);
+              // Use the real PID if this is an update of an existing person, else use PENDING prefix
+              const submissionPid = formData.get('isUpdateOfPid') || 'PENDING';
+              const cloudData = await uploadToCloudinary(file, cloudName, apiKey, apiSecret, submissionPid);
               photoUrl = cloudData.secure_url;
             } else {
               return new Response(JSON.stringify({ error: 'Server is missing CLOUDINARY_API_SECRET configuration.' }), { status: 500, headers: corsHeaders });
@@ -686,7 +701,9 @@ export async function onRequest(context) {
             return new Response(JSON.stringify({ error: 'Server is missing CLOUDINARY_API_SECRET configuration.' }), { status: 500, headers: corsHeaders });
           }
 
-          const cloudData = await uploadToCloudinary(file, cloudName, apiKey, apiSecret);
+          // Pass PID from FormData so photo is named PID0001_timestamp_random in Cloudinary
+          const uploadPid = formData.get('pid') || '';
+          const cloudData = await uploadToCloudinary(file, cloudName, apiKey, apiSecret, uploadPid);
 
           return new Response(JSON.stringify({
             success: true,

@@ -24,13 +24,16 @@
   },
   "home_person": {
     "select_title": "Select Profile",
-    "select_desc": "Select or change the primary focus person to initialize the lineage tree display.",
+    "select_desc": "If you are already a family member, choose your name. Otherwise, newly submit your family tree details through the form below.",
     "placeholder": "Search and select Profile...",
     "welcome": "Welcome, {name}!",
     "configured": "You have configured {name} ({id}) as the home focus.",
     "explore_tree": "Click Tree to Explore",
     "tip_title": "Perspective configuration saved:",
-    "tip_desc": "You can return to this page anytime in the future to change your focus person or explore from another branch."
+    "tip_desc": "You can return to this page anytime in the future to change your focus person or explore from another branch.",
+    "join_title": "Join Family Tree",
+    "join_desc": "Are you a family member? Submit your profile details, birth date, relationships, and photo to be added to the family tree database.",
+    "join_update_desc": "If you want to change existing profile details in the Family Tree, enter the details and submit the form."
   },
   "sidebar": {
     "personal_details": "Personal Details",

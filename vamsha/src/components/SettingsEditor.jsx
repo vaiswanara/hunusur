@@ -2,10 +2,10 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Sliders, Shield, CheckCircle, AlertCircle, AlertTriangle,
   Download, Upload, Camera, Moon, Calendar, Phone, Mail, 
-  GitFork, Heart, FileText, ChevronDown, ChevronUp, Play, Trash2,
+  GitFork, Heart, FileText, ChevronDown, ChevronUp, Play, Pause, Trash2,
   X, Eye, EyeOff, Copy, Check, Lock
 } from 'lucide-react';
-import { saveProfiles, isStaticHosting, getApiUrl, getSettingsUrl, getSaveSettingsUrl, getBulkMapLocalUrl, getBulkMapCloudinaryUrl, fetchSettings } from '../lib/api';
+import { saveProfiles, isStaticHosting, getApiUrl, getSettingsUrl, getSaveSettingsUrl, getHistoryUrl, getClearHistoryUrl, getBulkMapLocalUrl, getBulkMapCloudinaryUrl, fetchSettings } from '../lib/api';
 import { encryptData } from '../lib/crypto';
 import { getAdminPassword } from './AdminGate';
 import SearchableSelect from './SearchableSelect';
@@ -58,6 +58,10 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
   const [expandedSection, setExpandedSection] = useState(null);
   const [toast, setToast] = useState(null);
   const [adminUploadService, setAdminUploadService] = useState(import.meta.env.VITE_UPLOAD_SERVICE || 'cloudinary');
+  const [logs, setLogs] = useState([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [logsPausedSetting, setLogsPausedSetting] = useState(false);
+  const [logSearch, setLogSearch] = useState('');
   const [userUploadService, setUserUploadService] = useState(import.meta.env.VITE_UPLOAD_SERVICE || 'cloudinary');
   const [savingSettings, setSavingSettings] = useState(false);
   const fileInputRef = useRef();
@@ -98,6 +102,9 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
         if (settings.familyBranches) {
           setFamilyBranches(settings.familyBranches);
         }
+        if (settings.logsPaused !== undefined) {
+          setLogsPausedSetting(!!settings.logsPaused);
+        }
       } catch (err) {
         console.error('Failed to load settings configuration, using .env fallback:', err);
       }
@@ -112,7 +119,8 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
       const payload = { 
         adminUploadService, 
         userUploadService, 
-        familyBranches: updatedBranches 
+        familyBranches: updatedBranches,
+        logsPaused: logsPausedSetting
       };
 
       const saveUrl = getSaveSettingsUrl();
@@ -136,6 +144,282 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
       setToast({ type: 'error', message: err.message || 'Error saving settings' });
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const fetchLogs = async () => {
+    setLoadingLogs(true);
+    try {
+      const historyUrl = getHistoryUrl();
+      const res = await fetch(historyUrl + (historyUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
+      if (res.ok) {
+        const data = await res.json();
+        setLogs(Array.isArray(data) ? [...data].reverse() : []);
+      } else {
+        throw new Error('Failed to load logs');
+      }
+    } catch (e) {
+      console.warn("Could not load history logs:", e);
+      setToast({ type: 'error', message: 'Could not load activity logs.' });
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      fetchLogs();
+    }
+  }, [activeTab]);
+
+  const handleToggleLogging = async () => {
+    const nextPaused = !logsPausedSetting;
+    setSavingSettings(true);
+    try {
+      const password = getAdminPassword() || '';
+      const payload = { 
+        adminUploadService, 
+        userUploadService, 
+        familyBranches,
+        logsPaused: nextPaused
+      };
+
+      const saveUrl = getSaveSettingsUrl();
+      const res = await fetch(saveUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': password
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json();
+        throw new Error(errBody.error || 'Failed to save settings');
+      }
+
+      setLogsPausedSetting(nextPaused);
+      setToast({ type: 'success', message: nextPaused ? 'Logs paused successfully!' : 'Logs resumed successfully!' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Error saving settings' });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    if (!window.confirm("Are you sure you want to permanently clear all activity logs? This cannot be undone.")) {
+      return;
+    }
+    setLoadingLogs(true);
+    try {
+      const password = getAdminPassword() || '';
+      const clearUrl = getClearHistoryUrl();
+      
+      const res = await fetch(clearUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': password
+        }
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to clear logs');
+      }
+      
+      setToast({ type: 'success', message: 'Logs cleared successfully!' });
+      fetchLogs();
+    } catch (e) {
+      setToast({ type: 'error', message: e.message || 'Error clearing logs' });
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  const handleExportLogs = () => {
+    try {
+      const dataStr = JSON.stringify(logs, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `vamsha_activity_logs_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setToast({ message: '📋 Logs exported successfully!', type: 'success' });
+    } catch (err) {
+      setToast({ message: `❌ Export failed: ${err.message}`, type: 'error' });
+    }
+  };
+
+  const filteredLogs = useMemo(() => {
+    if (!logSearch.trim()) return logs;
+    const query = logSearch.toLowerCase();
+    return logs.filter(l => {
+      const matchPid = l.pid?.toLowerCase().includes(query);
+      const matchAction = l.action?.toLowerCase().includes(query);
+      const matchOldData = JSON.stringify(l.oldData || {}).toLowerCase().includes(query);
+      const matchNewData = JSON.stringify(l.newData || {}).toLowerCase().includes(query);
+      return matchPid || matchAction || matchOldData || matchNewData;
+    });
+  }, [logs, logSearch]);
+
+  const formatLogDate = (ts) => {
+    if (!ts) return '';
+    try {
+      return new Date(ts).toLocaleString();
+    } catch (e) {
+      return ts;
+    }
+  };
+
+  const getLogBadgeStyles = (action) => {
+    let bg = '#EAECEE';
+    let text = '#5D6D7E';
+    let label = action;
+
+    switch (action) {
+      case 'add':
+        bg = '#E8F8F5';
+        text = '#117A65';
+        label = 'Profile Added';
+        break;
+      case 'edit':
+        bg = '#EBF5FB';
+        text = '#2980B9';
+        label = 'Profile Edited';
+        break;
+      case 'delete':
+        bg = '#FDEDEC';
+        text = '#C0392B';
+        label = 'Profile Deleted';
+        break;
+      case 'settings_update':
+        bg = '#FEF9E7';
+        text = '#D4AC0D';
+        label = 'Settings Updated';
+        break;
+      case 'bulk_scan_local':
+      case 'bulk_scan_cloudinary':
+        bg = '#F5EEF8';
+        text = '#8E44AD';
+        label = action === 'bulk_scan_local' ? 'Bulk Local Scan' : 'Bulk Cloud CDN Scan';
+        break;
+      case 'photo_upload':
+      case 'photo_download':
+        bg = '#EAF2F8';
+        text = '#2471A3';
+        label = action === 'photo_upload' ? 'Photo Uploaded' : 'Photo Downloaded';
+        break;
+      case 'pending_submit':
+      case 'pending_delete':
+        bg = '#E0F2F1';
+        text = '#00796B';
+        label = action === 'pending_submit' ? 'User Suggestion' : 'Declined Suggestion';
+        break;
+      case 'clear_logs':
+        bg = '#FADBD8';
+        text = '#C0392B';
+        label = 'Logs Cleared';
+        break;
+    }
+
+    return { bg, text, label };
+  };
+
+  const renderLogDetails = (entry) => {
+    switch (entry.action) {
+      case 'add':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            New profile created for <strong>{entry.newData?.firstName} {entry.newData?.surName}</strong> (PID: {entry.pid}).
+          </div>
+        );
+      case 'delete':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Profile (PID: {entry.pid}) was deleted.
+            {entry.oldData && (
+              <span style={{ display: 'block', color: '#666', fontStyle: 'italic', fontSize: '0.8rem', marginTop: '4px' }}>
+                Name: {entry.oldData.firstName} {entry.oldData.surName} ({entry.oldData.gender})
+              </span>
+            )}
+          </div>
+        );
+      case 'edit':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Modified profile (PID: {entry.pid}). Changes:
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: '1.25rem', color: '#666', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              {Object.entries(entry.oldData || {}).map(([key, val]) => {
+                let displayVal = val === null || val === undefined || val === '' ? '(empty)' : String(val);
+                if (Array.isArray(val)) {
+                  displayVal = val.length > 0 ? val.join(', ') : '(empty)';
+                }
+                return (
+                  <li key={key}>
+                    <strong>{key}</strong>: changed from <span style={{ textDecoration: 'line-through', color: '#C0392B' }}>{displayVal}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      case 'settings_update':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            System settings were updated.
+          </div>
+        );
+      case 'bulk_scan_local':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Local photo scan executed: mapped <strong>{entry.oldData?.updatedCount || 0}</strong> photos. Database update: {entry.oldData?.updateDb ? 'Yes' : 'No'}.
+          </div>
+        );
+      case 'bulk_scan_cloudinary':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Cloudinary photo scan executed: mapped <strong>{entry.oldData?.updatedCount || 0}</strong> photos. Database update: {entry.oldData?.updateDb ? 'Yes' : 'No'}.
+          </div>
+        );
+      case 'photo_upload':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Uploaded <strong>{entry.oldData?.purpose || 'profile'}</strong> photo: <code>{entry.oldData?.filename}</code> for {entry.pid}.
+          </div>
+        );
+      case 'photo_download':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Downloaded remote photo: <code>{entry.oldData?.filename}</code> for {entry.pid}.
+          </div>
+        );
+      case 'pending_submit':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Submitted pending profile suggestion for <strong>{entry.oldData?.name}</strong> ({entry.oldData?.gender}). Action type: {entry.oldData?.isUpdateOfPid ? `Update PID ${entry.oldData?.isUpdateOfPid}` : 'New Profile'}.
+          </div>
+        );
+      case 'pending_delete':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+            Deleted/declined pending submission (ID: {entry.oldData?.pendingId}).
+          </div>
+        );
+      case 'clear_logs':
+        return (
+          <div style={{ fontSize: '0.85rem', color: '#555', fontWeight: 'bold' }}>
+            Logs were cleared by administrator.
+          </div>
+        );
+      default:
+        return <div style={{ fontSize: '0.85rem', color: '#555' }}>{JSON.stringify(entry.oldData || {})}</div>;
     }
   };
 
@@ -935,6 +1219,12 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
           onClick={() => setActiveTab('passwords')}
         >
           <Lock size={18} /> Passwords
+        </button>
+        <button 
+          className={`settings-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('logs')}
+        >
+          <FileText size={18} /> Logs
         </button>
       </div>
 
@@ -1757,6 +2047,217 @@ export default function SettingsEditor({ profiles, setProfiles, handleEditFromLi
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: Activity Logs */}
+        {activeTab === 'logs' && (
+          <div>
+            <p style={{ color: '#555', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+              Track and review all operations and changes performed in the family tree application.
+            </p>
+
+            <div style={{
+              backgroundColor: 'white',
+              border: '1px solid #EFE4DC',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem'
+            }}>
+              {/* Toolbar */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                borderBottom: '1px solid #EFE4DC',
+                paddingBottom: '1.25rem'
+              }}>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={handleExportLogs}
+                    disabled={logs.length === 0}
+                    className="btn btn-secondary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold',
+                      padding: '0.6rem 1.2rem',
+                      borderRadius: '8px',
+                      cursor: logs.length === 0 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <Download size={16} /> Export Logs
+                  </button>
+
+                  <button
+                    onClick={handleToggleLogging}
+                    disabled={savingSettings}
+                    className="btn btn-secondary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold',
+                      padding: '0.6rem 1.2rem',
+                      borderRadius: '8px',
+                      backgroundColor: logsPausedSetting ? '#FAF9F6' : '#FDEDEC',
+                      color: logsPausedSetting ? '#2E7D32' : '#C0392B',
+                      border: `1px solid ${logsPausedSetting ? '#A2D9CE' : '#FADBD8'}`
+                    }}
+                  >
+                    {logsPausedSetting ? (
+                      <>
+                        <Play size={16} /> Resume Logs
+                      </>
+                    ) : (
+                      <>
+                        <Pause size={16} /> Pause Logs
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleClearLogs}
+                  disabled={loadingLogs || logs.length === 0}
+                  className="btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: '8px',
+                    backgroundColor: '#C0392B',
+                    color: 'white',
+                    border: 'none',
+                    cursor: (loadingLogs || logs.length === 0) ? 'not-allowed' : 'pointer',
+                    opacity: (loadingLogs || logs.length === 0) ? 0.6 : 1
+                  }}
+                >
+                  <Trash2 size={16} /> Clear Logs
+                </button>
+              </div>
+
+              {/* Filtering & Search */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  placeholder="Search logs by PID, action type, changes..."
+                  value={logSearch}
+                  onChange={(e) => setLogSearch(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem 1rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #EFE4DC',
+                    fontSize: '0.92rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                {logSearch && (
+                  <button
+                    onClick={() => setLogSearch('')}
+                    style={{
+                      border: 'none',
+                      background: '#EEE',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      color: '#666'
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Logs Table/List View */}
+              {loadingLogs ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
+                  ⏳ Loading activity logs...
+                </div>
+              ) : filteredLogs.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '4rem 2rem',
+                  color: '#888',
+                  fontSize: '0.95rem',
+                  border: '2px dashed #EFE4DC',
+                  borderRadius: '12px'
+                }}>
+                  {logSearch ? "No logs matched your search filters." : "No logs available. Activity log file is empty."}
+                </div>
+              ) : (
+                <div style={{
+                  overflowX: 'auto',
+                  border: '1px solid #EFE4DC',
+                  borderRadius: '10px',
+                  maxHeight: '600px',
+                  overflowY: 'auto'
+                }}>
+                  <table className="check-table" style={{ margin: 0 }}>
+                    <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                      <tr>
+                        <th style={{ width: '130px' }}>Action</th>
+                        <th style={{ width: '90px' }}>PID</th>
+                        <th>Details / Description</th>
+                        <th style={{ width: '180px' }}>Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLogs.map((entry, idx) => {
+                        const { bg, text, label } = getLogBadgeStyles(entry.action);
+                        return (
+                          <tr key={idx}>
+                            <td>
+                              <span style={{
+                                backgroundColor: bg,
+                                color: text,
+                                padding: '0.25rem 0.5rem',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                display: 'inline-block',
+                                textAlign: 'center',
+                                minWidth: '90px',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {label}
+                              </span>
+                            </td>
+                            <td style={{ fontWeight: 700, color: '#777' }}>
+                              {entry.pid}
+                            </td>
+                            <td>
+                              {renderLogDetails(entry)}
+                            </td>
+                            <td style={{ color: '#888', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                              {formatLogDate(entry.timestamp)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}

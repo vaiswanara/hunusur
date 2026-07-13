@@ -60,6 +60,30 @@ function parseMultipart(buffer, boundary) {
 const saveDataPlugin = () => ({
   name: 'save-data-plugin',
   configureServer(server) {
+    const writeHistoryLogLocal = (entry) => {
+      let logsPaused = false;
+      const settingsFile = path.resolve(__dirname, '../vamsha_db/settings.json');
+      if (fs.existsSync(settingsFile)) {
+        try {
+          const settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+          if (settings.logsPaused === true) {
+            logsPaused = true;
+          }
+        } catch (e) {}
+      }
+      if (!logsPaused) {
+        const historyFile = path.resolve(__dirname, '../vamsha_db/history.json');
+        let history = [];
+        if (fs.existsSync(historyFile)) {
+          try {
+            history = JSON.parse(fs.readFileSync(historyFile, 'utf8')) || [];
+          } catch (e) {}
+        }
+        history.push(entry);
+        fs.writeFileSync(historyFile, JSON.stringify(history, null, 2), 'utf8');
+      }
+    };
+
     // 1. Serve files inside the local vamsha_db directory dynamically
     server.middlewares.use('/vamsha_db', (req, res, next) => {
       const cleanUrl = req.url.split('?')[0];
@@ -131,7 +155,7 @@ const saveDataPlugin = () => ({
               });
             });
 
-            // Record updates
+            // Record updates & additions
             parsed.forEach(newProfile => {
               const oldProfile = oldProfiles.find(p => p.pid === newProfile.pid);
               if (oldProfile) {
@@ -156,22 +180,41 @@ const saveDataPlugin = () => ({
                     oldData: changedFields
                   });
                 }
+              } else {
+                historyEntries.push({
+                  pid: newProfile.pid,
+                  action: 'add',
+                  timestamp,
+                  newData: newProfile
+                });
               }
             });
 
             // Write history entries to history.json
             if (historyEntries.length > 0) {
-              const historyPath = path.resolve(__dirname, '../vamsha_db/history.json');
-              let existingHistory = [];
-              if (fs.existsSync(historyPath)) {
+              let logsPaused = false;
+              const settingsFile = path.resolve(__dirname, '../vamsha_db/settings.json');
+              if (fs.existsSync(settingsFile)) {
                 try {
-                  existingHistory = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-                } catch (err) {
-                  console.error("Failed to parse history.json:", err);
-                }
+                  const settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+                  if (settings.logsPaused === true) {
+                    logsPaused = true;
+                  }
+                } catch (e) {}
               }
-              existingHistory = [...existingHistory, ...historyEntries];
-              fs.writeFileSync(historyPath, JSON.stringify(existingHistory, null, 2), 'utf8');
+              if (!logsPaused) {
+                const historyPath = path.resolve(__dirname, '../vamsha_db/history.json');
+                let existingHistory = [];
+                if (fs.existsSync(historyPath)) {
+                  try {
+                    existingHistory = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+                  } catch (err) {
+                    console.error("Failed to parse history.json:", err);
+                  }
+                }
+                existingHistory = [...existingHistory, ...historyEntries];
+                fs.writeFileSync(historyPath, JSON.stringify(existingHistory, null, 2), 'utf8');
+              }
             }
 
             fs.writeFileSync(dataPath, JSON.stringify(parsed, null, 2), 'utf8');
@@ -226,6 +269,13 @@ const saveDataPlugin = () => ({
             const filePath = path.join(photosDir, filename);
             
             fs.writeFileSync(filePath, filePart.data);
+
+            writeHistoryLogLocal({
+              pid: fields.pid || 'GALLERY',
+              action: 'photo_upload',
+              timestamp: new Date().toISOString(),
+              oldData: { purpose: fields.purpose || 'profile', filename }
+            });
             
             const host = req.headers.host || 'localhost:5173';
             const secureUrl = `http://${host}/vamsha_db/profile_photos/${filename}`;
@@ -300,6 +350,13 @@ const saveDataPlugin = () => ({
             
             const imageBuffer = await downloadImage(imageUrl);
             fs.writeFileSync(filePath, imageBuffer);
+
+            writeHistoryLogLocal({
+              pid: pid,
+              action: 'photo_download',
+              timestamp: new Date().toISOString(),
+              oldData: { url: imageUrl, filename }
+            });
             
             const host = req.headers.host || 'localhost:5173';
             const secureUrl = `http://${host}/vamsha_db/profile_photos/${filename}`;
@@ -333,7 +390,30 @@ const saveDataPlugin = () => ({
           try {
             const parsed = JSON.parse(body);
             const settingsFile = path.resolve(__dirname, '../vamsha_db/settings.json');
+            
+            let oldSettings = {};
+            if (fs.existsSync(settingsFile)) {
+              try { oldSettings = JSON.parse(fs.readFileSync(settingsFile, 'utf8')) || {}; } catch(e) {}
+            }
+
             fs.writeFileSync(settingsFile, JSON.stringify(parsed, null, 2), 'utf8');
+
+            const oldLogsPaused = oldSettings.logsPaused === true;
+            if (!oldLogsPaused) {
+              const historyPath = path.resolve(__dirname, '../vamsha_db/history.json');
+              let existingHistory = [];
+              if (fs.existsSync(historyPath)) {
+                try { existingHistory = JSON.parse(fs.readFileSync(historyPath, 'utf8')) || []; } catch(e) {}
+              }
+              existingHistory.push({
+                pid: 'SYSTEM',
+                action: 'settings_update',
+                timestamp: new Date().toISOString(),
+                oldData: oldSettings,
+                newData: parsed
+              });
+              fs.writeFileSync(historyPath, JSON.stringify(existingHistory, null, 2), 'utf8');
+            }
             
             res.setHeader('Content-Type', 'application/json');
             res.statusCode = 200;
@@ -427,6 +507,13 @@ const saveDataPlugin = () => ({
             if (updateDb && updatedCount > 0) {
               fs.writeFileSync(dataPath, JSON.stringify(updatedProfiles, null, 2), 'utf8');
             }
+
+            writeHistoryLogLocal({
+              pid: 'SYSTEM',
+              action: 'bulk_scan_local',
+              timestamp: new Date().toISOString(),
+              oldData: { updatedCount, updateDb }
+            });
 
             res.setHeader('Content-Type', 'application/json');
             res.statusCode = 200;
@@ -567,6 +654,13 @@ const saveDataPlugin = () => ({
                     fs.writeFileSync(dataPath, JSON.stringify(updatedProfiles, null, 2), 'utf8');
                   }
 
+                  writeHistoryLogLocal({
+                    pid: 'SYSTEM',
+                    action: 'bulk_scan_cloudinary',
+                    timestamp: new Date().toISOString(),
+                    oldData: { updatedCount, updateDb }
+                  });
+
                   res.setHeader('Content-Type', 'application/json');
                   res.statusCode = 200;
                   res.end(JSON.stringify({
@@ -615,6 +709,41 @@ const saveDataPlugin = () => ({
         }
         res.statusCode = 200;
         res.end(JSON.stringify(history));
+      } else {
+        next();
+      }
+    });
+
+    // 3.85. Clear edit history logs
+    server.middlewares.use('/api/clear_history', (req, res, next) => {
+      if (req.method === 'POST') {
+        const historyFile = path.resolve(__dirname, '../vamsha_db/history.json');
+        
+        let clearEntry = {
+          pid: 'SYSTEM',
+          action: 'clear_logs',
+          timestamp: new Date().toISOString(),
+          oldData: { info: 'Logs were cleared by admin.' }
+        };
+
+        // Check if logs are paused locally
+        let logsPaused = false;
+        const settingsFile = path.resolve(__dirname, '../vamsha_db/settings.json');
+        if (fs.existsSync(settingsFile)) {
+          try {
+            const settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+            if (settings.logsPaused === true) {
+              logsPaused = true;
+            }
+          } catch (e) {}
+        }
+
+        const dataToSave = logsPaused ? [] : [clearEntry];
+
+        fs.writeFileSync(historyFile, JSON.stringify(dataToSave, null, 2), 'utf8');
+        res.setHeader('Content-Type', 'application/json');
+        res.statusCode = 200;
+        res.end(JSON.stringify({ success: true }));
       } else {
         next();
       }
@@ -716,6 +845,17 @@ const saveDataPlugin = () => ({
               };
               submissions.push(newSubmission);
               fs.writeFileSync(pendingFile, JSON.stringify(submissions, null, 2), 'utf8');
+
+              writeHistoryLogLocal({
+                pid: pendingId,
+                action: 'pending_submit',
+                timestamp: new Date().toISOString(),
+                oldData: {
+                  name: (fields.firstName || '') + ' ' + (fields.surName || ''),
+                  gender: fields.gender || 'Male',
+                  isUpdateOfPid: fields.isUpdateOfPid || ''
+                }
+              });
               
               res.statusCode = 200;
               res.end(JSON.stringify({ success: true, pendingId }));
@@ -734,6 +874,13 @@ const saveDataPlugin = () => ({
               
               submissions = submissions.filter(s => s.pendingId !== deleteId);
               fs.writeFileSync(pendingFile, JSON.stringify(submissions, null, 2), 'utf8');
+
+              writeHistoryLogLocal({
+                pid: deleteId,
+                action: 'pending_delete',
+                timestamp: new Date().toISOString(),
+                oldData: { pendingId: deleteId }
+              });
               
               res.statusCode = 200;
               res.end(JSON.stringify({ success: true }));

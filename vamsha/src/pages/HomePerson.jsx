@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, UserPlus } from 'lucide-react';
 import SearchableSelect from '../components/SearchableSelect';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -189,7 +189,7 @@ const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
             }}>
               {t('home_person.select_title')}
             </h2>
-            <p style={{ color: '#666', fontSize: '0.9rem', margin: 0, lineHeight: 1.45 }}>
+            <p style={{ color: '#666', fontSize: '0.92rem', margin: 0, lineHeight: 1.5, fontWeight: '500' }}>
               {t('home_person.select_desc')}
             </p>
           </div>
@@ -204,6 +204,45 @@ const HomePerson = ({ profiles, setFocusedPid, setSidebarPerson }) => {
             placeholder={t('home_person.placeholder')}
           />
         </div>
+
+        {/* Join Family Tree Card */}
+        {!homePid && (
+          <div style={{
+            backgroundColor: '#FAF8F5',
+            border: '1px solid #EFE4DC',
+            borderRadius: '16px',
+            padding: '1.75rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+            marginTop: '2rem',
+            textAlign: 'center'
+          }}>
+            <h4 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.15rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              📝 {t('home_person.join_title')}
+            </h4>
+            <p style={{ margin: '0 0 0.75rem', color: '#666', fontSize: '0.85rem', lineHeight: 1.45 }}>
+              {t('home_person.join_desc')}
+            </p>
+            <p style={{ margin: '0 0 1.25rem', color: '#8c2d19', fontSize: '0.85rem', lineHeight: 1.45, fontWeight: '600' }}>
+              {t('home_person.join_update_desc')}
+            </p>
+            <div>
+              <button
+                onClick={() => navigate('/submit-details')}
+                className="btn btn-primary"
+                style={{
+                  padding: '0.7rem 1.4rem',
+                  fontSize: '0.9rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <UserPlus size={16} /> Submit Profile Details
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Welcome Banner & Tree Image */}
         {homePid && selectedPerson && (

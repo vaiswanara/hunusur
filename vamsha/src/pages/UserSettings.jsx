@@ -228,37 +228,6 @@ const UserSettings = ({ profiles, deferredPrompt, setDeferredPrompt, activeBranc
               </div>
             </div>
 
-            {/* Join Family Tree Card */}
-            <div style={{
-              backgroundColor: '#FAF8F5',
-              border: '1px solid #EFE4DC',
-              borderRadius: '16px',
-              padding: '2rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-              marginBottom: '2rem'
-            }}>
-              <h4 style={{ margin: '0 0 0.5rem', color: 'var(--color-maroon, #63131D)', fontSize: '1.2rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📝 Join Family Tree
-              </h4>
-              <p style={{ margin: '0 0 1.25rem', color: '#666', fontSize: '0.88rem', lineHeight: 1.45 }}>
-                Are you a family member? Submit your profile details, birth date, relationships, and photo to be added to the family tree database.
-              </p>
-              <div>
-                <button
-                  onClick={() => navigate('/submit-details')}
-                  className="btn btn-primary"
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '0.95rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <UserPlus size={18} /> Submit Profile Details
-                </button>
-              </div>
-            </div>
 
             {/* Birthday Generation Limit Card */}
             <div style={{

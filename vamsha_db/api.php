@@ -98,6 +98,55 @@ function getPidPrefix($settings = null) {
     return isset($settings['pidPrefix']) ? $settings['pidPrefix'] : 'PID';
 }
 
+function isLoggingEnabled() {
+    $settings_file = __DIR__ . '/settings.json';
+    if (file_exists($settings_file)) {
+        $settings = json_decode(file_get_contents($settings_file), true) ?: [];
+        if (isset($settings['logsPaused']) && ($settings['logsPaused'] === true || $settings['logsPaused'] === 'true')) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function writeHistoryLog($entry) {
+    if (!isLoggingEnabled()) {
+        return;
+    }
+    $history_file = dirname(DATA_FILE) . '/history.json';
+    $existing_history = [];
+    if (file_exists($history_file)) {
+        $history_content = file_get_contents($history_file);
+        $existing_history = json_decode($history_content, true) ?: [];
+    }
+    $existing_history[] = $entry;
+    file_put_contents(
+        $history_file,
+        json_encode($existing_history, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        LOCK_EX
+    );
+}
+
+function writeHistoryLogs($entries) {
+    if (!isLoggingEnabled()) {
+        return;
+    }
+    if (empty($entries)) return;
+    $history_file = dirname(DATA_FILE) . '/history.json';
+    $existing_history = [];
+    if (file_exists($history_file)) {
+        $history_content = file_get_contents($history_file);
+        $existing_history = json_decode($history_content, true) ?: [];
+    }
+    $existing_history = array_merge($existing_history, $entries);
+    file_put_contents(
+        $history_file,
+        json_encode($existing_history, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        LOCK_EX
+    );
+}
+
+
 
 // ─── CORS HEADERS ────────────────────────────────────────────────────────────
 
@@ -171,6 +220,8 @@ if ($method === 'GET') {
         handleDownloadPhoto();
     } elseif ($action === 'save_settings') {
         handleSaveSettings();
+    } elseif ($action === 'clear_history') {
+        handleClearHistory();
     } elseif ($action === 'bulk_map_local') {
         handleBulkMapLocal($json);
     } elseif ($action === 'bulk_map_cloudinary') {
@@ -475,7 +526,7 @@ function handlePost($origin) {
                 }
             }
 
-            // Record updates
+            // Record updates & additions
             foreach ($data as $new_p) {
                 if (isset($new_p['pid'])) {
                     $old_p = null;
@@ -509,12 +560,19 @@ function handlePost($origin) {
                                 'oldData' => $changed_fields
                             ];
                         }
+                    } else {
+                        $history_entries[] = [
+                            'pid' => $new_p['pid'],
+                            'action' => 'add',
+                            'timestamp' => $timestamp,
+                            'newData' => $new_p
+                        ];
                     }
                 }
             }
 
             // Save history entries to history.json
-            if (!empty($history_entries)) {
+            if (!empty($history_entries) && isLoggingEnabled()) {
                 $history_file = dirname(DATA_FILE) . '/history.json';
                 $existing_history = [];
                 if (file_exists($history_file)) {
@@ -652,6 +710,17 @@ function handleFileUpload() {
         
         $base_url = $proto . '://' . $host . ($base_path === '/' || $base_path === '.' ? '' : $base_path) . '/';
         $full_url = $base_url . $web_subdir . $filename;
+
+        if (isLoggingEnabled()) {
+            $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+            $pid_log = $_POST['pid'] ?? 'GALLERY';
+            writeHistoryLog([
+                'pid' => $pid_log,
+                'action' => 'photo_upload',
+                'timestamp' => $timestamp,
+                'oldData' => ['purpose' => $purpose, 'filename' => $filename]
+            ]);
+        }
 
         echo json_encode([
             'success' => true,
@@ -797,6 +866,20 @@ function handlePendingSubmit() {
     }
     rename($temp_file, $pending_file);
 
+    if (isLoggingEnabled()) {
+        $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+        writeHistoryLog([
+            'pid' => $pendingId,
+            'action' => 'pending_submit',
+            'timestamp' => $timestamp,
+            'oldData' => [
+                'name' => trim($_POST['firstName']) . ' ' . trim($_POST['surName'] ?? ''),
+                'gender' => trim($_POST['gender']),
+                'isUpdateOfPid' => trim($_POST['isUpdateOfPid'] ?? '')
+            ]
+        ]);
+    }
+
     echo json_encode(['success' => true, 'pendingId' => $pendingId]);
     exit;
 }
@@ -863,6 +946,16 @@ function handlePendingDelete() {
     $temp_file = $pending_file . '.tmp';
     file_put_contents($temp_file, json_encode($updated, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
     rename($temp_file, $pending_file);
+
+    if (isLoggingEnabled()) {
+        $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+        writeHistoryLog([
+            'pid' => $pendingId,
+            'action' => 'pending_delete',
+            'timestamp' => $timestamp,
+            'oldData' => ['pendingId' => $pendingId]
+        ]);
+    }
 
     echo json_encode(['success' => true]);
     exit;
@@ -951,6 +1044,16 @@ function handleDownloadPhoto() {
         exit;
     }
 
+    if (isLoggingEnabled()) {
+        $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+        writeHistoryLog([
+            'pid' => $pid,
+            'action' => 'photo_download',
+            'timestamp' => $timestamp,
+            'oldData' => ['url' => $url, 'filename' => $filename]
+        ]);
+    }
+
     $proto = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
     $script_name = $_SERVER['SCRIPT_NAME'];
@@ -993,6 +1096,11 @@ function handleSaveSettings() {
 
     $target_file = __DIR__ . '/settings.json';
     $temp_file = $target_file . '.tmp';
+
+    $old_settings = [];
+    if (file_exists($target_file)) {
+        $old_settings = json_decode(file_get_contents($target_file), true) ?: [];
+    }
     
     if (file_put_contents($temp_file, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX) === false) {
         http_response_code(500);
@@ -1004,6 +1112,17 @@ function handleSaveSettings() {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to save settings.json.']);
         exit;
+    }
+
+    if (isLoggingEnabled()) {
+        $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+        writeHistoryLog([
+            'pid' => 'SYSTEM',
+            'action' => 'settings_update',
+            'timestamp' => $timestamp,
+            'oldData' => $old_settings,
+            'newData' => $settings
+        ]);
     }
 
     echo json_encode(['success' => true]);
@@ -1018,6 +1137,37 @@ function handleGetHistory() {
         exit;
     }
     echo file_get_contents($history_file);
+    exit;
+}
+
+function handleClearHistory() {
+    $provided_password = getHeader('X-Admin-Password') ?: '';
+    $provided_hash = hash('sha256', $provided_password);
+    $is_admin = hash_equals(ADMIN_PASSWORD_HASH, $provided_hash);
+
+    if (!$is_admin) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Incorrect admin password. Access denied.']);
+        exit;
+    }
+
+    $history_file = dirname(DATA_FILE) . '/history.json';
+    $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+    $clear_entry = [
+        'pid' => 'SYSTEM',
+        'action' => 'clear_logs',
+        'timestamp' => $timestamp,
+        'oldData' => ['info' => 'Logs were cleared by admin.']
+    ];
+
+    $data_to_write = isLoggingEnabled() ? [$clear_entry] : [];
+    file_put_contents(
+        $history_file,
+        json_encode($data_to_write, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        LOCK_EX
+    );
+
+    echo json_encode(['success' => true]);
     exit;
 }
 
@@ -1160,6 +1310,16 @@ function handleBulkMapLocal($json) {
         rename($tempFile, $dataFile);
     }
 
+    if (isLoggingEnabled()) {
+        $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+        writeHistoryLog([
+            'pid' => 'SYSTEM',
+            'action' => 'bulk_scan_local',
+            'timestamp' => $timestamp,
+            'oldData' => ['updatedCount' => $updatedCount, 'updateDb' => $updateDb]
+        ]);
+    }
+
     echo json_encode([
         'success' => true,
         'updatedCount' => $updatedCount,
@@ -1286,6 +1446,16 @@ function handleBulkMapCloudinary($json) {
             exit;
         }
         rename($tempFile, $dataFile);
+    }
+
+    if (isLoggingEnabled()) {
+        $timestamp = gmdate('Y-m-d\TH:i:s\Z');
+        writeHistoryLog([
+            'pid' => 'SYSTEM',
+            'action' => 'bulk_scan_cloudinary',
+            'timestamp' => $timestamp,
+            'oldData' => ['updatedCount' => $updatedCount, 'updateDb' => $updateDb]
+        ]);
     }
 
     echo json_encode([

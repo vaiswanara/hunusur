@@ -76,6 +76,13 @@ export function getHistoryUrl() {
   return api.includes('?') ? `${api}&action=get_history` : `${api}?action=get_history`;
 }
 
+export function getClearHistoryUrl() {
+  if (IS_DEV) return '/api/clear_history';
+  const api = getApiUrl();
+  if (api.endsWith('.json')) return api;
+  return api.includes('?') ? `${api}&action=clear_history` : `${api}?action=clear_history`;
+}
+
 export function getBulkMapLocalUrl() {
   if (IS_DEV) return '/api/bulk_map_local';
   const api = getApiUrl();

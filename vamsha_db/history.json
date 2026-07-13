@@ -5351,5 +5351,88 @@
     "oldData": {
       "photoUrl": "https://res.cloudinary.com/klr3yhep/image/upload/v1783581516/PID0104_o8mctz.png"
     }
+  },
+  {
+    "pid": "SYSTEM",
+    "action": "settings_update",
+    "timestamp": "2026-07-13T01:52:16.738Z",
+    "oldData": {
+      "adminUploadService": "local",
+      "userUploadService": "cloudinary",
+      "familyBranches": {
+        "DFWA": {
+          "name": "DHARMAVARAM FAMILY",
+          "passwordHash": "e19701cb9c6b6647783e940e66282827218ba85e4e0ec28e29ba4dffa2bc2c01",
+          "rootPid": "PID0104"
+        }
+      }
+    },
+    "newData": {
+      "adminUploadService": "local",
+      "userUploadService": "cloudinary",
+      "familyBranches": {
+        "DFWA": {
+          "name": "DHARMAVARAM FAMILY",
+          "passwordHash": "e19701cb9c6b6647783e940e66282827218ba85e4e0ec28e29ba4dffa2bc2c01",
+          "rootPid": "PID0104"
+        }
+      },
+      "logsPaused": true
+    }
+  },
+  {
+    "pid": "PENDING_mock_1783908200591",
+    "action": "pending_submit",
+    "timestamp": "2026-07-13T02:03:20.592Z",
+    "oldData": {
+      "name": "Srikanth Dharmavaram",
+      "gender": "Male",
+      "isUpdateOfPid": "PID0104"
+    }
+  },
+  {
+    "pid": "SYSTEM",
+    "action": "settings_update",
+    "timestamp": "2026-07-13T02:04:21.600Z",
+    "oldData": {
+      "adminUploadService": "local",
+      "userUploadService": "cloudinary",
+      "familyBranches": {
+        "DFWA": {
+          "name": "DHARMAVARAM FAMILY",
+          "passwordHash": "e19701cb9c6b6647783e940e66282827218ba85e4e0ec28e29ba4dffa2bc2c01",
+          "rootPid": "PID0104"
+        }
+      },
+      "logsPaused": false
+    },
+    "newData": {
+      "adminUploadService": "local",
+      "userUploadService": "cloudinary",
+      "familyBranches": {
+        "DFWA": {
+          "name": "DHARMAVARAM FAMILY",
+          "passwordHash": "e19701cb9c6b6647783e940e66282827218ba85e4e0ec28e29ba4dffa2bc2c01",
+          "rootPid": "PID0104"
+        }
+      },
+      "logsPaused": true
+    }
+  },
+  {
+    "pid": "PENDING_mock_1783908200591",
+    "action": "pending_delete",
+    "timestamp": "2026-07-13T02:05:42.214Z",
+    "oldData": {
+      "pendingId": "PENDING_mock_1783908200591"
+    }
+  },
+  {
+    "pid": "PENDING_mock_1783908281625",
+    "action": "pending_delete",
+    "timestamp": "2026-07-13T02:05:47.769Z",
+    "oldData": {
+      "pendingId": "PENDING_mock_1783908281625"
+    }
   }
 ]
